@@ -1,4 +1,4 @@
-function [hrv,bh,mur] = get_river_profile(yi,mobj)
+function [hrv,bh,mur] = get_river_profile(obj,tr,yi)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -6,12 +6,13 @@ function [hrv,bh,mur] = get_river_profile(yi,mobj)
 % PURPOSE
 %   get river profile using regime theoretical profile (Cao & Knight,1996)
 % USAGE
-%   [hrv,bh,mur] = get_river_profile(yi,mobj)
+%   [hrv,bh,mur] = get_river_profile(obj,tr,yi)
 % INPUTS
+%   obj - CF_FormModel instance with RunParam to use
+%   tr - tidal range (m)
 %   yi - y co-ordinates
-%   mobj - ChannelForm model UI instance
 % OUTPUT
-%   hrv - depths of river regime channelfrom 0-bh (ie half-width)
+%   hrv - depths of river regime channel from 0-bh (ie half-width)
 %   bh  - half width of regime channel 
 %   mur - effective submerged static coefficient of Coulomb friction 
 %         (estimated from geometry)
@@ -22,29 +23,15 @@ function [hrv,bh,mur] = get_river_profile(yi,mobj)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    expobj = getClassObj(mobj,'Inputs','CF_ExpData');
-    hydobj = getClassObj(mobj,'Inputs','CF_HydroData');
-    sedobj = getClassObj(mobj,'Inputs','CF_SediData');
-    cnsobj = mobj.Constants;    
-    %assign properties
-    Le = expobj.TotalLength;         %total length of channel (m)
-    nc = expobj.ChannelShapeParam;   %channel shape parameter (-)
-    d50river = sedobj.d50river;      %sediment grain size, D50 (m)
-    tauriver = sedobj.tauriver;      %critical bed shear stress (Pa)
-    rhos = cnsobj.SedimentDensity;
-    rhow = cnsobj.WaterDensity;   
-    Qr = hydobj.RiverDischarge;    
-
-    tr = (hydobj.zhw(1)-hydobj.zlw(1)); %tidal range at mouth
-    Sr  = tr/Le;                %mean water surface slope in estuary
-    if Qr>0
-        [hav,Wrv,~] = river_regime(Qr,Sr,d50river,tauriver,rhos,rhow);
+    frmobj = obj.RunParam.CF_FormData;
+    nc = frmobj.ChannelShapeParam;           %channel shape parameter (-)
+    [hav,Wrv,~] = get_river_regime(obj,tr);  %Cao & Knight, 1996
+    if hav>0
+        bh = Wrv/2;         %half-width at head when mean water level = HW
+        hc = hav*(nc+1)/nc; %depth at centre-line of channel section
+        mur = nc*hc/bh(1);  %submerged static coefficient of Coulomb friction (estimated from geometry)
+        hrv = hc*(1-(yi/bh(1)).^nc).*(yi<bh(1));
     else
-        hav = 1; Wrv = 8;  %dummy head
+        hrv = 0; bh = 0; mur = 0;
     end
-
-    bh = Wrv/2;            %half-width at head when mean water level = HW
-    hc = hav*(nc+1)/nc;
-    mur = nc*hc/bh(1);%submerged static coefficient of Coulomb friction (estimated from geometry)
-    hrv = hc*(1-(yi/bh(1)).^nc).*(yi<bh(1));
 end

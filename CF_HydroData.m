@@ -18,10 +18,11 @@ classdef CF_HydroData < muiPropertyUI
         %abstract properties in muiPropertyUI to define input parameters
         PropertyLabels = {'River discharge (m3/s)',...
                           'Wind speed at 10m (m/s)',...
-                          'Distance to estuary/river switch and tidal limit (m)',...
+                          'Distance to estuary/river switch (m)',...
+                          'Distance to tidal limit (m)',...
                           'Manning friction coefficient [mouth switch head]',...
                           'Intertidal storage ratio [mouth switch head]',...
-                          'River discharge range [Q1 Q2 ...  Qn]'};
+                          'River discharge range [Q1 Q2 ...Qn]'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
     end
@@ -29,16 +30,22 @@ classdef CF_HydroData < muiPropertyUI
     properties
         RiverDischarge = 0    %river discharge (m^3/s) +ve downstream
         WindSpeed = 0         %wind speed at 10m (m/s)
-        xTideRiver            %distance from mouth to estuary/river switch and tidal limit
+        xTideRiver            %distance from mouth to estuary/river switch (m)
+        xTidalLimit           %distance from mouth to tidal limit (m)
         Manning               %Manning friction coefficient [estuary river]
         StorageRatio          %Intertidal storage ratio [estuary river]
         Qrange                %vector of input river discharges (m^3/s)
     end     
     
     properties (Transient)
+        tidalperiod     %tidal period in seconds (s)
         zhw = 0         %high and low water level from amplitude+mtl 
-        zmt = 0         %or CST model (mOD)
-        zlw = 0
+        zmt = 0         %or CST model if varying along channel and/or
+        zlw = 0         %time dependent (mOD)
+        Qr = 0          %time dependent river discharge
+        FormModel       %definition of morphological form
+        cstres          %struct with velocity and hyd.depth from cst model
+        cstmsg = 'CSTmodel not found. Check that App is installed';
     end
 
     properties (Hidden)
@@ -55,14 +62,9 @@ classdef CF_HydroData < muiPropertyUI
             %constructor code:            
             %TabDisplay values defined in UI function setTabProperties used to assign
             %the tabname and position on tab for the data to be displayed
-            obj = setTabProps(obj,mobj);  %muiPropertyUI function
-            
-            %to use non-numeric entries then one can either pre-assign 
-            %the values in the class properties defintion, above, or 
-            %specify the PropertyType as a cell array here in the class 
-            %constructor, e.g.:
-            % obj.PropertyType = [{'datetime','string','logical'},...
-            %                                       repmat({'double'},1,8)];
+            obj = setTabProps(obj,mobj);  %muiPropertyUI function            
+            ok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
+            if ok<1, return; end
         end 
     end
 %%  
@@ -87,8 +89,14 @@ classdef CF_HydroData < muiPropertyUI
 %%
     methods
         function runModel(obj,mobj)
-            %compile input data and run model
-            if isempty(obj.MouthWidth)  %check first property has been set
+            %compile input data and run model. Uses definitions based on
+            %CF_CKFAdata properties when run from Utilities>Hydraulic Model.
+            %Whereas runModelatT (see below) which uses the form model currently 
+            %being manipulated (water surface added to morphological form)            
+            ok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
+            if ok<1, return; end
+            
+            if isempty(obj.xTideRiver)  %check first property has been set
                 warndlg('Hydraulic properties have not been defined')
                 return;
             end
@@ -97,24 +105,41 @@ classdef CF_HydroData < muiPropertyUI
             %now check that the input data has been entered
             %isValidModel checks the InputHandles defined in ModelUI
             if ~isValidModel(mobj, metaclass(obj).Name)
-                warndlg('Use Setup to define Estuary and/or Water Level parameters');
+                warndlg('Use Setup to define Form and Forcing parameters');
                 return;
             end
             %--------------------------------------------------------------------------
             % Model code
             %--------------------------------------------------------------------------
-            %input parameters for model
-            [inp,rnp] = getModelParameters(obj,mobj);
+            %input parameters for model 
+            setTransHydroProps(obj,mobj);
+            obj.FormModel = selectFormModel(obj,mobj);
+            if isempty(obj.FormModel), return; end  %no form model retrieved
+            
+            %assign the run parameters to the model instance          
+            [inp,rnp] = getHydroModelParams(obj,false);            
             est = [];  %observed values of estuary form so can be empty
-            if isempty(obj.Qrange) || obj.Qrange==0
-                obj.Qrange = obj.RiverDischarge;
+
+            %run model iteratively for a range of river discharges
+            if isempty(obj.Qrange)
+                obj.Qrange = obj.Qr;
             end
             nrow = length(obj.Qrange);
             resX{nrow,5} = [];
             for i=1:nrow
-                inp.RiverDischarge = obj.Qrange(i);
-                [res,~,~,xy] = cst_model(inp,rnp,est);
-                resX(i,:) = res;
+                inp = updateModelParameters(obj,inp,i);
+                try
+                    [res,~,~,xy] = cst_model(inp,rnp,est);
+                    resX(i,:) = res;
+                catch
+                    %remove the waitbar if program did not complete
+                    hw = findall(0,'type','figure','tag','TMWWaitbar');
+                    delete(hw);
+                    inpQr = inp.RiverDischarge;
+                    msg = sprintf('Failed to find solution in cst_model for Qr=%d',inpQr);
+                    warndlg(msg);
+                    return;
+                end
             end
             resXQ = cell(1,5);
             for col = 1:5
@@ -135,6 +160,26 @@ classdef CF_HydroData < muiPropertyUI
             obj.CSTmodel = dst;
             setClassObj(mobj,'Inputs','CSThydraulics',obj);
             getdialog('Run complete');            
+        end
+%%
+        function [resX,resXT,time,xyz] = runHydroModel(obj,estobj)
+            %run model when updating models eg adding surface to form model or in
+            %transgression model (i) no checks made; (ii) uses current transient
+            %properties for water levels; and (iii) specified form model. 
+            %See cst_model help for definitions of output.
+            resX = []; resXT = []; time = []; xyz = [];
+            ok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
+            if ok<1, return; end
+            
+            obj.FormModel = estobj;
+            [inp,rnp] = getHydroModelParams(obj,true);
+            
+            try
+                [resX,resXT,time,xyz] = cst_model(inp,rnp,[]);
+            catch ME
+                %remove the waitbar if program did not complete
+                model_catch(ME,'cst_model','Qr',inp.RiverDischarge);                
+            end
         end
 %%
         function tabPlot(obj,src,~)
@@ -159,6 +204,14 @@ classdef CF_HydroData < muiPropertyUI
             
             cstPlot(obj,ax,Q(1))
         end
+%%
+        function obj = setTransHydroProps(obj,mobj)
+            %initialise the transient properties used in the models
+            wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
+            [obj.zhw,obj.zmt,obj.zlw] = newWaterLevels(wlvobj,0,0);
+            obj.Qr = obj.RiverDischarge;  %initialise transient river discharge
+            obj.tidalperiod = wlvobj.TidalPeriod*3600; %tidal period in seconds
+        end        
     end
 %%    
     methods (Access = private)
@@ -199,7 +252,7 @@ classdef CF_HydroData < muiPropertyUI
             xlabel('Distance from mouth (m)'); 
             ylabel('Velocity (m/s)'); 
 			legend('MTL','HWL','LWL','Hydraulic depth',...
-                'Tidal velocity','River velocity','Location','best');			
+                'Tidal velocity','River velocity','Location','east');			
             title('Along channel variation');
         end
 
@@ -250,25 +303,79 @@ classdef CF_HydroData < muiPropertyUI
             ax.YLim = [lim3,lim4];
         end        
 %%
-        function [inp,rnp] = getModelParameters(obj,mobj)
+        function [inp,rnp] = getHydroModelParams(obj,incriver)
             %extract the additional parameters needed to run the CSTmodel
-            %from the Estuary and WaterLevels classes
-            inp = getPropertiesStruct(obj);
-            est = getClassObj(mobj,'Inputs','Estuary');
-            wlv = getClassObj(mobj,'Inputs','WaterLevels');
+            %from the CF_HydroData and CF_FormModel classes
+            inp = getPropertiesStruct(obj);         
             
-            %inp parameters requires the following
-            inp.WidthELength = est.WidthELength;    %width convergence length (m) =0 import from file
-            inp.AreaELength = est.AreaELength;      %area convergence length (m)  =0 import from file
-            inp.MTLatMouth = wlv.MSL0;              %mean tide level at mouth (mOD)
-            inp.TidalAmplitude = wlv.TidalAmp;      %tidal amplitude (m)
-            inp.TidalPeriod = wlv.TidalPeriod;      %tidal period (hr)
-            inp.RiverDischarge = []                 ;%river discharge (m^3/s) +ve downstream
+            %inp parameters requires the following form parameters
+            inp.EstuaryLength = obj.xTidalLimit;%total length of channel (m)
+            
+            %width, CSA and convergence length are form model dependent
+            inp = getHydroFormProps(obj,inp);
+            
+            %get time dependent water level properties (due to slr and ntc)          
+            amp = (obj.zhw(end)-obj.zlw(end))/2;%tidal amplitude at mouth
+            %inp parameters requires the following water level parameters
+            inp.MTLatMouth = obj.zmt(end);            %mean tide level at mouth (mOD)
+            inp.TidalAmplitude = amp;            %tidal amplitude (m)
+            inp.TidalPeriod = obj.tidalperiod/3600 ;%tidal period (hr)
+            
+            if incriver
+                inp.RiverDischarge = obj.Qr;     %transient river discharge
+                [~,Wrv,Arv] = get_river_regime(obj.FormModel,2*amp,obj.Qr);                
+                inp.RiverWidth = Wrv;            %upstream river width (m) 
+                inp.RiverCSA = Arv;              %upstream river cross-sectional area (m^2)
+            else
+                inp.RiverDischarge = 0;
+                inp.RiverWidth = 0;
+                inp.RiverCSA = 0;
+            end
 
             %rnp parameters requires the following
             rnp.TimeInt = 1;     %time increment in analytical model (hrs)
             rnp.DistInt = 1000;  %distance increment along estuary (m)
             rnp.useObs = false;  %flag to indicate whether to use observations
+        end
+%%
+        function inp = getHydroFormProps(obj,inp)
+            %initialise the properties required for the CST model using the
+            %Form model which was used to call CF_HydroData and assigned to
+            %obj.FormModel
+            if ismember(obj.FormModel.ModelType,{'Exponential','Power'})
+                frm = obj.FormModel.Channel; 
+                inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
+                inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
+                inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
+                inp.AreaELength = frm.form.La;   %area convergence length (m)              
+            elseif strcmp(obj.FormModel.ModelType,'CKFA')
+                frm = obj.FormModel.CKFAform;
+                inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
+                inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
+                inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
+                inp.AreaELength = frm.form.La;   %area convergence length (m)              
+            else
+                inp = [];   %call error
+            end
+        end
+%%
+        function [formobj,caserec] = selectFormModel(~,mobj)    
+            %prompt user to select a form model from existing cases
+            muicat = mobj.Cases;
+            promptxt = 'Select Form Model to use:';            
+            [caserec,ok] = selectRecord(muicat,'PromptText',promptxt,...
+                              'CaseType',{'form_model'},'CaseClass',[],...
+                              'SelectionMode','single','ListSize',[250,200]);
+            if ok<1, formobj = []; return; end
+            formobj = getCase(muicat,caserec);             
+        end
+%%
+        function inp = updateModelParameters(obj,inp,idx)
+            %update additional properties that change with river discharge
+            inp.RiverDischarge = obj.Qrange(idx);%value to use in cst_model
+            [~,Wrv,Arv] = get_river_regime(obj.FormModel,obj.Qrange(idx));
+            inp.RiverWidth = Wrv;                %upstream river width (m) 
+            inp.RiverCSA = Arv;                  %upstream river cross-sectional area (m^2)
         end
 %%
         function dsp1 = modelDSproperties(~)

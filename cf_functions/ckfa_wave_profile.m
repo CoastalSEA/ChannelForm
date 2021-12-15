@@ -2,7 +2,7 @@ function [dw,yw] = ckfa_wave_profile(Uw,zw,Fch,cnc,df,ds,d50,tau,me,ws)
 %
 %-------header-------------------------------------------------------------
 % NAME
-%   ckfa_wave_profile.m [NB modified from version in CKFA model}*********
+%   ckfa_wave_profile.m [NB modified from version in CKFA model}
 % PURPOSE
 %   Depth and width of wave formed profile d=dw*(1-y/yw)^2/3
 % USAGE
@@ -27,7 +27,7 @@ function [dw,yw] = ckfa_wave_profile(Uw,zw,Fch,cnc,df,ds,d50,tau,me,ws)
 %   Calls internal function fun_dw, which calculates the sedimentation
 %   balance for a given depth and wave conditions
 % SEE ALSO
-% ckfa_form_model.m and ckfa_form_properties.m
+%   ckfa_form_model.m and ckfa_form_properties.m
 %
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2022

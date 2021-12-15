@@ -11,9 +11,9 @@ classdef CF_ExpData < muiPropertyUI
 %   inherits muiPropertyUI
 % NOTES
 %   Notation used in model, with exobj an instance of this class:
-%     Le = expobj.TotalLength;       %total length of channel (m)
-%     bu = expobj.HWmouthWidth;      %width of mouth at high water(m)
-%     bl = expobj.LWmouthWidth;      %width of mouth at low water level(m)
+%     Le = expobj.ChannelLength;     %total length of channel (m)
+%     bu = expobj.HWmouthWidth/2;    %half-width of mouth at high water(m)
+%     bl = expobj.LWmouthWidth/2;    %half-width of mouth at low water level(m)
 %     nc = expobj.ChannelShapeParam; %channel shape parameter (-)
 %     Lwu = expobj.HWwidthELength;   %width convergence length at high water (m)
 %     Lwl = expobj.LWwidthELength;   %width convergence length at low water (m)
@@ -28,8 +28,7 @@ classdef CF_ExpData < muiPropertyUI
 %      
     properties (Hidden)
         %abstract properties in muiPropertyUI to define input parameters
-        PropertyLabels = {'Total length of channel (m)',...
-                          'Width of mouth at high water (m)',...
+        PropertyLabels = {'Width of mouth at high water (m)',...
                           'Width of mouth at low water level (m)',...
                           'Channel shape parameter',...
                           'Width convergence length at high water (m)',...
@@ -43,7 +42,6 @@ classdef CF_ExpData < muiPropertyUI
     end
     
     properties
-        TotalLength         %Le - total length of channel (m)
         HWmouthWidth        %bu - width of mouth at high water(m)
         LWmouthWidth        %bl - width of mouth at low water level(m)
         ChannelShapeParam   %nc - channel shape parameter (-)

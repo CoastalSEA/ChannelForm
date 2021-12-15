@@ -5,7 +5,13 @@ classdef CF_FormModel < GDinterface
 %   CF_FormModel.m
 % PURPOSE
 %   Class for exponential and power plan form model used in ChannelForm App
-%
+% NOTES
+%   Co-ordinate convention is that the x-axis is seaward from the head or
+%   tidal limit. The y-axis is the cross-channel axis mirrored about the
+%   centre-line.
+%   If a hydraulic surface (based on CSTmodel) is not included the
+%   surrounding surface is at high water level +a small offset and the 
+%   tidal amplitude is assumed to decay linearly to the tidal limit.
 % SEE ALSO
 %   muiDataSet and GDinterface
 %
@@ -16,7 +22,11 @@ classdef CF_FormModel < GDinterface
     properties
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
         %Additional properties:   
-        Selection %structure for plan, channel and intertidal form selection
+        ModelType %type of form model being used (Exp, Power, CKFA)
+        Selection %struct for plan, channel and intertidal form selection
+        CKFAform  %struct for CKFA model property tables for:
+                  %form, flow and wave
+        Channel   %struct for Channel model summary parameters
     end
     
     methods (Access = private)
@@ -38,66 +48,96 @@ classdef CF_FormModel < GDinterface
                 warndlg('Use Setup to define model input parameters');
                 return;
             end
-            %assign the run parameters to the model instance
-            %may need to be after input data selection to capture caserecs
-            %prompt user to select plan form and x-sect form  
-            setRunParam(obj,mobj); 
+            
 %--------------------------------------------------------------------------
 % Model code
 %--------------------------------------------------------------------------
-            wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
+%             wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
             hydobj = getClassObj(mobj,'Inputs','CF_HydroData');
-            [hydobj.zhw,hydobj.zmt,hydobj.zlw] = newWaterLevels(wlvobj,0,0);
+            setTransHydroProps(hydobj,mobj); %initialise transient properties
+            
+            %assign the run parameters to the model instance           
+            setRunParam(obj,mobj); 
+            %add water level definition to the run parameters
+            [iscst,wlstxt] = setWaterLevels(obj);
+            
+            obj.ModelType = option;
             switch option
-                case 'Exponential'
+                case 'Exponential'                    
+                    %prompt user to select plan form and x-sect form 
                     %model selection assigned to obj.Selection struct
+                    obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
                     hf = setFormSelection(obj); 
                     waitfor(hf);
-                    [xi,yi,zi,yz] = channel_form_models(obj,mobj);
+                    [xi,yi,zi,yz] = channel_form_models(obj,iscst);
                     sel = obj.Selection;
-                    meta.data = sprintf('%s plan form, %s intertidal, %s channel',...
-                          sel.planform,sel.intertidalform,sel.channelform);
+                    meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
+                                        sel.planform,sel.intertidalform,...
+                                        sel.channelform,wlstxt);
                 case 'Power'
-                    [xi,yi,zi,yz] = pr_form_model(obj,mobj);
-                    meta.data = 'PR power form';
+                    obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
+                    [xi,yi,zi,yz] = pr_form_model(obj,iscst);
+                    meta.data = sprintf('PR power form, %s',wlstxt);
                 case 'CKFA'
-                    [xi,yi,zi,yz] = ckfa_properties(obj,mobj);
-                    meta.data = 'CKFA ideal form';
+                    [xi,yi,zi,yz] = ckfa_form_model(obj,iscst);
+                    meta.data = sprintf('CKFA exogenous form, %s',wlstxt);
+%                 case 'Valley'
+%                     [xi,yi,zi,yz] = cf_valley_model(obj,iscst);
+%                     meta.data = sprintf('Valley form, %s',wlstxt);
             end
-
             if isempty(xi), return; end
+            
             griddata = reshape(zi,1,length(xi),length(yi));  
-            results = [{griddata},yz'];
-            xydata = {xi',yi'};      %assign xyz coordinates
+            %check that x and y are 1xn and yz is 1xnx3
+            if size(yz,2)~=3, yz = yz'; end
+            results = [{griddata},yz];
+%             xydata = {xi,yi};     %assign xyz coordinates as row vectors
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
+            dims = struct('x',xi,'y',yi,'t',gridyear);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = metaclass(obj).Name;
-            dst = setGridOuput(obj,results,xydata,gridyear,meta);
+            dst = setGridOuput(obj,results,dims,meta);
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  
-            grdobj = getClassObj(mobj,'Inputs','CF_GridData');
-            dst = setFormProps(obj,dst,1,grdobj,hydobj);            
+            dst = setFormProps(obj,dst,1,meta);            
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             
-            setDataSetRecord(obj,mobj.Cases,dst,'model');
+            setDataSetRecord(obj,mobj.Cases,dst,'form_model');
             getdialog('Run complete');
+            DrawMap(mobj);
         end
     end
 %%
     methods
-        function tabPlot(obj,mobj,src) %abstract class method for muiDataSet
+        function tabPlot(obj,src) %abstract class method for muiDataSet
             %generate plot for display on Q-Plot tab
-            cf_model_tabs(obj,mobj,src);
+            cf_model_tabs(obj,src);
         end
     end 
 %%    
-    methods (Access = private)       
+    methods (Access = private) 
+        function [iscst,mtxt] = setWaterLevels(obj)
+            %set water levels for form model using either the surface
+            %defined by the cst_model, or high water at the mouth and a 
+            %reducing tidal amplitude            
+            answer = questdlg('Include hydro surface?','Select hydro',...
+                              'CST surface','Constant HW','CST surface');
+            
+            if strcmp(answer,'Constant HW')
+                iscst = false; 
+                mtxt = 'hydraulic surfaces use HW at mouth';
+            else
+                iscst = true;
+                mtxt = 'hydraulic surfaces from CSTmodel';
+            end                              
+        end
+%%
         function hf = setFormSelection(obj)   
             %initialise ui for selection of form options
             hf = figure('Name','Channel Form', ...

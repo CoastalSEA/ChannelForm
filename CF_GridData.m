@@ -18,10 +18,8 @@ classdef CF_GridData < muiPropertyUI
         %abstract properties in muiPropertyUI to define input parameters
         PropertyLabels = {'X-axis definition [x0 xN]',...
                           'No. of intervals in the x direction',...
-                          'X-coordinate of mouth',...
                           'Y-axis definition [y0 yN]',...
                           'No. of intervals in the y direction',...
-                          'Y-coordinate of centre-line',...
                           'Vertical resolution for hypsometry'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
@@ -30,10 +28,8 @@ classdef CF_GridData < muiPropertyUI
     properties
         XaxisLimits = [0 100000]   %definition of the x-axis [x0 xN]         
         Xint = 500                 %no of intervals in the x direction
-        Xmouth = 0                 %x co-ordinate of mouth
         YaxisLimits = [-5000 5000] %definition of the y-axis [y0 yN]
         Yint = 500                 %no of intervals in the y direction
-        Ycentre = 0                %y co-ordinate of centre-line
         histint = 0.1;             %vertical resolution for hypsometry histogram
     end    
 

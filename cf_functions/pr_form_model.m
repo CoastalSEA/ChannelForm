@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = pr_form_model(~,mobj,isfull)
+function [xi,yi,zgrd,yz] = pr_form_model(obj,iscst,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -7,10 +7,10 @@ function [xi,yi,zgrd,yz] = pr_form_model(~,mobj,isfull)
 %   function to compute 3D form of a creek or tidal channel
 %   useing power laws to define width and hydraulic depth variations.
 % USAGE
-%   [xi,yi,zgrd,yz] = pr_form_model(obj,inputs,isfull)
+%   [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
 % INPUTS
-%   obj - CF_FormModel class instance (used to identify class method)
-%   mobj - ChannelForm model UI instance
+%   obj - CF_FormModel class instance
+%   iscst - logical flag, true if CSTmodel to be used to define water levels
 %   isfull - true returns full grid, false half-grid
 % OUTPUT
 %   xi - x co-ordinate (m)
@@ -27,23 +27,68 @@ function [xi,yi,zgrd,yz] = pr_form_model(~,mobj,isfull)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
+    xi = []; yi = []; zgrd = []; yz = [];
     if nargin<3
         isfull = true;
     end
+
+    %channel properties
+    if iscst
+        %provides initial guess of gross properties if cst_model called
+        obj= cf_set_hydroprops(obj,false);     %fixed water level surface 
+        obj = pr_properties(obj); 
+    end
+    %set the water level variations along the estuary
+    [obj,ok] = cf_set_hydroprops(obj,iscst);
+    if ok<1, return; end
+    
+    [xi,yi,zi,yz] = pr_3D_form(obj);
+    if isempty(xi),return; end
+    
+    yz = num2cell(yz',2);  %formatted to load into dstable
+    %generate complete 3D channel form by mirroring half section
+    if isfull                        %return full grid
+        zgrd = cat(2,fliplr(zi),zi);
+        yi  = [-fliplr(yi), yi];
+    else                             %return half grid
+        zgrd = zi;
+    end
+end
+%%
+function obj = pr_properties(obj)
+    %compute the summary gross properties for the channel form
+    [grid.x,yi,zi] = pr_3D_form(obj); 
+    grid.y  = [-fliplr(yi), yi];
+    grid.z = cat(2,fliplr(zi),zi);
+    
+    wl = obj.RunParam.CF_HydroData; 
+    grdobj = obj.RunParam.CF_GridData;
+    hyps = gd_channel_hypsometry(grid,wl,grdobj.histint);
+    [xj,w,csa,~] = gd_section_properties(grid,wl);
+    gp = gd_gross_properties(grid,wl,hyps,xj,w{2},csa{2});
+    obj.Channel.form.Wm = gp.Wm;
+    obj.Channel.form.Lw = gp.Lw;
+    obj.Channel.form.Am = gp.Am;
+    obj.Channel.form.La = gp.La;  
+end
+%%
+function [xi,yi,zi,yz] = pr_3D_form(obj)    
+    %generate the 3D form
+
     %get the required input parameter classes
-    pwrobj = getClassObj(mobj,'Inputs','CF_PowerData');
-    grdobj = getClassObj(mobj,'Inputs','CF_GridData');
-    hydobj = getClassObj(mobj,'Inputs','CF_HydroData');
-    sedobj = getClassObj(mobj,'Inputs','CF_SediData');
+    pwrobj = obj.RunParam.CF_FormData;
+    grdobj = obj.RunParam.CF_GridData;
+    hydobj = obj.RunParam.CF_HydroData;
+    sedobj = obj.RunParam.CF_SediData;
 
     %model run parameters
     Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
     nintx = grdobj.Xint;             %no of intervals in the x direction
     bt = diff(grdobj.YaxisLimits)/2; %half width of model domain (m)   
     ninty = grdobj.Yint/2;           %no of intervals in the y direction
+    offset = 2*grdobj.histint;       %offset from hw to supra-tidal form
     
     %channel form parameters
-    Le = pwrobj.TotalLength;       %total length of channel (m)
     bu = pwrobj.HWmouthWidth/2;    %half-width of mouth at high water(m)
     bl = pwrobj.LWmouthWidth/2;    %half-width of mouth at low water level(m)
     nu = pwrobj.HWwidthExponent;   %width exponent at high water (-)
@@ -55,34 +100,33 @@ function [xi,yi,zgrd,yz] = pr_form_model(~,mobj,isfull)
     %sediment properties (if saltmarsh defined)
     dmax = 0;
     if ~isempty(sedobj.MaxMarshDepth)
-        dm = sedobj.AvMarshDepth;    %average depth of marsh surface
-        dmax = sedobj.MaxMarshDepth; %maximum depth of saltmarsh
+        dm = sedobj.AvMarshDepth;    %average depth of marsh surface (m)
+        dmax = sedobj.MaxMarshDepth; %maximum depth of saltmarsh (m)
     end
     
-    Ll = hydobj.xTideRiver(1);  %distance from mouth to estuary/river switch
-    Lu = Le-Ll;                 %distance from estuary/river switch to head
+    Le = hydobj.xTidalLimit;       %length of tidal channel (m)
+    Ll = hydobj.xTideRiver;        %distance from mouth to estuary/river switch (m)
+    Lu = Le-Ll;                    %distance from estuary/river switch to head (m)
     
     %set-up co-ordinate system
     delx = Lt/nintx;
     dely = bt/ninty;
     Lu = Lu+delx;   
     xi = -(Lt-Ll):delx:Ll;
-    yi = 0:dely:bt; yi(1) = 0.1;     %the offset ensures no duplicates
+    yi = 0:dely:bt; yi(1) = 0.1;   %the offset ensures no duplicates
     
-    z20 = zeros(length(xi),length(yi));
+    zi = zeros(length(xi),length(yi));
     yz = zeros(length(xi),3);
     %water level properties based on amplitude+mtl or CST model (mAD)
-    if isscalar(hydobj.zhw)
-        zHWxi = ones(length(xi),1)*hydobj.zhw;
-        zLWxi = ones(length(xi),1)*hydobj.zlw;
-    else
-        %water level properties based on amplitude+mtl or CST model (mAD)
-        zHWxi = hydobj.zhw;              %high water level(mAD)
-        zLWxi = hydobj.zlw;              %low water level(mAD)
-    end
-    
+    zHWxi = hydobj.zhw;        %high water level(mAD)
+    zLWxi = hydobj.zlw;        %low water level(mAD)
+    amp0 = (hydobj.zhw(end)-hydobj.zlw(end))/2;  %tidal amplitude at mouth
+    zso = hydobj.zmt(end);  %mean tide level at mouth used to define the level of the 'shoulder' in the power form (constant)
+    du = hydobj.zhw(end)-zso;          %depth of upper form at head (constant)
+    dl = zm-zso;           %depth of lower form at mouth (constant)
+
     %river properties
-    [hrv,bh,~] = get_river_profile(yi,mobj); 
+    [hrv,bh,~] = get_river_profile(obj,2*amp0,yi); 
     
     %calculate the transformation of the x co-ordinate for given x and y values
     %and then use this to obtain a value of z
@@ -90,18 +134,30 @@ function [xi,yi,zgrd,yz] = pr_form_model(~,mobj,isfull)
     for ix=1:nxi
         zhw = zHWxi(ix); zlw = zLWxi(ix);
         am = (zhw-zlw)/2;     %tidal amplitude(m)
-        zo = zhw-am;          %mean tide level(m)
-        du = zhw-zo;          %depth of upper form
-        dl = zm-zo;           %depth of lower form
-        %upper form
-        zu = du.*(Lt/Lu.*((yi./bu).^(1/nu)-xi(ix)./Lt)).^mu;
-        zu = zu.*(zu>=0);
-        yu = (bu.*((Lu+xi(ix))./Lt).^nu).*(Lu+xi(ix)>0);
-        %lower form
-        temp = (dl.*(xi(ix)./Ll-(yi./bl).^(1/nl)).^ml);
-        zl = temp.*(temp<=0);
-        yl = (bl.*(xi(ix)./Ll).^nl).*(xi(ix)>0);
+        zmt = zhw-am;         %mean tide level(m)
+        
+        % upper form
+        %zu equation is for a coordinate system with x=0 at the 'shoulder'
+        %where z=0 before the vertical offset for the 'shoulder', zso, 
+        %is applied
+        xLi = Lu+xi(ix);
+        temp = Le/Lu.*((yi./bu).^(1/nu)-xi(ix)./Le);
+        zu = du.*((temp.*(xLi>=0)).^mu); %equation only valid to tidal limit
+        %elevation when above tidal limit set to be same as surrounding land
+        if xLi<0, zu = ones(size(yi))*zhw+offset; end  
+        yu = bu*(xLi/Le)^nu*(xLi>0);    
+
+        % lower form
+        %zl equation applies below and seaward of the 'shoulder' ie for x>0
+        %and z<zso in the same coordinate system (see definitions sketch in
+        %manual)
+        temp = (xi(ix)./Ll-(yi./bl).^(1/nl));
+        %apply along channel and cross-channel limits to validity of eqn
+        limit = (xi(ix)>0) & (temp>=0);   
+        zl = dl.*((temp.*limit).^ml); 
+        yl = (bl*(xi(ix)/Ll)^nl)*(xi(ix)>0);
         yo = (yu+yl)/2;
+        
         %check for saltmarsh on upper intertidal form        
         if dmax>0     
             idm = yi<=yu & yi>yo;    %width in which marsh can exist
@@ -110,27 +166,24 @@ function [xi,yi,zgrd,yz] = pr_form_model(~,mobj,isfull)
         end
         zu = zu.*(yi>=yl);
         zl = zl.*(yi<yl);
-        z20(ix,:) = zu+zl;           %elevations relative to zero datum
-        yz(ix,:) = [yu, yo, yl];
-        isriver = yi<bh & hrv>-z20(ix,:);
+        %elevations adjusted for variation in mtl. The model is strictly
+        %adjusted by zso to define the domains relative to the 'shoulder'.
+        %zmt is used here to generate an along channel vertical variation 
+        %in the line that defines the shoulder so that system takes account
+        %of valley slope and link to river system     
+        zi(ix,:) = zu+zl+zmt;           
+        isriver = yi<bh & (du-hrv)<zi(ix,:);
         if any(isriver)
-            zdcr = -hrv.*isriver;
-            z20(ix,:) = z20(ix,:).*(~isriver)+zdcr;
+            if yu<bh, yu=bh; end
+            if yl<bh, yl=bh; end
+            zdcr = (zhw-hrv).*isriver;
+            zi(ix,:) = zi(ix,:).*(~isriver)+zdcr;
         end
+        yz(ix,:) = [yu, yo, yl];
     end
     
-    yz = num2cell(yz',2);  %formatted to load into dstable 
-    %combine upper and lower surface
-    zi  = z20+zo;           %add vertical transformation to move origin  
-    zhw = repmat(zHWxi,1,ninty+1);
-    msk = (zhw+0.01).*(zi>zhw);      %construct high water mask
+    %add mask to define surrounding land surface
+    zhw = repmat(zHWxi',1,ninty+1);
+    msk = (zhw+offset).*(zi>zhw);      %construct high water mask
     zi  = zi.*(zi<=zhw)+ msk;
-
-    %generate complete 3D channel form by mirroring half section
-    if isfull                        %return full grid
-        zgrd = cat(2,fliplr(zi),zi);
-        yi  = [-fliplr(yi), yi];
-    else                             %return half grid
-        zgrd = zi;
-    end
 end

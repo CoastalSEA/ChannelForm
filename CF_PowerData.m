@@ -11,9 +11,9 @@ classdef CF_PowerData < muiPropertyUI
 %   inherits muiPropertyUI
 % NOTES
 %   Notation used in model, with exobj an instance of this class:
-%     Le = pwrobj.TotalLength;       %total length of channel (m)
-%     bu = pwrobj.HWmouthWidth;      %width of mouth at high water(m)
-%     bl = pwrobj.LWmouthWidth;      %width of mouth at low water level(m)
+%     Le = pwrobj.ChannelLength;     %total length of channel (m)
+%     bu = pwrobj.HWmouthWidth/2;    %half-width of mouth at high water(m)
+%     bl = pwrobj.LWmouthWidth/2;    %half-width of mouth at low water level(m)
 %     nu = pwrobj.HWwidthExponent;   %width exponent at high water (-)
 %     nl = pwrobj.LWwidthExponent;   %width exponent at low water (-)
 %     mu = pwrobj.HWdepthExponent;   %depth exponent at high water (-)
@@ -26,8 +26,7 @@ classdef CF_PowerData < muiPropertyUI
 %      
     properties (Hidden)
         %abstract properties in muiPropertyUI to define input parameters
-        PropertyLabels = {'Total length of channel (m)',...
-                          'Width of mouth at high water (m)',...
+        PropertyLabels = {'Width of mouth at high water (m)',...
                           'Width of mouth at low water level (m)',...
                           'Width exponent at high water (-)',...
                           'Width exponent at low water (-)',...  
@@ -36,10 +35,10 @@ classdef CF_PowerData < muiPropertyUI
                           'Thalweg bed level at mouth (mOD)'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
+        ChannelShapeParam = 2 %used to define river profile
     end
     
     properties           
-        TotalLength         %Le - total length of channel (m)
         HWmouthWidth        %bu - width of mouth at high water(m)
         LWmouthWidth        %bl - width of mouth at low water level(m)
         HWwidthExponent     %nu - width exponent at high water (-)

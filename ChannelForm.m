@@ -37,14 +37,10 @@ classdef ChannelForm < muiModelUI
             %initialise standard figure and menus    
             %classes required to run model, format:
             %obj.ModelInputs.<model classname> = {'Param_class1',Param_class2',etc}
-            %                                        % << Edit to model and input parameters classnames 
-            obj.ModelInputs.Model_template = {'ParamInput_template'};
-            defaultprops = {'WaterLevels','CF_HydroData','CF_SediData','CF_GridData'};
-            obj.ModelInputs.CF_ExpModel = horzcat(defaultprops,'CF_ExpData');
-            obj.ModelInputs.CF_PowerModel = horzcat(defaultprops,'h_ValleyData');
-            obj.ModelInputs.CF_CKFAModel =  {'h_CFRunProps','h_HFdata','h_SFdata'};
-            obj.ModelInputs.Cf_ValleyModel = {'h_ValleyData','h_CFRunProps','h_HFdata','h_SFdata'};
-            obj.ModelInputs.CF_HydroModel = defaultprops;
+            defaultprops = {'CF_HydroData','CF_SediData','GD_GridProps'};
+            obj.ModelInputs.CF_FormModel = defaultprops;
+            obj.ModelInputs.CF_ValleyModel = [defaultprops,{'CF_ValleyData'}];
+            obj.ModelInputs.CF_HydroData = {'CF_HydroData','CF_SediData'};
             obj.ModelInputs.CF_TransModel = defaultprops;
             %tabs to include in DataUIs for plotting and statistical analysis
             %select which of the options are needed and delete the rest
@@ -54,7 +50,9 @@ classdef ChannelForm < muiModelUI
             obj.DataUItabs.Stats = {'General','Timeseries','Taylor','Intervals'};  
             
             modelLogo = 'ChannelForm_logo.jpg';  %default splash figure - edit to alternative
-            initialiseUI(obj,modelLogo); %initialise menus and tabs                  
+            initialiseUI(obj,modelLogo); %initialise menus and tabs   
+            
+            
         end    
         
 %% ------------------------------------------------------------------------
@@ -71,7 +69,7 @@ classdef ChannelForm < muiModelUI
             %submenus in order following each brach to the lowest level 
             %before defining the next branch.         
                                     
-            MenuLabels = {'File','Tools','Project','Setup','Checks',...
+            MenuLabels = {'File','Tools','Project','Setup','Utilities',...
                                        'Process','Run','Analysis','Help'};
             menu = menuStruct(obj,MenuLabels);  %create empty menu struct
             %
@@ -106,38 +104,53 @@ classdef ChannelForm < muiModelUI
             
             %% Setup menu -------------------------------------------------
             menu.Setup(1).List = {'Form Parameters','System Parameters',...
-                                  'Run Parameters','Model Constants'}; 
-            menu.Setup(1).Callback = {'gcbo;','gcbo;','gcbo;',...
+                                  'Run Parameters','Import Grid','Model Constants'}; 
+            menu.Setup(1).Callback = {'gcbo;','gcbo;','gcbo;','gcbo;',...
                                                     @obj.setupMenuOptions};                  
             %add separators to menu list (optional - default is off)
-            menu.Setup(1).Separator = [repmat({'off'},[1,3]),{'on'}]; %separator preceeds item
+            menu.Setup(1).Separator = [repmat({'off'},[1,3]),{'on'},{'on'}]; %separator preceeds item
             
             menu.Setup(2).List = {'Exp Form Parameters','Power Form Parameters',...
-                    'CKFA Form Parameters','Valley Parameters'};
+                                  'CKFA Form Parameters','Valley Parameters'};
             menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,4]); 
             
             menu.Setup(3).List = {'Hydraulic Parameters','Sediment Parameters',...
                                   'Transgression Parameters','Morphological Modifications'};
-            menu.Setup(3).Callback = repmat({@obj.setupMenuOptions},[1,4]);          
-                
-            menu.Setup(4).List = {'Grid Parameters','Run Time Parameters'};           
-            menu.Setup(4).Callback = repmat({@obj.setupMenuOptions},[1,2]);
+            menu.Setup(3).Callback = [{'gcbo;'},repmat({@obj.setupMenuOptions},[1,3])];  
+            
+            menu.Setup(4).List = {'Tidal Forcing','Hydraulic Model'};
+            menu.Setup(4).Callback = repmat({@obj.setupMenuOptions},[1,2]); 
+            
+            menu.Setup(5).List = {'Grid Parameters','Run Time Parameters'};           
+            menu.Setup(5).Callback = repmat({@obj.setupMenuOptions},[1,2]);
+            
+            menu.Setup(6).List = {'Load','Add','Delete'};
+            menu.Setup(6).Callback = repmat({@obj.loadMenuOptions},[1,3]);
             
 
-            %% Check menu ---------------------------------------------------
-            menu.Checks(1).List = {'River Dimensions',...
-                                  'Valley Thalweg',...
-                                  'Area of Flood Plain',...
-                                  'CKFA Channel Dimensions',...
-                                  'Morphological Timescale'};
-            menu.Checks(1).Callback = repmat({@obj.checkMenuOptions},[1,5]);
+            %% Utilities menu ---------------------------------------------------
+            menu.Utilities(1).List = {'Hydraulic Model',...
+                                      'River Dimensions',...
+                                      'Valley Thalweg',...
+                                      'Area of Flood Plain',...
+                                      'CKFA Channel Dimensions',...
+                                      'Morphological Timescale',...
+                                      'Channel-Valley Sub-Plot'};
+            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,7]);
             
             %% Process menu ---------------------------------------------------
-            menu.Process(1).List = {'Add Form to Valley','Restore Form',...
-                            'Add Modifications','Component Plot'...
-                            'Export Grid','Import Grid'};
-            menu.Process(1).Callback = repmat({@obj.procMenuOptions},[1,6]);
-            menu.Process(1).Separator = [repmat({'off'},[1,4]),{'on'},{'off'}]; %separator preceeds item
+            menu.Process(1).List = {'Add Form to Valley','Add Modifications',...
+                                    'Restore Form','Grid Tools'};
+            menu.Process(1).Callback = [repmat({@obj.procMenuOptions},...
+                                                        [1,3]),{'gcbo;'}];
+            menu.Process(1).Separator = [repmat({'off'},[1,3]),{'on'}]; %separator preceeds item
+            
+            menu.Process(2).List = {'Grid Mesh Data','Regrid Data',...
+                                    'Subgrid Data','Combine Grids',...
+                                    'Rotate Grid',...
+                                    'Export Grid','Import Grid'};                                    
+            menu.Process(2).Callback = repmat({@obj.gridMenuOptions},[1,7]);
+            menu.Process(2).Separator = [repmat({'off'},[1,5]),{'on'},{'off'}]; %separator preceeds item
             
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Exponential form model','Power form model',...
@@ -201,14 +214,14 @@ classdef ChannelForm < muiModelUI
             props = {...                                    
                 'CF_ExpData','Exponential',[0.90,0.60],{220,70}, 'Exponential model parameters:';...  
                 'CF_PowerData','Power',[0.90,0.60],{220,70}, 'Power model parameters:';...
-                'CF_CKFAData','CKFA',[0.90,0.60],{220,70}, 'CKFA model parameters:';...
+                'CF_CKFAdata','CKFA',[0.90,0.60],{220,70}, 'CKFA model parameters:';...
                 'CF_ValleyData','Valley',[0.90,0.60],{220,70}, 'Valley model parameters:';... 
                 'CF_ModsData','Modifications',[0.90,0.96],{240,260},'Morphological modifications:';...
                 'WaterLevels','Forcing',[0.90,0.48],{160,80},'Hydraulic forcing parameters:';...
                 'CF_HydroData','Forcing',[0.90,0.96],{160,80},'Hydraulic model parameters:';...
                 'CF_SediData','Sediments',[0.90,0.50],{180,70}, 'Sediment parameters:';... 
                 'RunProperties','Run Parameters',[0.40,0.50],{170,80},'Run time parameters:';...
-                'CF_GridData','Run Parameters',[0.90,0.50],{160,90}, 'Grid parameters:';...
+                'GD_GridProps','Run Parameters',[0.90,0.50],{160,90}, 'Grid parameters:';...
                 'CF_TransData','Transgression',[0.90,0.50],{180,70}, 'Transgression parameters:'}; 
         end    
  %%
@@ -217,17 +230,17 @@ classdef ChannelForm < muiModelUI
             %tab (src)
             switch src.Tag                                   
                 case 'Plot' 
-                     tabPlot(cobj,obj,src);
+                     tabPlot(cobj,src);
                 case 'Stats'
                     lobj = getClassObj(obj,'mUI','Stats');
                     if isempty(lobj), return; end
                     tabStats(lobj,src);           
                 case 'FormProps'  
-                    if isa(cobj,'CF_ValleyModel')
-                        warndlg('FormProps tab does not display Valley Form data');
-                        return; 
-                    end                        
-                    tabPlot(cobj,obj,src); %the function cf_form_tabs selects Properties
+%                     if isa(cobj,'CF_ValleyModel')
+%                         warndlg('FormProps tab does not display Valley Form data');
+%                         return; 
+%                     end                        
+                    tabPlot(cobj,src); %the function cf_form_tabs selects Properties
 %                 case 'Transgression'
 %                     channel_transgression(gobj,inp);
                 case 'Export Grid'
@@ -289,12 +302,16 @@ classdef ChannelForm < muiModelUI
                     %update tab display with input data
                     tabsrc = findobj(obj.mUI.Tabs,'Tag','Valley');
                     InputTabSummary(obj,tabsrc);
-                case 'Hydraulic Parameters'
-                    WaterLevels.setInput(obj);
-                    CF_HydroData.setInput(obj);                      
+                case 'Tidal Forcing'
+                    WaterLevels.setInput(obj);                    
                     %update tab display with input data
                     tabsrc = findobj(obj.mUI.Tabs,'Tag','Forcing');
                     InputTabSummary(obj,tabsrc);
+                case 'Hydraulic Model'
+                    CF_HydroData.setInput(obj);                      
+                    %update tab display with input data
+                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Forcing');
+                    InputTabSummary(obj,tabsrc);   
                 case 'Sediment Parameters'   
                     CF_SediData.setInput(obj);  
                     %update tab display with input data
@@ -311,7 +328,7 @@ classdef ChannelForm < muiModelUI
                     tabsrc = findobj(obj.mUI.Tabs,'Tag','Run Parameters');
                     InputTabSummary(obj,tabsrc);
                 case 'Grid Parameters'
-                    CF_GridData.setInput(obj);  
+                    GD_GridProps.setInput(obj);  
                     %update tab display with input data
                     tabsrc = findobj(obj.mUI.Tabs,'Tag','Run Parameters');
                     InputTabSummary(obj,tabsrc);
@@ -324,35 +341,38 @@ classdef ChannelForm < muiModelUI
                     obj.Constants = setInput(obj.Constants);
             end
         end  
-% %%
-%         function loadMenuOptions(obj,src,~)
-%             %callback functions to import data
-%             classname = 'UserData';
-%             switch src.Text
-%                 case 'Load'
-%                     fname = sprintf('%s.loadData',classname);
-%                     callStaticFunction(obj,classname,fname); 
-%                 case 'Add'
-%                     useCase(obj.Cases,'single',{classname},'addData');
-%                 case 'Delete'
-%                     useCase(obj.Cases,'single',{classname},'deleteData');
-%                 case 'Quality Control'
-%                     useCase(obj.Cases,'single',{classname},'qcData');
-%             end
-%             DrawMap(obj);
-%         end   
+%%
+        function loadMenuOptions(obj,src,~)
+            %callback functions to import data
+            classname = 'GD_ImportData';
+            switch src.Text
+                case 'Load'
+                    fname = sprintf('%s.loadData',classname);
+                    callStaticFunction(obj,classname,fname); 
+                case 'Add'
+                    useCase(obj.Cases,'single',{classname},'addData');
+                case 'Delete'
+                    useCase(obj.Cases,'single',{classname},'deleteData');
+            end
+            DrawMap(obj);
+        end   
 
-
-        %% Check menu -------------------------------------------------------
-        function checkMenuOptions(obj,src,~)
+        %% Utilities menu -------------------------------------------------------
+        function utilsMenuOptions(obj,src,~)
             %callback functions to run model
-            switch src.Text                   
+            switch src.Text      
+                case 'Hydraulic Model'
+                    msgtxt = ('Hydraulic properties have not been defined');
+                    cobj = getClassObj(obj,'Inputs','CF_HydroData',msgtxt);
+                    if isempty(cobj), return; end
+                    runModel(cobj,obj);
                 case 'River Dimensions'
                 case 'Valley Thalweg'
                 case 'Area of Flood Plain'
                 case 'CKFA Channel Dimensions'
                 case 'Morphological Timescale'
-                
+                case 'Channel-Valley Sub-Plot'
+                    CF_ValleyModel.componentsPlot(obj);
             end            
         end  
 
@@ -362,13 +382,35 @@ classdef ChannelForm < muiModelUI
             %callback functions to run model
             switch src.Text                   
                 case 'Add Form to Valley'
+                    CF_ValleyModel.addForm2Valley(obj);
                 case 'Restore Form'
+                    CF_ValleyModel.restoreForm(obj); 
                 case 'Add Modifications'
-                case 'Component Plot'
-                case 'Export Grid'
-                case 'Import Grid'
+                    MorphMods.addMorphMods(obj);
+                
             end            
         end  
+        
+        function gridMenuOptions(obj,src,~)
+            %callback functions for grid tools options
+            gridclassses = {'CF_FormModel','CF_ValleyModel','GD_ImportData'};
+            switch src.Text 
+                case 'Grid Mesh Data'
+                    
+                case 'Regrid Data'
+                    
+                case 'Subgrid Data'
+                    
+                case 'Rotate Grid'
+                    
+                case 'Combine Grids'
+                    
+                case 'Export Grid'
+                    
+                case 'Import Grid'
+                    
+            end
+        end
 
         %% Run menu -------------------------------------------------------
         function runMenuOptions(obj,src,~)
@@ -381,6 +423,7 @@ classdef ChannelForm < muiModelUI
                 case 'CKFA form model'
                     CF_FormModel.runModel(obj,'CKFA');
                 case 'Valley form model'
+                    CF_ValleyModel.runModel(obj);
                 case 'Hydro-Form model'
                 case 'Transgression model'
                 case 'Derive Output'

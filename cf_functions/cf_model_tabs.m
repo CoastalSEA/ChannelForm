@@ -1,4 +1,4 @@
-function cf_model_tabs(obj,mobj,src)
+function cf_model_tabs(obj,src)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -9,7 +9,6 @@ function cf_model_tabs(obj,mobj,src)
 %   cf_model_tabs(obj,mobj,src)
 % INPUTS
 %   obj - instance of any form model that uses the GDinterface abstract class
-%   mobj - ChannelForm model UI instance
 %   src - handle to calling tab
 % OUTPUT
 %   generate plot or properties table on tab
@@ -23,39 +22,39 @@ function cf_model_tabs(obj,mobj,src)
 %
     switch src.Tag
         case 'Plot'
-            tabPlot(obj,mobj,src);
+            tabPlot(obj,src);
         case 'FormProps'
-            tabProperties(obj,mobj,src);
+            tabProperties(obj,src);
     end
 end
 %%
-function tabPlot(obj,mobj,src,iswidth,isfig)
-    %generate plot for display on Plot tab
-    
-    %to produce stand alone plots set the flags to true as required
+function tabPlot(obj,src,iswidth,isfig)
+    %generate plot for display on Plot tab. To produce stand alone plots 
+    %set the flags to true as required. Can also use button on tab
     if nargin<4
         %to create stand alone figure set isfig=true   
-        isfig = false;  %hard code selection
+        isfig = false; 
         %to use the high and low water widths rather than interpolated values
-        iswidth = false;  %hard code selection  
+        iswidth = false; 
     elseif nargin<5
-        isfig = false;  %hard code selection
+        isfig = false; 
     end
 
     selecteddata = obj.Data.Form;
     xi = selecteddata.Dimensions.X;
     if (xi(1)<0)
         xi = max(xi)-xi;
+    else
+        xi = flipud(xi);
     end
     yi = selecteddata.Dimensions.Y;
     zi = squeeze((selecteddata.Z))';
     %can use zlevels to plot contours or recover the widths
     widths = reshape(selecteddata.DataTable{1,2:end},length(xi),3);
-    wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
-    zo = wlvobj.MSL0;
-    am = wlvobj.TidalAmp;
-    zhw = zo+am;
-    zlw = zo-am;
+    hydobj = obj.RunParam.CF_HydroData;
+    zo = hydobj.zmt(1);
+    zhw = hydobj.zhw(1);
+    zlw = hydobj.zlw(1);
 
     %surface plot of 3D form
     ht = findobj(src,'Type','axes');
@@ -70,8 +69,8 @@ function tabPlot(obj,mobj,src,iswidth,isfig)
     
     surfc(ax,xi,yi,zi, 'FaceColor','interp','EdgeColor', 'none');
 
-%     caxis(ax,[-15,10]);  %constrain the range of the colormap used by surfc
-    %zlim(ax,[-10,10]);  %constrain the z-axis limits
+    % caxis(ax,[-15,10]);  %constrain the range of the colormap used by surfc
+    % zlim(ax,[-10,10]);   %constrain the z-axis limits
     if license('test','MAP_Toolbox')
         cmapsea = [0,0,0.2;  0,0,1;  0,0.45,0.74;  0.30,0.75,0.93; 0.1,1,1];
         cmapland = [0.95,0.95,0.0;  0.1,0.7,0.2; 0,0.4,0.2; 0.8,0.9,0.7;  0.4,0.2,0];
@@ -82,7 +81,7 @@ function tabPlot(obj,mobj,src,iswidth,isfig)
         colormap(cmap)        
     end
 
-    %view(180,90); %plan view
+    % view(180,90); %plan view
 	view(315,30);
     hold on
     if iswidth
@@ -99,7 +98,7 @@ function tabPlot(obj,mobj,src,iswidth,isfig)
         clabel(C,h); 
         contour3(ax,xi,yi,zi,[zo zo],'--c');
     end
-    xlabel('Length (m)'); 
+    xlabel('Distance from mouth (m)'); 
     ylabel('Width (m)');  
     zlabel('Elevation (mAD)');
     title(selecteddata.Description,'FontWeight','normal','FontSize',10);
@@ -120,13 +119,8 @@ function tabPlot(obj,mobj,src,iswidth,isfig)
         'Callback',@(src,evtdat)rotatebutton(ax,src,evtdat));  
 end
 %%
-function tabProperties(obj,mobj,tabsrc)
+function tabProperties(obj,tabsrc)
     %generate table and plot for display on Properties tab
-%     h_data = mobj.(inp.handle)(inp.idh);
-%     %this is the same as obj when called by ChannelFormModel but is
-%     %explicitely redefined so that CKFAmodel can use the function            
-%     propid = 1;  %id for addn property that holds grossproperties
-%     grossprops = h_data.(inp.aprop{propid}){inp.id_rec}; 
     T = obj.Data.GrossProps;
     %generate table of gross properties
     uitable('Parent',tabsrc,'Data',T.DataTable{:,:},...
@@ -148,7 +142,7 @@ function tabProperties(obj,mobj,tabsrc)
         popup = uicontrol('Parent',tabsrc,'Style','popup',...
            'String',plotlist,'Tag','PlotList',...
            'Units','Normalized','Position', [0.05 0.74 0.9 0.05],...
-           'Callback', @(src,evdat)cf_property_plots(obj,mobj,src));
+           'Callback', @(src,evdat)cf_property_plots(obj,src));
 
         %Create push button to copy data to clipboard
         uicontrol('Parent',tabsrc,'Style','pushbutton',...                    
@@ -162,14 +156,15 @@ function tabProperties(obj,mobj,tabsrc)
             'String','>Figure','UserData',popup.Value,'Tag','FigButton',...
             'TooltipString','Create plot as stand alone figure',...
             'Units','normalized','Position',[0.86 0.793 0.10 0.044],...                    
-            'Callback',@(src,evdat)cf_property_plots(obj,mobj,src));  
+            'Callback',@(src,evdat)cf_property_plots(obj,src));  
         
     else
         %update obj in Callbacks and table in UserData
-        popup.Callback = @(src,evdat)cf_property_plots(obj,mobj,src);
+        popup.Callback = @(src,evdat)cf_property_plots(obj,src);
         hb = findobj(tabsrc,'Tag','CopyButton');           
         hb.UserData = T;
         hf = findobj(tabsrc,'Tag','FigButton');
-        hf.Callback = @(src,evdat)cf_property_plots(obj,mobj,src);
+        hf.Callback = @(src,evdat)cf_property_plots(obj,src);
+        cf_property_plots(obj,popup); %set plot to current popup selection
     end           
 end 
