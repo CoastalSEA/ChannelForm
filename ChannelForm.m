@@ -393,23 +393,9 @@ classdef ChannelForm < muiModelUI
         
         function gridMenuOptions(obj,src,~)
             %callback functions for grid tools options
-            gridclassses = {'CF_FormModel','CF_ValleyModel','GD_ImportData'};
-            switch src.Text 
-                case 'Grid Mesh Data'
-                    
-                case 'Regrid Data'
-                    
-                case 'Subgrid Data'
-                    
-                case 'Rotate Grid'
-                    
-                case 'Combine Grids'
-                    
-                case 'Export Grid'
-                    
-                case 'Import Grid'
-                    
-            end
+            gridclasses = {'CF_FormModel','CF_ValleyModel','GD_ImportData'};
+            CF_FormModel.gridMenuOptions(obj,src,gridclasses);
+            DrawMap(obj);
         end
 
         %% Run menu -------------------------------------------------------

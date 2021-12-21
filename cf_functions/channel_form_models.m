@@ -48,8 +48,8 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
     yz = num2cell(yz',2);  %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                          %return full grid
-        zgrd = cat(2,fliplr(zi),zi);
-        yi  = [-fliplr(yi), yi];
+        zgrd = cat(2,fliplr(zi(:,2:end)),zi);
+        yi  = [-flipud(yi(2:end)); yi];
     else                               %return half grid
         zgrd = zi;
     end
@@ -62,7 +62,7 @@ function obj = channel_properties(obj)
     grid.z = cat(2,fliplr(zi),zi);
     
     wl = obj.RunParam.CF_HydroData; 
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint);
     [xj,w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,xj,w{2},csa{2});
@@ -77,15 +77,12 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     
     %get the required input parameter classes
     expobj = obj.RunParam.CF_FormData;
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
     hydobj = obj.RunParam.CF_HydroData;
     sedobj = obj.RunParam.CF_SediData;
     
     %model run parameters
     Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-    nintx = grdobj.Xint;             %no of intervals in the x direction
-    bt = diff(grdobj.YaxisLimits)/2; %half width of model domain (m)   
-    ninty = grdobj.Yint/2;           %no of intervals in the y direction
     offset = 2*grdobj.histint;       %offset from hw to supra-tidal form
     
     %channel form parameters    
@@ -126,11 +123,11 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     end
 
     %set-up co-ordinate system
-    delx = Lt/nintx;
-    dely = bt/ninty;
+    [~,yi,delx] = getGridDimensions(grdobj);
     xi = -(Lt-Ll):delx:Ll;
-    yi = 0:dely:bt;   yi(1) = 0.01;      %the offset ensures no duplicates
-                                         %values when matrix mirrored     
+    yi = yi(yi>=0);  %half the grid
+%     yi(1) = 0.01;    %the offset ensures no duplicates when matrix mirrored 
+  
     zi = zeros(length(xi),length(yi));
     yz = zeros(length(xi),3);
     %water level properties based on amplitude+mtl or CST model (mAD)

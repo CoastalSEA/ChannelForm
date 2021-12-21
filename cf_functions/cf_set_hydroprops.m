@@ -30,10 +30,11 @@ function [obj,ok] = cf_set_hydroprops(obj,iscst)
         obj.RunParam.CF_HydroData = cf_interp2grid(obj,resX,xyz{:},true);
     else
         %use constant high water level and linear reducing low water
-        grdobj = obj.RunParam.CF_GridData;
+        grdobj = obj.RunParam.GD_GridProps;
         Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-        nintx = grdobj.Xint;             %no of intervals in the x direction
-        xi = 0:Lt/nintx:Lt;
+%         nintx = grdobj.Xint;             %no of intervals in the x direction
+%         xi = 0:Lt/nintx:Lt;
+        xi = getGridDimensions(grdobj);
         zhw = hydobj.zhw(end); zlw = hydobj.zlw(end);
         amp0 = (zhw-zlw)/2;                    %tidal amplitude at mouth
         ampx = amp0*(xi/Lt);

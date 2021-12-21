@@ -62,7 +62,7 @@ function obj = pr_properties(obj)
     grid.z = cat(2,fliplr(zi),zi);
     
     wl = obj.RunParam.CF_HydroData; 
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint);
     [xj,w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,xj,w{2},csa{2});
@@ -77,15 +77,12 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
 
     %get the required input parameter classes
     pwrobj = obj.RunParam.CF_FormData;
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
     hydobj = obj.RunParam.CF_HydroData;
     sedobj = obj.RunParam.CF_SediData;
 
     %model run parameters
     Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-    nintx = grdobj.Xint;             %no of intervals in the x direction
-    bt = diff(grdobj.YaxisLimits)/2; %half width of model domain (m)   
-    ninty = grdobj.Yint/2;           %no of intervals in the y direction
     offset = 2*grdobj.histint;       %offset from hw to supra-tidal form
     
     %channel form parameters
@@ -109,11 +106,11 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     Lu = Le-Ll;                    %distance from estuary/river switch to head (m)
     
     %set-up co-ordinate system
-    delx = Lt/nintx;
-    dely = bt/ninty;
-    Lu = Lu+delx;   
+    [~,yi,delx] = getGridDimensions(grdobj);
     xi = -(Lt-Ll):delx:Ll;
-    yi = 0:dely:bt; yi(1) = 0.1;   %the offset ensures no duplicates
+    yi = yi(yi>=0);  %half the grid
+    yi(1) = 0.01;    %the offset ensures no duplicates when matrix mirrored
+    nyi = length(yi);
     
     zi = zeros(length(xi),length(yi));
     yz = zeros(length(xi),3);
@@ -183,7 +180,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     end
     
     %add mask to define surrounding land surface
-    zhw = repmat(zHWxi',1,ninty+1);
+    zhw = repmat(zHWxi',1,nyi);
     msk = (zhw+offset).*(zi>zhw);      %construct high water mask
     zi  = zi.*(zi<=zhw)+ msk;
 end

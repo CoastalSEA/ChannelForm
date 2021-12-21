@@ -27,16 +27,11 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
 %
     nbk = 2; %number of banks is assumed to be 2 in the ChannelForm model
     %get the required input parameter classes
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
     hydobj = obj.RunParam.CF_HydroData;
     
     %model run parameters
-    Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-    nintx = grdobj.Xint;             %no of intervals in the x direction
-    bt = diff(grdobj.YaxisLimits)/2; %half width of model domain (m)   
-    ninty = grdobj.Yint/2;           %no of intervals in the y direction
     offset = 2*grdobj.histint;       %level above hw for land outside section
-    Ll = hydobj.xTideRiver;          %distance from mouth to estuary/river switch
 
     % CKFA form properties from ckfa_form_solver    
     hm = obj.CKFAform.form.hm;   %MTL hydraulic depth at mouth (m) 
@@ -81,11 +76,9 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
     %     Qp = Le/LA*Qp;
     % end
     %set-up co-ordinate system
-    delx = Lt/nintx;                       %x interval
-    dely = bt/ninty;                       %y interval
-    xi = 0:delx:Lt;                        %x and y co-ordinates
-    yi = 0:dely:bt;   yi(1) = 0.01;        %the offset ensures no duplicates
-                                           %values when matrix mirrored     
+    [xi,yi] = getGridDimensions(grdobj);
+    yi = yi(yi>=0);  %half the grid
+    yi(1) = 0.01;    %the offset ensures no duplicates when matrix mirrored     
     zi = zeros(length(xi),length(yi));
 
     %water level properties based on amplitude+mtl or CST model (mAD)
@@ -177,8 +170,6 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
         y0sm = (y0hw+yhw)-ysm;      %distance from c.l. to Dmx (saltmarsh)
         %
         %set up profile and calculate z values
-        dy = bt/ninty;                          %horizontal y-interval
-        yi = 0:dy:bt;   yi(1)=0.01;             %y-intervals over half-section
         for k = 1:length(yi)
             %
             if  yi(k)<=y0lw && yi(k)<=y0hw

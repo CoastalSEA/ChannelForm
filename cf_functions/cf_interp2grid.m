@@ -25,13 +25,14 @@ function hydobj = cf_interp2grid(obj,resX,cstx,isflip)
         isflip = false;
     end
     hydobj = obj.RunParam.CF_HydroData;
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
      
     %set-up co-ordinate system
-    Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-    nintx = grdobj.Xint;             %no of intervals in the x direction
-    delx = Lt/nintx;                 %x interval
-    xi = 0:delx:Lt;                  %x and y co-ordinates
+    xi = getGridDimensions(grdobj);   %x co-ordinates
+%     Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
+%     nintx = grdobj.Xint;             %no of intervals in the x direction
+%     delx = Lt/nintx;                 %x interval
+%     xi = 0:delx:Lt;                  
     
     if isflip
         resX = cellfun(@fliplr,resX,'UniformOutput',false);

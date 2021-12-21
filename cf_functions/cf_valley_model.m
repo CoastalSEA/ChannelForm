@@ -29,7 +29,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
         isfull = true;
     end
     %get the required input parameter classes
-    grdobj = obj.RunParam.CF_GridData;
+    grdobj = obj.RunParam.GD_GridProps;
     hydobj = obj.RunParam.CF_HydroData;
     valobj = obj.RunParam.CF_ValleyData;
     sedobj = obj.RunParam.CF_SediData;

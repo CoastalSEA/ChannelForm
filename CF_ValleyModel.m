@@ -21,7 +21,7 @@ classdef CF_ValleyModel < GDinterface
         %Additional properties:
     end
     
-    methods (Access = private)
+    methods
         function obj = CF_ValleyModel()                   
             %class constructor
         end
@@ -70,7 +70,7 @@ classdef CF_ValleyModel < GDinterface
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = metaclass(obj).Name;
-            dst = setGridOuput(obj,results,dims,meta);
+            dst = setGrid(obj,results,dims,meta);
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  

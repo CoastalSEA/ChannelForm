@@ -29,7 +29,7 @@ classdef CF_FormModel < GDinterface
         Channel   %struct for Channel model summary parameters
     end
     
-    methods (Access = private)
+    methods
         function obj = CF_FormModel()                   
             %class constructor
         end
@@ -100,7 +100,7 @@ classdef CF_FormModel < GDinterface
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = metaclass(obj).Name;
-            dst = setGridOuput(obj,results,dims,meta);
+            dst = setGrid(obj,results,dims,meta);
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  
@@ -122,7 +122,7 @@ classdef CF_FormModel < GDinterface
     end 
 %%    
     methods (Access = private) 
-        function [iscst,mtxt] = setWaterLevels(obj)
+        function [iscst,mtxt] = setWaterLevels(~)
             %set water levels for form model using either the surface
             %defined by the cst_model, or high water at the mouth and a 
             %reducing tidal amplitude            
