@@ -59,7 +59,7 @@ classdef CF_FormModel < GDinterface
             %assign the run parameters to the model instance           
             setRunParam(obj,mobj); 
             %add water level definition to the run parameters
-            [iscst,wlstxt] = setWaterLevels(obj);
+            [wlflag,wlstxt] = setWaterLevels(obj);
             
             obj.ModelType = option;
             switch option
@@ -69,17 +69,17 @@ classdef CF_FormModel < GDinterface
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
                     hf = setFormSelection(obj); 
                     waitfor(hf);
-                    [xi,yi,zi,yz] = channel_form_models(obj,iscst);
+                    [xi,yi,zi,yz] = channel_form_models(obj,wlflag);
                     sel = obj.Selection;
                     meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
                                         sel.planform,sel.intertidalform,...
                                         sel.channelform,wlstxt);
                 case 'Power'
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
-                    [xi,yi,zi,yz] = pr_form_model(obj,iscst);
+                    [xi,yi,zi,yz] = pr_form_model(obj,wlflag);
                     meta.data = sprintf('PR power form, %s',wlstxt);
                 case 'CKFA'
-                    [xi,yi,zi,yz] = ckfa_form_model(obj,iscst);
+                    [xi,yi,zi,yz] = ckfa_form_model(obj,wlflag);
                     meta.data = sprintf('CKFA exogenous form, %s',wlstxt);
 %                 case 'Valley'
 %                     [xi,yi,zi,yz] = cf_valley_model(obj,iscst);
@@ -90,25 +90,28 @@ classdef CF_FormModel < GDinterface
             griddata = reshape(zi,1,length(xi),length(yi));  
             %check that x and y are 1xn and yz is 1xnx3
             if size(yz,2)~=3, yz = yz'; end
-            results = [{griddata},yz];
-%             xydata = {xi,yi};     %assign xyz coordinates as row vectors
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'ism',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = metaclass(obj).Name;
-            dst = setGrid(obj,results,dims,meta);
+            obj = setGrid(obj,{griddata},dims,meta);
+            obj = setPlanProps(obj,yz,meta);  %half width data
+            hydobj = obj.RunParam.CF_HydroData;
+            zwl = {hydobj.zhw',hydobj.zmt',hydobj.zlw'};            
+            obj = setWLProps(obj,zwl,meta); 
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  
-            dst = setFormProps(obj,dst,1,meta);            
+            obj = setFormProps(obj,meta,0); %0=use grid to determin hypsometry limits         
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             
-            setDataSetRecord(obj,mobj.Cases,dst,'form_model');
+%             setDataSetRecord(obj,mobj.Cases,dst,'form_model');
+            setCase(mobj.Cases,obj,'form_model');
             getdialog('Run complete');
             DrawMap(mobj);
         end
@@ -122,19 +125,25 @@ classdef CF_FormModel < GDinterface
     end 
 %%    
     methods (Access = private) 
-        function [iscst,mtxt] = setWaterLevels(~)
+        function [wlflag,mtxt] = setWaterLevels(~)
             %set water levels for form model using either the surface
             %defined by the cst_model, or high water at the mouth and a 
-            %reducing tidal amplitude            
-            answer = questdlg('Include hydro surface?','Select hydro',...
-                              'CST surface','Constant HW','CST surface');
-            
-            if strcmp(answer,'Constant HW')
-                iscst = false; 
-                mtxt = 'hydraulic surfaces use HW at mouth';
-            else
-                iscst = true;
+            %reducing tidal amplitude    
+            % wlflag - flag to indicate type of water surface to use
+            % mtxt - text to define type of water surface
+            answer = questdlg('Use which hydro surface?','Select hydro',...
+                              'CST surface','Constant HW',...
+                              'Constant HW&LW','CST surface');
+
+            if strcmp(answer,'CST surface')
+                wlflag = 0;
                 mtxt = 'hydraulic surfaces from CSTmodel';
+            elseif strcmp(answer,'Constant HW')
+                wlflag = 1; 
+                mtxt = 'constant HW surface, tapered LW surface';
+            else
+                wlflag = 2;
+                mtxt = 'constant HW and LW surfaces';
             end                              
         end
 %%

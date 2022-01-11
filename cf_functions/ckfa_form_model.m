@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = ckfa_form_model(obj,iscst,isfull)
+function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -6,14 +6,17 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,iscst,isfull)
 % PURPOSE
 %   construct idealised channel form using 3D CKFA model
 % USAGE
-%   [xi,yi,zgrd,yz] = ckfa_form_model(obj,iscst,isfull)
+%   [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   iscst - logical flag, true if CSTmodel to be used to define water levels
+%   wlflag - flag to indicate type of water surface to use
+%            0=CSTmodel used to define water levels
+%            1=constant HW tapering LW 
+%            2=constant HW & LW
 %   isfull - true returns full grid, false half-grid
 % OUTPUTS
-%   xi - x co-ordinate (m)
-%   yi - y co-ordinate (m)
+%   xi - x co-ordinate (m) origin at head/river
+%   yi - y co-ordinate (m) origin on centre-line
 %   zgrd - bed elevation grid (m)
 %   yz - width at hw,mt,lw (m)
 % NOTES
@@ -35,7 +38,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,iscst,isfull)
     params = ckfa_properties(obj);
 
     %set the water level variations along the estuary
-    [obj,ok] = cf_set_hydroprops(obj,iscst);
+    [obj,ok] = cf_set_hydroprops(obj,wlflag);
     if ok<1, return; end
 
     %generate 3D surface of CKFA model
@@ -43,15 +46,16 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,iscst,isfull)
     if isempty(xi),return; end
     
     [yu,yo,yl] = expPlan(obj,xi);
-    yz = flipud([yu',yo',yl']);
-    yz = num2cell(yz',2);  %formatted to load into dstable
+    yz = [yu,yo,yl];
+    yz = num2cell(yz',2)';  %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                              %return full grid
-        zgrd = flipud(cat(2,fliplr(zi),zi));
-        yi  = [-fliplr(yi), yi];
+        zgrd = cat(2,fliplr(zi(:,2:end)),zi);
+        yi  = [-flipud(yi(2:end)); yi];
     else                                   %return half grid
         zgrd = zi;
     end
+    zgrd = flipud(zgrd); %make orientation consistent with other models
 end
 %%
 function params = ckfa_properties(obj)
@@ -59,7 +63,7 @@ function params = ckfa_properties(obj)
     %form, flow and tide+wave properties
     params = ckfa_parameters(obj);          
     %call solver function 
-    initdepth = 5;  %initial guess of hydraulic depth
+    initdepth = 1;  %initial guess of hydraulic depth
     obj.CKFAform.form = ckfa_form_solver(initdepth,params);
     % flow only gross properties
     obj.CKFAform.flow = ckfa_flowprops(obj,params);

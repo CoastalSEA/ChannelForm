@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
+function [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -7,10 +7,13 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
 %   construct idealised channel form using exponential functions in y to 
 %   determine width and CKFA cross-section to determine z at each x interval
 % USAGE
-%   [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
+%   [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   iscst - logical flag, true if CSTmodel to be used to define water levels
+%   wlflag - flag to indicate type of water surface to use
+%            0=CSTmodel used to define water levels
+%            1=constant HW tapering LW 
+%            2=constant HW & LW
 %   isfull - true returns full grid, false half-grid
 % OUTPUT
 %   xi - x co-ordinate (m)
@@ -33,13 +36,13 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
     end
     
     %channel properties
-    if iscst
+    if wlflag==0
         %provides initial guess of gross properties if cst_model called
         obj= cf_set_hydroprops(obj,false);     %fixed water level surface 
         obj = channel_properties(obj); 
     end
     %set the water level variations along the estuary
-    [obj,ok] = cf_set_hydroprops(obj,iscst);
+    [obj,ok] = cf_set_hydroprops(obj,wlflag);
     if ok<1, return; end
 
     [xi,yi,zi,yz] = channel_3D_form(obj);
@@ -58,12 +61,12 @@ end
 function obj = channel_properties(obj)
     %compute the summary gross properties for the channel form
     [grid.x,yi,zi] = channel_3D_form(obj); 
-    grid.y  = [-fliplr(yi), yi];
-    grid.z = cat(2,fliplr(zi),zi);
+    grid.y  = [-flipud(yi(2:end)); yi];
+    grid.z = cat(2,fliplr(zi(:,2:end)),zi);
     
     wl = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;
-    hyps = gd_channel_hypsometry(grid,wl,grdobj.histint);
+    hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
     [xj,w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,xj,w{2},csa{2});
     obj.Channel.form.Wm = gp.Wm;
@@ -124,9 +127,8 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
 
     %set-up co-ordinate system
     [~,yi,delx] = getGridDimensions(grdobj);
-    xi = -(Lt-Ll):delx:Ll;
+    xi = -(Lt-Ll):delx:Ll;  %from head (-ve) to mouth (+ve)
     yi = yi(yi>=0);  %half the grid
-%     yi(1) = 0.01;    %the offset ensures no duplicates when matrix mirrored 
   
     zi = zeros(length(xi),length(yi));
     yz = zeros(length(xi),3);
@@ -192,9 +194,9 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
                 zdl = 0.*(yi<=yo & yi>=yl);
             case 'Stepped'
                 %upper intertidal form
-                zdu = az/2.*(yi<=yu & yi>yo);                
+                zdu = ax/2.*(yi<=yu & yi>yo);                
                 %lower intertidal form
-                zdl = -az/2.*(yi<=yo & yi>=yl);
+                zdl = -ax/2.*(yi<=yo & yi>=yl);
             case 'Uniform Shear'
                 if ls==0                     %no intertidal present
                     zdu = yi*0;

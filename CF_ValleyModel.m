@@ -50,7 +50,7 @@ classdef CF_ValleyModel < GDinterface
             %assign the run parameters to the model instance           
             setRunParam(obj,mobj); 
             %add water level definition to the run parameters
-            setWaterLevels(obj);
+            setWaterLevels(obj); %valley model specific function below
 
             %call valley model
             [xi,yi,zi,yz,Lv,Ls] = cf_valley_model(obj);
@@ -60,25 +60,28 @@ classdef CF_ValleyModel < GDinterface
             griddata = reshape(zi,1,length(xi),length(yi));  
             %x and y are 1xn and yz is {[1xn]x3}
             if size(yz,2)~=3, yz = yz'; end
-            results = [{griddata},yz];
-%             xydata = {xi,yi};     %assign xyz coordinates as row vectors
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'ism',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = metaclass(obj).Name;
-            dst = setGrid(obj,results,dims,meta);
+            obj = setGrid(obj,{griddata},dims,meta);
+            obj = setPlanProps(obj,yz,meta);  %half width data
+            hydobj = obj.RunParam.CF_HydroData;
+            zwl = {hydobj.zhw',hydobj.zmt',hydobj.zlw'};            
+            obj = setWLProps(obj,zwl,meta); 
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  
-            dst = setFormProps(obj,dst,1,meta);            
+            obj = setFormProps(obj,meta,0); %0=use grid to determin hypsometry limits           
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             
-            setDataSetRecord(obj,mobj.Cases,dst,'form_model');
+%             setDataSetRecord(obj,mobj.Cases,obj,'form_model');
+            setCase(mobj.Cases,obj,'form_model');
             getdialog('Run complete');
             DrawMap(mobj);
         end
@@ -211,35 +214,130 @@ classdef CF_ValleyModel < GDinterface
             localObj.cidValley = [];
             ModelUI.myDialog('Data modified');
         end 
+        
+%% ------------------------------------------------------------------------
+% Utility functions to checkValleyThalweg, checkFloodPlainArea and generate
+% componentsPlot
+%--------------------------------------------------------------------------
+        function checkValleyThalweg(mobj)
+            %plot valley thalweg based on current parameter settings
+            %valley properties
+            msgtxt = 'Valley Parameters have not been defined';
+            cobj = getClassObj(mobj,'Inputs','CF_ValleyData',msgtxt);
+            if isempty(cobj), return; end
+            
+            z0 = cobj.ValleyDepth;    %depth of valley at mouth (mAD)
+            xr = cobj.xTidalLimit;    %distance to tidal limit (m)
+            ztl = cobj.zTidalLimit;   %water surface elevation at TL (mAD)
+            xH = cobj.xValleyHead;    %distance to valley head (m)
+            zH = cobj.zValleyHead;    %elevation at valley head (mAD)
+            
+            [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,ztl-1,xH,zH,z0);  
+            if zm0==0
+                warndlg('No solution found for convergence length')
+                return;
+            end
+            delx = xH/100;
+            %whole valley
+            xI = 0:delx:xH;
+            zV = zm0*(exp(xI/Lv)-1)+z0;
+            %lower marine valley
+            xi = 0:delx:xr;
+            zv = zm0*(exp(xi/Lv)-1)+z0;
+
+            figure('Name','Thalweg plot','Tag','PlotFog');
+            yyaxis left
+            hp = plot(xi,zv,'LineWidth',1);
+            % hp.Annotation.LegendInformation.IconDisplayStyle = 'off';
+            hold on
+            plot(xI,zV)
+            hold off
+            xlabel('Distance along valley (m)')
+            ylabel('Elevation (mAD)')
+            yyaxis right
+            plot(xI,(gradient(zV)/delx))
+            ylabel('Slope')
+            title('Valley thalweg')
+            legend('Estuary','Full valley','Slope','Location','northwest')
+        end
+%%
+        function checkFloodPlainArea(mobj)
+            %display the area of the flood plain in a user selected combined form
+            
+            promptxt = 'Select a Combined Form'; 
+            obj = selectCaseObj(mobj.Cases,[],{'CF_FormModel'},promptxt);
+            if isempty(obj), return; end
+            grid = getGrid(obj,1);
+            
+            
+            
+%             idf = contains(mobj.Cases.CaseType,'_model'); 
+%             if isempty(idf) || all(idf==0)
+%                 warndlg('No form model available');
+%                 return;
+%             elseif sum(idf)>1
+%                 [f_useCase,~,ok] = ScenarioList(mobj.Cases,'_model',...
+%                   'PromptText','Select Combined Form','ListSize',[200,140]);
+%                 if ok<1, return; end
+%             else
+%                 f_useCase = find(idf);
+%             end
+%             robj = mobj.Cases;
+%             [xf,yf,zf,h_f,~,id_f,aprop] = getCaseGridData(robj,mobj,f_useCase); 
+            
+            
+            %offset from high water to flood plain surface
+            fp_offset = 2*mobj.Inputs.RunProperties.histint;
+            %model water level surfaces
+            hydobj = obj.RunParam.CF_HydroData;
+            zfp = hydobj.zhw+fp_offset;
+            Zfp = repmat(zfp',1,length(grid.y));
+            
+%             if isa(h_f,'ChannelFormModel') || isa(h_f,'PRFormModel')
+%                 hyd = mobj.(getClassHandle(mobj,'HydroFormData'));
+%                 zfp = hyd.MTLatMouth+hyd.TidalAmplitude+fp_offset;
+%                 
+%             else
+%                 cst_res = h_f.(aprop{4}){id_f};
+%                 zfp = cst_res{1}+cst_res{2}+fp_offset;
+%                 Zfp = ones(size(zf)).*zfp;
+%             end
+            zf = grid.z;
+            zf(zf<Zfp-0.05 | zf>Zfp+0.05) = NaN;
+            ndx = sum(sum(~isnan(zf)));
+            [~,~,delx,dely] = getGridDimensions(obj.RunParam.GD_GridProps);
+%             delx = xf(2)-xf(1);
+%             dely = yf(2)-yf(1);
+            planarea = delx*dely*ndx;
+            msgbox(sprintf('Area of flood plain = %.3e',planarea),'Valley area');
+        end
 %%
         function componentsPlot(mobj)
-            %generate a plot of the channel, valley and combined form
-            obj = getClassObj(mobj,'Cases','CF_ValleyModel');
-            if isempty(obj) 
-                warndlg('No valley model available');
-                return; 
-            end
+            %generate a plot of the channel, valley and combined form            
+            muicat = mobj.Cases;
             ftxt = 'Select Form Model to use:';
-            [fgrid,frmobj] = getGrid(obj,mobj,1,{'CF_FormModel'},ftxt);
+            [fobj,~] = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
+            if isempty(fobj), return; end
+            fgrid = getGrid(fobj,1);
             xf = fgrid.x/1000;  %change x-y axes to km
             if min(xf)<0, xf = max(xf)-xf; end
             yf = fgrid.y/1000;
-            zf = grid.z;
-            
+            zf = fgrid.z;
+
             vtxt = 'Select Valley Model to use:';
-            [vgrid,valobj] = getGrid(obj,mobj,1,{'CF_ValleyModel'},vtxt);
-            zv = vgrid.z;
-            
-            [X,Y] = ndgrid(xf,fgrid.y);
-            zv = griddata(vgrid.x,vgrid.y,vgrid.z',X,Y);    %valley elevations
-            new_z = max(fgrid.z,zv);
+            [vobj,~] = selectCaseObj(muicat,[],{'CF_ValleyModel'},vtxt);
+            vgrid = getGrid(vobj,1);
+            xv = vgrid.x/1000;  %change x-y axes to km
+            if xv(1)<xv(end), xv =  flipud(xv); end
+            yv = vgrid.y/1000;
+
+            %ensure that both surface use the same grid
+            [X,Y] = ndgrid(xf,yf);
+            zv = griddata(xv,yv,vgrid.z',X,Y);    %valley elevations
+            new_z = max(zf,zv);
             [m,n] = size(new_z);
-            zc = reshape(new_z,1,m,n);
-            
-            
-            
-            
-            
+            zc = reshape(new_z,m,n);
+
             defaultvals = {num2str(floor(min(zf,[],'All'))),'12'};
             prompt = {'Lower z-limit','Upper z-limit'};
             inp = inputdlg(prompt,'Zlimits',1,defaultvals);
@@ -249,28 +347,27 @@ classdef CF_ValleyModel < GDinterface
             ax = axes('Parent',hf,'Tag','SurfacePlot');
             
             s1 = subplot(1,3,1,ax);
-            contouredSurfacePlot(obj,s1,xf,yf,zf',zlimits,'(a) Channel Form');
+            contouredSurfacePlot(fobj,s1,xf,yf,zf',zlimits,'(a) Channel Form');
             colorbar('off');
             zlim(zlimits)
             s1.Position = [0.05,0.1,0.25,0.8]; 
 
             s2 = subplot(1,3,2);
-            contouredSurfacePlot(obj,s2,xf,yf,zv',zlimits,'(b) Valley Form');
+            contouredSurfacePlot(vobj,s2,xf,yf,zv',zlimits,'(b) Valley Form');
             colorbar('off');
             zlim(zlimits)
             s2.Position = [0.35,0.1,0.25,0.8];
             
             s3 = subplot(1,3,3);
-            contouredSurfacePlot(obj,s3,xf,yf,zc',zlimits,'(c) Combined Form');
+            contouredSurfacePlot(vobj,s3,xf,yf,zc',zlimits,'(c) Combined Form');
             zlim(zlimits)
             s3.Position = [0.65,0.1,0.25,0.8];
             
-            channel = frmobj.Data.Form.Description;
-            valley = valobj.Data.Form.Description;
+            channel = fobj.Data.Form.Description;
+            valley = vobj.Data.Form.Description;
             ht = sgtitle(sprintf('Form using %s and %s',channel,valley));
             ht.FontSize = 12;        
-        end        
-        
+        end               
     end
 %%
     methods
@@ -281,21 +378,29 @@ classdef CF_ValleyModel < GDinterface
     end 
 %%    
     methods (Access = private) 
-
-       
-%%
         function setWaterLevels(obj)
             %set the water levels at the mouth as constant values along
             %channel
             grdobj = obj.RunParam.GD_GridProps;
             hydobj = obj.RunParam.CF_HydroData;
-            Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-            nintx = grdobj.Xint;             %no of intervals in the x direction
-            xi = 0:Lt/nintx:Lt;
+            xi = getGridDimensions(grdobj);
             obj.RunParam.CF_HydroData.zhw = ones(size(xi))*hydobj.zhw; %high water
             obj.RunParam.CF_HydroData.zmt = ones(size(xi))*hydobj.zmt; %mean tide level
             obj.RunParam.CF_HydroData.zlw = ones(size(xi))*hydobj.zlw; %low water
             obj.RunParam.CF_HydroData.cstres = [];
         end
+    end
+%%
+    methods (Static, Access=private)
+        function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
+            %iterative solution for the convergence length of a valley with
+            %defined levels at the head, zH, and tidal limit, zr, and a 
+            %basal level, z0, at the mouth
+            zrp = zr-z0;
+            zHp = zH-z0;
+            lv_fun = @(lv) zrp/zHp-(exp(xr/lv)-1)/(exp(xH/lv)-1);
+            Lv = fzero(lv_fun,xH/2);
+            zm0 = zrp/(exp(xr/Lv)-1);
+        end        
     end
 end

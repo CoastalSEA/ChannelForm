@@ -20,7 +20,7 @@ classdef CF_SediData < muiPropertyUI
                           'Critical bed shear stress (Pa)',...
                           'Erosion rate constant (kg/N/s)',...
                           'Equilibrium sediment density (kg/m^3)', ...                          
-                          'Bed density (kg/m^3)',...
+                          'Bulk density of bed (kg/m^3)',...
                           'Transport coefficient (+/-n)',...
                           'Average depth over marsh (m)',...
                           'Maximum marsh depth (m), 0=no marsh',...
@@ -48,6 +48,7 @@ classdef CF_SediData < muiPropertyUI
     properties (Dependent)
         EqConcentration      %equilibrium concentration (-)
         BedConcentration     %concentration of bed (-)
+        RiverConcentration   %concentration of river load (-)
     end
 %%   
     methods (Access=protected)
@@ -82,20 +83,112 @@ classdef CF_SediData < muiPropertyUI
                 %add any additional manipulation of the input here
             end
             setClassObj(mobj,'Inputs',classname,obj);
-        end     
+        end   
+%%
+        function displayMorphTime(mobj)
+            %display the morphological time scale for a single element using
+            %the model parameters currently defined
+            obj = getClassObj(mobj,'Inputs','CF_SediData');
+            if isempty(obj)
+                warndlg('Model properties, including sediment properties, need to be defined')
+                return;
+            end
+            
+            %prompt user to select an existing form model to modify
+            promptxt = 'Select an existing Form Model?';
+            formobj = selectCaseObj(mobj.Cases,{'form_model'},[],promptxt);
+            if isempty(formobj), return; end
+           
+            sedinp = getSedFluxInputs(obj,mobj,formobj);
+            V = sedinp.Volume;            %element volume at start of run (m^3)
+            S = sedinp.SurfaceArea;       %element surface area (m^2)
+            n = sedinp.TransportCoeff;    %transport coefficient n (3-5)
+            cE = sedinp.EqConc;           %equilibrium concentration (-)
+            w = sedinp.VerticalExchange;  %vertical exchange (m/s)
+            d = sedinp.HorizontalExchange;%horizontal exchange (m/s)
+            
+            tau = 1/(n*cE)*(V/(w*S)+V/d)/sedinp.y2s;
+  
+            answer = inputdlg('Rate of slr (m/yr)','SLR rate',1,{'0.002'});
+            slr = str2double(answer);
+            %get_sed_flux_returns change in morphological volume/yr, dvol 
+            %hence negative is infilling and import of sediment
+            %delV is the water volume change (S x slr)
+            [dvol,delV] = get_sed_flux(sedinp,slr,false);
+            msg1 = sprintf('SEM morphological timescale = %0.3f years',tau);
+            msg2 = sprintf('Volume change due to SLR (m3/yr) = %0.3e',delV);
+            msg3 = sprintf('Volume imported/exported (m3/yr) = %0.3e',-dvol);
+            msgtxt = sprintf('%s\n%s\n%s',msg1,msg2,msg3);
+            msgbox(msgtxt,'Morphological Time');
+        end
     end
 %%        
     methods
         function eqConc = get.EqConcentration(obj)
-            %dependent property derived from EqRhoCoarse
+            %dependent property derived from EqDensity
             cn = muiConstants.Evoke;
             eqConc = obj.EqDensity/cn.SedimentDensity;
         end
 %%
         function eqConc = get.BedConcentration(obj)
-            %dependent property derived from EqRhoCoarse
+            %dependent property derived from BedDensity
             cn = muiConstants.Evoke;
-            eqConc = obj.BedDensity/cn.SedimentDensity;
+            nomi = obj.BedDensity-cn.WaterDensity;
+            dnom = cn.SedimentDensity-cn.WaterDensity;
+            eqConc = nomi/dnom;
         end
+%%
+        function eqConc = get.RiverConcentration(obj)
+            %dependent property derived from RiverDensity
+            cn = muiConstants.Evoke;
+            eqConc = obj.RiverDensity/cn.SedimentDensity;
+        end
+    end
+    
+    methods (Access=private)
+        function sedinp = getSedFluxInputs(obj,mobj,formobj)
+            %use model definition to construct sedflux input parameters
+            answer = questdlg('Use saved or current sediment properties?',...
+                                     'Sed Props','Saved','Current','Saved');
+            if strcmp(answer,'Current')     %sediment properties
+                sed = obj;
+            else
+                sed = formobj.RunParam.CF_SediData;                
+            end
+            cn = getConstantStruct(mobj.Constants); %model constants 
+            sedinp.y2s = cn.y2s;
+            ws = settling_velocity(sed.SedimentSize,cn.g,cn.rhow,...
+                                          cn.rhos,cn.visc,sed.EqDensity);                                             
+            sedinp.VerticalExchange = ws;             %vertical exchange (m/s)
+            sedinp.BedConc = sed.BedConcentration;    %concentration of bed (-)
+            sedinp.EqConc = sed.EqConcentration;      %equilibrium concentration (-)
+            sedinp.RiverConc = sed.RiverConcentration;%river load imported by advection (-)
+
+            gprop = formobj.Data.GrossProps(1,:);
+            sedinp.Volume = gprop.Vhw;              %element volume at start of run (m^3)
+            sedinp.SurfaceArea = gprop.Shw;         %element surface area (m^2)
+            sedinp.Prism = gprop.Vhw-gprop.Vlw;     %tidal prism of channel (m^3)
+            
+            hydobj = formobj.RunParam.CF_HydroData;
+            sedinp.RiverDischarge = hydobj.RiverDischarge;  %river discharge (m^3/s)
+
+            if ~isempty(hydobj.cstres)  %hydraulic results from CST model
+                u = hydobj.cstres.U(end);             %velocity at mouth
+                H = mean(hydobj.cstres.d);               %average hydraulic depth
+            else                        %no hydraulic data
+                u = 1;                              %assumed velocity at mouth
+                H = gprop.Vhw/gprop.Shw;            %estimated hydraulic depth
+            end
+            A = gprop.Am;                    %CSA at mouth
+            D = u^2*H/ws;
+            wlvobj = mobj.Inputs.WaterLevels;
+            %delx = cfm.Le/2;                       %half estuary length
+            delx = u*wlvobj.TidalPeriod/4*3600;     %tidal excursion length
+            sedinp.HorizontalExchange = D*A/delx;   %horizontal exchange (m/s)
+            sedinp.TransportCoeff = sed.TransportCoeff;%transport coefficient n (3-5)
+            rnpobj = mobj.Inputs.RunProperties;
+            sedinp.TimeInt = rnpobj.TimeStep;
+%             sedinp.NumSteps = rnpobj.NumSteps;
+        end        
     end
 end

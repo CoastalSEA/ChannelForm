@@ -14,8 +14,8 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
 %   xi - x co-ordinate (m)
 %   yi - y co-ordinate (m)
 %   zgrd - bed elevation grid (m)
-%   Lv - 
-%   Ls0 - 
+%   Lv - river valley convergence length for longitudinal elevation (m)
+%   Ls0 - cross-valley convergene length between mtl and max elevation (m)
 % NOTES
 %   
 % SEE ALSO
@@ -36,18 +36,11 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     
     %model run parameters
     Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-    nintx = grdobj.Xint;             %no of intervals in the x direction
-    bt = diff(grdobj.YaxisLimits)/2; %half width of model domain (m)   
-    ninty = grdobj.Yint/2;           %no of intervals in the y direction
 
     %set-up co-ordinate system
-    delx = Lt/nintx;                       %x interval
-    dely = bt/ninty;                       %y interval
-    xi = 0:delx:Lt;                        %x and y co-ordinates
-    yi = 0:dely:bt;   yi(1) = 0.01;        %the offset ensures no duplicates
-                                           %values when matrix mirrored     
-    zi = zeros(length(xi),length(yi));    
-    yix = repmat(yi,length(xi),1); 
+    [xi,yi,delx] = getGridDimensions(grdobj);
+    yi = yi(yi>=0);  %half the grid
+    yix = repmat(yi',length(xi),1); 
     
     zMx = valobj.ValleyEle;          %Maximum elelvation (mOD)
     bv = valobj.ValleyWidth(1)/2;    %half-width of valley at mouth
@@ -62,17 +55,17 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     rhos = cns.SedimentDensity;   %density of sediment (default = 2650 kg/m^3) 
     
     %hydraulic parameters
-    zm0 = hydobj.zmt(end);
-    if isscalar(hydobj.zhw)
-        am = (hydobj.zhw-hydobj.zlw)/2; %tidal amplitude at mouth
-        zhw = zm0+am;
-    else  
-        zhw = hydobj.zhw(end);          %high water level at mouth
-    end
-
+%     zm0 = hydobj.zmt(end);
+%     if isscalar(hydobj.zhw)
+%         am = (hydobj.zhw-hydobj.zlw)/2; %tidal amplitude at mouth
+%         zhw = zm0+am;
+%     else  
+%         zhw = hydobj.zhw(end);          %high water level at mouth
+%     end
+zhw = hydobj.zhw(end);          %high water level at mouth
     %top of river valley
     coastlevel = 1;
-    zmx = (zMx-(zhw+1))/Lt*xi+zhw+coastlevel;
+    zmx = (zMx-(zhw+1))/Lt*xi'+zhw+coastlevel;
     zmx = repmat(zmx',1,length(yi));
 
     %valley properties
@@ -86,9 +79,9 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     Qr = hydobj.Qr;                  %river discharge (m^3/s)
     %examined using river slope (too wide and shallow)
     [zm0,Lv] = findconvergencelength(xr,ztl-1,xH,zH,z0);
-    zv = (zm0*(exp(xi/Lv)-1)+z0);
+    zv = (zm0*(exp(xi'/Lv)-1)+z0);
     gradV = gradient(zv)/delx;
-    Sr = interp1(xi,gradV,xr);
+    Sr = interp1(xi',gradV,xr);
     % Sr  = 2*am/xr;   %energy slope at tidal limit (-); **estimate**
 
     % River depth
@@ -97,7 +90,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
 
     %get convergence length for river valley longitudinal elevation
     [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0);
-    zv = (zm0*(exp(xi/Lv)-1)+z0)';
+    zv = (zm0*(exp(xi'/Lv)-1)+z0)';
     %get cross-valley convergence length between mtl and max elevation
     Ls0 = bv/log((zhw+zm0-z0)/zm0);
 
@@ -142,12 +135,14 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     end
     hold off
     
-    yz = planForm(hydobj,xi,yi,zi);
-    yz = num2cell(flipud(yz)',2);      %formatted to load into dstable
+    grid = struct('x',xi,'y',yi,'z',zi);
+    zwl = {hydobj.zhw(end),hydobj.zmt(end),hydobj.zlw(end)};
+    yz = cf_plan_form(zwl,grid);
+%     yz = num2cell(flipud(yz)',2);      %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                          %return full grid
-        zgrd = flipud(cat(2,fliplr(zi),zi));
-        yi  = [-fliplr(yi), yi];
+        zgrd = flipud(cat(2,fliplr(zi(:,2:end)),zi));
+        yi  = [-flipud(yi(2:end)); yi];
     else                               %return half grid
         zgrd = zi;
     end
@@ -166,17 +161,17 @@ function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
     zm0 = zrp/(exp(xr/Lv)-1);
 end
 %%
-function yz = planForm(hydobj,xi,yi,zi)
-    %compute controlling dimensions (y) for an exponential plan form
-    zwl(1) = hydobj.zhw(end); %constant so does not matter which end
-    zwl(2) = hydobj.zmt(end);
-    zwl(3) = hydobj.zlw(end);
-    
-    yz = zeros(length(xi),3);
-    for j=1:3
-        M = contour(yi,xi,zi,[zwl(j),zwl(j)]);
-        xj = M(2,2:end);
-        yj = M(1,2:end);
-        yz(:,j) = interp1(xj,yj,xi,'linear');
-    end
-end
+% function yz = planForm(hydobj,xi,yi,zi)
+%     %compute controlling dimensions (y) for an exponential plan form
+%     zwl(1) = hydobj.zhw(end); %constant so does not matter which end
+%     zwl(2) = hydobj.zmt(end);
+%     zwl(3) = hydobj.zlw(end);
+%     
+%     yz = zeros(length(xi),3);
+%     for j=1:3
+%         M = contour(yi,xi,zi,[zwl(j),zwl(j)]);
+%         xj = M(2,2:end);
+%         yj = M(1,2:end);
+%         yz(:,j) = interp1(xj,yj,xi,'linear');
+%     end
+% end

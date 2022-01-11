@@ -50,11 +50,12 @@ classdef CF_HydroData < muiPropertyUI
 
     properties (Hidden)
         CSTmodel         %dstable from CSTrunmodel with following fields
-        % MeanTideLevel  %mean water suface elevation along estuary
-        % TidalElevAmp   %elevation amplitude along estuary
-        % TidalVelAmp    %tidal velocity amplitude along estuary
-        % RiverVel       %river flow velocity along estuary
-        % HydDepth       %along estuary hydraulic depth 
+        % MeanTideLevel  %z - mean water suface elevation along estuary
+        % TidalElevAmp   %a - elevation amplitude along estuary
+        % TidalVelAmp    %U - tidal velocity amplitude along estuary
+        % RiverVel       %v - river flow velocity along estuary
+        % HydDepth       %d - along estuary hydraulic depth 
+        %used for Hydraulics display utility (NOT used in models)
     end  
 %%   
     methods (Access=protected)
@@ -84,7 +85,34 @@ classdef CF_HydroData < muiPropertyUI
                 %add any additional manipulation of the input here
             end
             setClassObj(mobj,'Inputs',classname,obj);
-        end     
+        end  
+%%
+        function displayRiverDims(mobj)
+            %display river dimensions for current property settings
+            msgtxt = 'Hydraulic Parameters have not been defined';
+            obj = getClassObj(mobj,'Inputs','CF_HydroData',msgtxt);
+            if isempty(obj), return; end
+            msgtxt = 'Sediment Parameters have not been defined';
+            sedobj = getClassObj(mobj,'Inputs','CF_SediData',msgtxt);
+            if isempty(sedobj), return; end
+            msgtxt = 'Water level Parameters have not been defined';
+            wlvobj = getClassObj(mobj,'Inputs','WaterLevels',msgtxt);
+            if isempty(wlvobj), return; end
+
+            am = wlvobj.TidalAmp;
+            d50riv = sedobj.d50river;
+            tauriv = sedobj.tauriver;
+            rhos = mobj.Constants.SedimentDensity;
+            rhow = mobj.Constants.WaterDensity;
+            Qr = obj.RiverDischarge;
+            Le = obj.xTidalLimit;   %distance to tidal limit 
+            Sr  = 2*am/Le;
+
+            [hrv,Wrv,~] = river_regime(Qr,Sr,d50riv,tauriv,rhos,rhow);
+            msgbox(sprintf('River input is %gm^3/s, slope is %g\nWidth is %0.1fm and hydraulic depth is %0.2fm',...
+                      Qr,Sr,Wrv,hrv));
+        end       
+        
     end
 %%
     methods
@@ -389,17 +417,17 @@ classdef CF_HydroData < muiPropertyUI
             %static ouput (mean tide values)
             dsp1.Variables = struct(...
                 'Name',{'MeanTideLevel','TidalElevAmp','TidalVelAmp',...
-                'RiverVel','HydDepth'},...
+                        'RiverVel','HydDepth'},...
                 'Description',{'Mean water level',...
-                'Tidal elevation amplitude',...
-                'Tidal velocity amplitude',...
-                'River flow velocity',...
-                'Hydraulic depth'},...
+                               'Tidal elevation amplitude',...
+                               'Tidal velocity amplitude',...
+                               'River flow velocity',...
+                               'Hydraulic depth'},...
                 'Unit',{'m','m','m/s','m/s','m'},...
                 'Label',{'Mean water level (m)',...
-                'Elevation amplitude (m)',...
-                'Velocity amplitude (m/s)',...
-                'Velocity (m/s)','Depth (m)'},...
+                         'Elevation amplitude (m)',...
+                         'Velocity amplitude (m/s)',...
+                         'Velocity (m/s)','Depth (m)'},...
                 'QCflag',repmat({'model'},1,5));
             dsp1.Row = struct(...
                 'Name',{''},...

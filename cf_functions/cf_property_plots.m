@@ -1,4 +1,4 @@
-function cf_property_plots(obj,src)
+function cf_property_plots(obj,irec,src)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -20,47 +20,50 @@ function cf_property_plots(obj,src)
 %--------------------------------------------------------------------------
 %
     tabsrc = src.Parent;           %handle to Form-Props tab
-    zprop = obj.Data.Form;         %dstable of elevations and widths
-    hprop = obj.Data.Hypsometry;   %dstable of hypsometry data
-    sprop = obj.Data.SectionProps; %dstable of section properties
-    cdesc = obj.Data.Form.Description;
-    hydobj = obj.RunParam.CF_HydroData;
+    
+    zprop = getDSTable(obj.Data.Form,irec,[]);        %dstable of elevations
+    pprop = getDSTable(obj.Data.Plan,irec,[]);        %dstable of half-form widths
+    wprop = getDSTable(obj.Data.WaterLevels,irec,[]); %dstable of along-channel water levels
+    hprop = getDSTable(obj.Data.Hypsometry,irec,[]);  %dstable of hypsometry data
+    sprop = getDSTable(obj.Data.SectionProps,irec,[]);%dstable of section properties
+
+    if ~isempty(obj.RunParam) && isfield(obj.RunParam,'CF_HydroData')
+        hydobj = obj.RunParam.CF_HydroData;
+    else
+        hydobj = [];
+    end
 
     if strcmp(src.Tag,'FigButton')
         hfig = figure('Tag','PlotFig');
-        ax = axes('Parent',hfig,'Tag','PropertyPlot','Units','normalized');
+        ax = axes('Parent',hfig,'Tag','PlotFig','Units','normalized','NextPlot','add');
         src = findobj(tabsrc,'Tag','PlotList'); 
     else
         ht = findobj(tabsrc,'Type','axes'); %remove any existing plot
         delete(ht); 
-        ax = axes('Parent',tabsrc,'Tag','PropertyPlot',...
+        ax = axes('Parent',tabsrc,'Tag','PropertyPlot','NextPlot','add',...
            'Units','normalized','Position', [0.08,0.11,0.86,0.58]);
     end
  
     %water levels at mouth
     wl_0 = zeros(1,3);
-    wl_0(1) = hydobj.zhw(1);
-    wl_0(2) = hydobj.zmt(1);    
-    wl_0(3) = hydobj.zlw(1);   
+    wl_0(1) = wprop.zhw(1);
+    wl_0(2) = wprop.zmt(1);    
+    wl_0(3) = wprop.zlw(1);   
+    
+    grid = getGrid(obj,irec);
+    grid.desc = sprintf('%s (%s)',grid.desc,char(grid.t));
     
     switch src.String{src.Value}
         case 'Hypsommetry'            
             zcentre = hprop.Dimensions.Z;
             zsurf = hprop.SurfaceArea;
             zvol = hprop.Volume;            
-            hypsommetryplot(ax,zcentre,zsurf,zvol,wl_0,cdesc)
-        case 'Cross-sections'
-            xi = zprop.Dimensions.X;
-            yi = zprop.Dimensions.Y;
-            zi = squeeze(zprop.Z);    
-            crossectionplot(ax,xi,yi,zi,wl_0,cdesc)            
-        case 'Centre-line'
-            ax.Position(3) = 0.82;
-            xi = zprop.Dimensions.X;
-            yz = reshape(zprop.DataTable{1,2:end},length(xi),3);
-            zi = squeeze(zprop.Z);
-            zi = zi(:,size(zi,2)/2+1:end);
-            centrelineplot(ax,xi,yz,zi,cdesc)
+            hypsommetryplot(ax,zcentre,zsurf,zvol,wl_0,grid.desc)
+        case 'Cross-sections'    
+            crossectionplot(ax,grid,wl_0)            
+        case 'Thalweg + Plan width'            
+            yz = reshape(pprop.DataTable{1,:},length(grid.x),3);
+            centrelineplot(ax,grid,yz);
 %             sT = h_data.StepData{idr};
 %             fprintf('Le0 = %.0f; Le = %.0f\n',sT.Length(1),sT.Length(end));
         case 'Form width'
@@ -70,32 +73,32 @@ function cf_property_plots(obj,src)
                 W(:,i) = sprop.DataTable{:,i}; %selects Widths 
                 L(i) = getconvergencelength(xj,W(:,i));
             end
-            formwidthplot(ax,xj,W,L,cdesc)
+            formwidthplot(ax,xj,W,L,grid.desc)
         case 'Elevation-Area histogram'
             zcentre = hprop.Dimensions.Z;
             zhist = hprop.SAfreq; %SAfreq = histogram bin count x grid area
-            elevationareaplot(ax,zcentre,zhist,wl_0,cdesc)
+            elevationareaplot(ax,zcentre,zhist,wl_0,grid.desc)
         case 'Hydraulic depth'
             zcentre = hprop.Dimensions.Z;
             zsurf = hprop.SurfaceArea;
             zvol = hprop.Volume;          
-            hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl_0,cdesc)
+            hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl_0,grid.desc)
         case 'Area-Prism ratio'
             xj = sprop.Dimensions.X;
             AP = sprop.AoP;
-            prismareaplot(ax,xj,AP,cdesc)
+            prismareaplot(ax,xj,AP,grid.desc)
         case 'Cross-sectional area' 
             xj = sprop.Dimensions.X;   
-            L = zeros(length(xj),3); W = L;
+            L = zeros(length(xj),3);
             for i=1:3
-                A(:,i) = sprop.DataTable{:,3+i}; %selects CSAs 
+                A(:,i) = sprop.DataTable{:,3+i}; %#ok<AGROW> %selects CSAs 
                 L(i) = getconvergencelength(xj,A(:,i));
             end
-            csaplot(ax,xj,A,L,cdesc)
+            csaplot(ax,xj,A,L,grid.desc)
         case 'Prism'
             xj = sprop.Dimensions.X;  
             Pr = sprop.Prism;
-            prismplot(ax,xj,Pr,cdesc)
+            prismplot(ax,xj,Pr,grid.desc)
         case 'a/h and Vs/Vc'
             xj = sprop.Dimensions.X';  
             Ahw = sprop.CSAhw;
@@ -104,8 +107,8 @@ function cf_property_plots(obj,src)
             Whw = sprop.Whw;
             Wmt = sprop.Wmt;
             Wlw = sprop.Wlw;
-            amp = hydobj.zhw-hydobj.zlw;   %transient!!!!
-            xi = zprop.Dimensions.X';
+            amp = wprop.zhw-wprop.zmt; 
+            xi = wprop.Dimensions.X';
             amp = interp1(xi,amp,xj);
             
             ah(:,1) = amp./(Ahw./Whw);
@@ -114,10 +117,13 @@ function cf_property_plots(obj,src)
             ah(ah>1.2) = NaN; ah(ah<0) = NaN;
             VsVc = (Ahw-Alw-2*amp.*Wlw)./(Alw+amp.*Wlw);
             VsVc(VsVc>3) = NaN;
-            asymmratiosplot(ax,xj,ah,VsVc,cdesc);             
+            asymmratiosplot(ax,xj,ah,VsVc,grid.desc);             
         case 'Hydraulics'
             xi = zprop.Dimensions.X;
-            hydraulicsplot(ax,hydobj,xi,cdesc); 
+            if isempty(hydobj) || isempty(hydobj.cstres)
+                hydobj = wprop;
+            end
+            hydraulicsplot(ax,hydobj,xi,grid.desc); 
         case 'Transgression'
             if ~isa(obj,'CF_TransModel')
                 warndlg('Trangression model required for this plot');
@@ -129,7 +135,7 @@ function cf_property_plots(obj,src)
 %             cst = h_data.(aprop{4}){idr};
             xi = zprop.Dimensions.X;
             yi = zprop.Dimensions.Y;
-            yz = reshape(zprop.DataTable{1,2:end},length(xi),3);
+            yz = reshape(obj.Data.Plan.DataTable{1,:},length(xi),3);
             zi = squeeze(zprop.Z);
 %             zi = zi(:,size(zi,2)/2+1:end);
             projectionplot(ax,xi,hydobj,yi,yz,zi);
@@ -143,9 +149,9 @@ function hypsommetryplot(ax,zcentre,zsurf,zvol,wl,casedesc)
     plot(ax,zsurf,zcentre,'-.b');
     
     %add water levels at mouth
-    plot(xlim, wl(1)*[1 1],':','Color',[0.7,0.7,0.7]);
-    plot(xlim, wl(2)*[1 1],'--','Color',[0.8,0.8,0.8]);
-    plot(xlim, wl(3)*[1 1],':','Color',[0.7,0.7,0.7]);
+    plot(ax,xlim, wl(1)*[1 1],':','Color',[0.7,0.7,0.7]);
+    plot(ax,xlim, wl(2)*[1 1],'--','Color',[0.8,0.8,0.8]);
+    plot(ax,xlim, wl(3)*[1 1],':','Color',[0.7,0.7,0.7]);
     
     xlabel('Volume (m^3) and Area (m^2)'); 
     ylabel('Elevation (mAD)');
@@ -154,21 +160,24 @@ function hypsommetryplot(ax,zcentre,zsurf,zvol,wl,casedesc)
     hold off
 end
 %%
-function crossectionplot(ax,xi,yi,zgrd,wl,casedesc)
+function crossectionplot(ax,grid,wl)
     %plot a series of cross-sections along length of channel
-%     figure;  %over-ride plot to UI window and plot as stand alone figure
-%     ax = axes;    
-    noxi=length(xi);
+    noxi=length(grid.x);
     nx1=noxi;nx2=ceil(9*noxi/10);nx3=ceil(4*noxi/5);
     nx4=ceil(3*noxi/5);nx5=ceil(2*noxi/5);nx6=ceil(noxi/5);
-    plot(ax,yi,zgrd(nx1,:),'-r');
+    if grid.ism  %orientation of x-axis, x=0 is nearest the mouth
+        zgrd = flipud(grid.z);
+    else
+        zgrd = grid.z;
+    end
+    plot(ax,grid.y,zgrd(nx1,:),'-r');
     hold on
-    plot(ax,yi,zgrd(nx2,:),'-.b');
-    plot(ax,yi,zgrd(nx3,:),'--g');
-    plot(ax,yi,zgrd(nx4,:),'-.c');
-    plot(ax,yi,zgrd(nx5,:),'--y');
-    plot(ax,yi,zgrd(nx6,:),'-.m');
-    plot(ax,yi,zgrd(1,:),':k');
+    plot(ax,grid.y,zgrd(nx2,:),'-.b');
+    plot(ax,grid.y,zgrd(nx3,:),'--g');
+    plot(ax,grid.y,zgrd(nx4,:),'-.c');
+    plot(ax,grid.y,zgrd(nx5,:),'--y');
+    plot(ax,grid.y,zgrd(nx6,:),'-.m');
+    plot(ax,grid.y,zgrd(1,:),':k');
     
     %add water levels at mouth
     plot(xlim, wl(1)*[1 1],':','Color',[0.7,0.7,0.7]);
@@ -179,35 +188,36 @@ function crossectionplot(ax,xi,yi,zgrd,wl,casedesc)
     ylabel('Elevation (mAD)');
     hL=legend('0','0.1L','0.2L','0.4L','0.6L','0.8L','R','Location','SouthEast');
     set(hL, 'Color', 'none');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
     hold off
 end
 %%
-function centrelineplot(ax,xi,yz,zi,casedesc)
+function centrelineplot(ax,grid,yz)
     %plot centrel-line depth and width variation along channel
-%     figure;  %over-ride plot to UI window and plot as stand alone figure
-%     ax = axes;
+    ax.Position(3) = 0.8;  
+    zi = grid.z(:,ceil(size(grid.z,2)/2):end);
+    if grid.ism  %orientation of x-axis, x=0 is nearest the mouth
+        zi = flipud(zi);
+    end
     yyaxis left
-    plot(ax,xi,zi(:,1),'Color','k');
+    plot(ax,grid.x,zi(:,1),'Color','k');
     xlabel('<= head       Distance along channel (m)       mouth =>');  
     ylabel('Elevation (mAD)');
     yyaxis right
-    plot(ax,xi,squeeze(yz(:,1)),'Color','g','LineStyle','--');
+    plot(ax,grid.x,squeeze(yz(:,1)),'Color','g','LineStyle','--');
     hold on
-    plot(ax,xi,squeeze(yz(:,2)),'Color','r','LineStyle',':');
-    plot(ax,xi,squeeze(yz(:,3)),'Color','b','LineStyle','-.');
+    plot(ax,grid.x,squeeze(yz(:,2)),'Color','r','LineStyle',':');
+    plot(ax,grid.x,squeeze(yz(:,3)),'Color','b','LineStyle','-.');
     hold off
     ylabel('Half-width (m)');
     hL=legend('Centre Line','High water', 'Mean tide level','Low water',...
                                                     'Location','West');
     set(hL, 'Color', 'none');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
 function formwidthplot(ax,xi,W,L,casedesc)
     %plot centrel-line depth and width variation along channel
-%     figure;  %over-ride plot to UI window and plot as stand alone figure
-%     ax = axes;
     %order of W and L is HW, MT, LW
     ax.Position(1) = 0.1;
     plot(ax,xi,W(:,1),xi,W(:,2),xi,W(:,3));
@@ -281,8 +291,6 @@ end
 %%
 function asymmratiosplot(ax,xj,ah,VsVc,casedesc)
     %plot a/h and Vs/Vc along channel
-%     figure;  %over-ride plot to UI window and plot as stand alone figure
-%     ax = axes;
     ax.Position = [0.08,0.11,0.84,0.58];
     yyaxis left
     plot(ax,xj,ah(:,1),'Color','g','LineStyle','-');
@@ -303,30 +311,33 @@ end
 %%
 function hydraulicsplot(ax,hydobj,x,casedesc)
     %plot the results from the CST hydraulic model or linear decay
-    
-    %over-ride plot to UI window and plot as stand alone figure
-    % figure('Name','Tab plot','Tag','PlotFig');  
-    % ax = axes; 
     green = mcolor('green');
     orange = mcolor('orange');
-    
-    zhw = hydobj.zhw;  %high water level
-    zmt = hydobj.zmt;  %mean tide level
-    zlw = hydobj.zlw;  %low water level
-    
-    incvelocity = false;  %used to plot water levels without velocities
-    if isfield(hydobj.cstres,'U')
-        U = hydobj.cstres.U;  %tidal velocity amplitude
-        v = hydobj.cstres.v;  %river velocity 
-        d = hydobj.cstres.d;  %hydraulic depth
+
+    if isprop(hydobj,'cstres')
+        zmt = hydobj.cstres.z;     %along channel mean level
+        zhw = zmt+hydobj.cstres.a; %high water level
+        zlw = zmt-hydobj.cstres.a; %low water level
+        U = hydobj.cstres.U;       %tidal velocity amplitude
+        v = hydobj.cstres.v;       %river velocity 
+        d = hydobj.cstres.d;       %hydraulic depth
         incvelocity = true;  %used to plot water levels without velocities
+    else
+        zhw = hydobj.zhw;    %high water level
+        zmt = hydobj.zmt;    %mean tide level
+        zlw = hydobj.zlw;    %low water level
+        incvelocity = false; %used to plot water levels without velocities
+        if length(x)~=length(zhw)
+            x = [min(x),max(x)];
+        end
     end
     yyaxis(ax,'left')
     cla                                    %clear any existing plot lines
-    plot(ax,x,zmt,'-r','LineWidth',1.0);   %plot time v elevation
+    plot(ax,x,zhw,'-.b','LineWidth',0.8)   %plot high water level    
     hold on
-    plot(ax,x,zhw,'-.b','LineWidth',0.8)   %plot high water level
-    plot(ax,x,zlw,'-.b','LineWidth',0.8)   %plot low water level    
+    plot(ax,x,zmt,'-r','LineWidth',1.0);   %plot time v elevation
+    plot(ax,x,zlw,'-.b','LineWidth',0.8)   %plot low water level  
+    ax.YLim(1) = min(zlw)-0.1;
     ax.YLim(2) = max(zhw)+0.1;
     ylabel('Elevation (mOD)'); 
     
@@ -338,10 +349,10 @@ function hydraulicsplot(ax,hydobj,x,casedesc)
         plot(ax,x,U,'--','Color',orange,'LineWidth',0.6)%plot tidal velocity
         plot(ax,x,v,'--','Color',green,'LineWidth',0.6) %plot river velocity
         ylabel('Velocity (m/s)'); 
-            legend('MTL','HWL','LWL','Hydraulic depth',...
+            legend('HWL','MTL','LWL','Hydraulic depth',...
                 'Tidal velocity','River velocity','Location','west');
     else
-       legend('MTL','HWL','LWL','Location','west');
+       legend('HWL','MTL','LWL','Location','west');
     end
     hold off
     ax.XLimMode = 'manual';

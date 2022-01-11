@@ -20,38 +20,65 @@ function cf_model_tabs(obj,src)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
+    dst = obj.Data.Form;
+    
+    if height(dst)>1
+        %propmpt user to select timestep
+        list = dst.DataTable.Properties.RowNames;
+        irec = listdlg('PromptString','Select timestep:',...
+                       'Name','Tab plot','SelectionMode','single',...
+                       'ListSize',[250,100],'ListString',list);
+        if isempty(irec), return; end
+    else
+        irec = 1;
+    end
+
     switch src.Tag
         case 'Plot'
-            tabPlot(obj,src);
+            tabPlot(obj,src,irec);
         case 'FormProps'
-            tabProperties(obj,src);
+            tabProperties(obj,src,irec);
     end
 end
 %%
-function tabPlot(obj,src,iswidth,isfig)
+function tabPlot(obj,src,irec,iswidth,isfig)
     %generate plot for display on Plot tab. To produce stand alone plots 
     %set the flags to true as required. Can also use button on tab
-    if nargin<4
+    if nargin<5
         %to create stand alone figure set isfig=true   
         isfig = false; 
         %to use the high and low water widths rather than interpolated values
         iswidth = false; 
-    elseif nargin<5
+    elseif nargin<6
         isfig = false; 
     end
 
-    selecteddata = obj.Data.Form;
-    xi = selecteddata.Dimensions.X;
-    if (xi(1)<0)
-        xi = max(xi)-xi;
+%     dst = obj.Data.Form;
+%     
+%     if height(dst)>1
+%         %propmpt user to select timestep
+%         list = dst.DataTable.Properties.RowNames;
+%         irec = listdlg('PromptString','Select timestep:',...
+%                        'Name','Tab plot','SelectionMode','single',...
+%                        'ListSize',[250,100],'ListString',list);
+%         if isempty(irec), return; end
+%     else
+%         irec = 1;
+%     end
+
+    grid = getGrid(obj,irec);
+    if isempty(grid.z), return; end
+    
+    if grid.x(1)<0
+        xi = max(grid.x)-grid.x;
     else
-        xi = flipud(xi);
+        xi = flipud(grid.x);
     end
-    yi = selecteddata.Dimensions.Y;
-    zi = squeeze((selecteddata.Z))';
+    yi = grid.y;
+    zi = grid.z';
     %can use zlevels to plot contours or recover the widths
-    widths = reshape(selecteddata.DataTable{1,2:end},length(xi),3);
-    hydobj = obj.RunParam.CF_HydroData;
+    widths = reshape(obj.Data.Plan.DataTable{1,:},length(xi),3);
+    hydobj = obj.Data.WaterLevels;
     zo = hydobj.zmt(1);
     zhw = hydobj.zhw(1);
     zlw = hydobj.zlw(1);
@@ -62,25 +89,21 @@ function tabPlot(obj,src,iswidth,isfig)
     %
     if isfig
         hf = figure;
-        ax = axes('Parent',hf,'Tag','Surface');
+        ax = axes('Parent',hf,'Tag','PlotFig','NextPlot','add');
     else
-        ax = axes('Parent',src,'Tag','Surface');
+        ax = axes('Parent',src,'Tag','QPlot','NextPlot', 'add');
     end
+    %force ax to be the current axes (without it can plot on the wrong 
+    %figure if switching between FormProps and Q-Plot
+    axes(ax); 
     
+    %plot form as a surface
     surfc(ax,xi,yi,zi, 'FaceColor','interp','EdgeColor', 'none');
 
     % caxis(ax,[-15,10]);  %constrain the range of the colormap used by surfc
     % zlim(ax,[-10,10]);   %constrain the z-axis limits
-    if license('test','MAP_Toolbox')
-        cmapsea = [0,0,0.2;  0,0,1;  0,0.45,0.74;  0.30,0.75,0.93; 0.1,1,1];
-        cmapland = [0.95,0.95,0.0;  0.1,0.7,0.2; 0,0.4,0.2; 0.8,0.9,0.7;  0.4,0.2,0];
-        demcmap([min(zi,[],'All'),10],128,cmapsea,cmapland) %mapping toolbox
-    else
-        cmap = cmap_selection;
-        if isempty(cmap), cmap = 'parula'; end
-        colormap(cmap)        
-    end
-
+    zlimits = [min(zi,[],'All'),10];   %constrain the z-color range limits
+    gd_colormap(zlimits);
     % view(180,90); %plan view
 	view(315,30);
     hold on
@@ -101,7 +124,8 @@ function tabPlot(obj,src,iswidth,isfig)
     xlabel('Distance from mouth (m)'); 
     ylabel('Width (m)');  
     zlabel('Elevation (mAD)');
-    title(selecteddata.Description,'FontWeight','normal','FontSize',10);
+    ttltxt = sprintf('%s (%s)',grid.desc,char(grid.t));
+    title(ttltxt,'FontWeight','normal','FontSize',10);
     hold off
     cb = colorbar;
     %c.Limits = [-10,10]; %constrain the range of the colorbar
@@ -119,9 +143,13 @@ function tabPlot(obj,src,iswidth,isfig)
         'Callback',@(src,evtdat)rotatebutton(ax,src,evtdat));  
 end
 %%
-function tabProperties(obj,tabsrc)
+function tabProperties(obj,tabsrc,irec)
     %generate table and plot for display on Properties tab
-    T = obj.Data.GrossProps;
+    if ~isfield(obj.Data,'GrossProps') || isempty(obj.Data.GrossProps)
+        getdialog('No Form Properties available for selected grid')
+        return;
+    end
+    T = getDSTable(obj.Data.GrossProps,irec,[]);
     %generate table of gross properties
     uitable('Parent',tabsrc,'Data',T.DataTable{:,:},...
             'ColumnName',T.VariableNames,...
@@ -132,9 +160,9 @@ function tabProperties(obj,tabsrc)
     %user popup to select a type of plot 
     popup = findobj(tabsrc,'Style','popup');
     if isempty(popup)
-        plotlist = {'Hypsommetry','Cross-sections','Centre-line',...
-                'Form width','Elevation-Area histogram','Hydraulic depth',...
-                'Area-Prism ratio','Cross-sectional area','Prism',...
+        plotlist = {'Hypsommetry','Cross-sections','Thalweg + Plan width',...
+                'Form width','Cross-sectional area','Hydraulic depth',...
+                'Area-Prism ratio','Prism','Elevation-Area histogram',...
                 'a/h and Vs/Vc','Hydraulics','Transgression'};    
         uicontrol('Parent',tabsrc,'Style','text',...
            'Units','Normalized','Position', [0.05 0.79 0.1 0.04],...
@@ -142,7 +170,7 @@ function tabProperties(obj,tabsrc)
         popup = uicontrol('Parent',tabsrc,'Style','popup',...
            'String',plotlist,'Tag','PlotList',...
            'Units','Normalized','Position', [0.05 0.74 0.9 0.05],...
-           'Callback', @(src,evdat)cf_property_plots(obj,src));
+           'Callback', @(src,evdat)cf_property_plots(obj,irec,src));
 
         %Create push button to copy data to clipboard
         uicontrol('Parent',tabsrc,'Style','pushbutton',...                    
@@ -153,18 +181,18 @@ function tabProperties(obj,tabsrc)
         
         %create push button to create tab plot as a stand alone figure
         uicontrol('Parent',tabsrc,'Style','pushbutton',...                    
-            'String','>Figure','UserData',popup.Value,'Tag','FigButton',...
+            'String','>Figure','Tag','FigButton',...
             'TooltipString','Create plot as stand alone figure',...
             'Units','normalized','Position',[0.86 0.793 0.10 0.044],...                    
-            'Callback',@(src,evdat)cf_property_plots(obj,src));  
+            'Callback',@(src,evdat)cf_property_plots(obj,irec,src));  
         
     else
         %update obj in Callbacks and table in UserData
-        popup.Callback = @(src,evdat)cf_property_plots(obj,src);
+        popup.Callback = @(src,evdat)cf_property_plots(obj,irec,src);
         hb = findobj(tabsrc,'Tag','CopyButton');           
         hb.UserData = T;
         hf = findobj(tabsrc,'Tag','FigButton');
-        hf.Callback = @(src,evdat)cf_property_plots(obj,src);
-        cf_property_plots(obj,popup); %set plot to current popup selection
+        hf.Callback = @(src,evdat)cf_property_plots(obj,irec,src);
+        cf_property_plots(obj,irec,popup); %set plot to current popup selection
     end           
 end 

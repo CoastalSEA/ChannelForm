@@ -77,14 +77,14 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
     % end
     %set-up co-ordinate system
     [xi,yi] = getGridDimensions(grdobj);
-    yi = yi(yi>=0);  %half the grid
-    yi(1) = 0.01;    %the offset ensures no duplicates when matrix mirrored     
+    yi = yi(yi>=0);  %half the grid    
     zi = zeros(length(xi),length(yi));
 
     %water level properties based on amplitude+mtl or CST model (mAD)
-    zHWxi = hydobj.zhw;                        %high water level(mAD)
-    zLWxi = hydobj.zlw;                        %low water level(mAD) 
-    am0 = (hydobj.zhw(end)-hydobj.zlw(end))/2; %tidal amplitude at mouth
+    %ckfa model has origin at mouth, x positive upstream
+    zHWxi = flipud(hydobj.zhw);         %high water level(mAD)
+    zLWxi = flipud(hydobj.zlw);         %low water level(mAD) 
+    am0 = (zHWxi(1)-zLWxi(1))/2;        %tidal amplitude at mouth
 
     Slope = 4*am0/tp/sqrt(g*hm);
 %     [hlw,wlw,~] = river_regime(Qp,Slope,d50river,tauriver,rhos,rhow);
@@ -104,7 +104,8 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
         phi  = Wm/2/LW*exp(-xi(j)/LW);  %angle to bank at xj
         Lst  = Lsll*tan(phi);           %width of lower intertidal at xj
         meq  = Lst/ax;                  %equilibrium lower intertidal slope at xj
-
+        if isinf(meq), meq = Lst/0.1; end
+        
         Wx   = Wm*exp(-xi(j)/LW);       %mtl width at xj
         Wlw  = Wx - nbk*ax*meq;         %flow only width at low water
         Whw  = Wx + nbk*pi/2*ax*meq;    %flow only width at high water

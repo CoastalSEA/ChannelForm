@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = pr_form_model(obj,iscst,isfull)
+function [xi,yi,zgrd,yz] = pr_form_model(obj,wlflag,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -7,10 +7,13 @@ function [xi,yi,zgrd,yz] = pr_form_model(obj,iscst,isfull)
 %   function to compute 3D form of a creek or tidal channel
 %   useing power laws to define width and hydraulic depth variations.
 % USAGE
-%   [xi,yi,zgrd,yz] = channel_form_models(obj,iscst,isfull)
+%   [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   iscst - logical flag, true if CSTmodel to be used to define water levels
+%   wlflag - flag to indicate type of water surface to use
+%            0=CSTmodel used to define water levels
+%            1=constant HW tapering LW 
+%            2=constant HW & LW
 %   isfull - true returns full grid, false half-grid
 % OUTPUT
 %   xi - x co-ordinate (m)
@@ -33,13 +36,13 @@ function [xi,yi,zgrd,yz] = pr_form_model(obj,iscst,isfull)
     end
 
     %channel properties
-    if iscst
+    if wlflag==0
         %provides initial guess of gross properties if cst_model called
         obj= cf_set_hydroprops(obj,false);     %fixed water level surface 
         obj = pr_properties(obj); 
     end
     %set the water level variations along the estuary
-    [obj,ok] = cf_set_hydroprops(obj,iscst);
+    [obj,ok] = cf_set_hydroprops(obj,wlflag);
     if ok<1, return; end
     
     [xi,yi,zi,yz] = pr_3D_form(obj);
@@ -48,8 +51,8 @@ function [xi,yi,zgrd,yz] = pr_form_model(obj,iscst,isfull)
     yz = num2cell(yz',2);  %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                        %return full grid
-        zgrd = cat(2,fliplr(zi),zi);
-        yi  = [-fliplr(yi), yi];
+        zgrd = cat(2,fliplr(zi(:,2:end)),zi);
+        yi  = [-flipud(yi(2:end)); yi];
     else                             %return half grid
         zgrd = zi;
     end
@@ -58,8 +61,8 @@ end
 function obj = pr_properties(obj)
     %compute the summary gross properties for the channel form
     [grid.x,yi,zi] = pr_3D_form(obj); 
-    grid.y  = [-fliplr(yi), yi];
-    grid.z = cat(2,fliplr(zi),zi);
+    grid.y  = [-flipud(yi(2:end)); yi];
+    grid.z = cat(2,fliplr(zi(:,2:end)),zi);
     
     wl = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;
@@ -108,8 +111,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     %set-up co-ordinate system
     [~,yi,delx] = getGridDimensions(grdobj);
     xi = -(Lt-Ll):delx:Ll;
-    yi = yi(yi>=0);  %half the grid
-    yi(1) = 0.01;    %the offset ensures no duplicates when matrix mirrored
+    yi = yi(yi>=0);    %half the grid
     nyi = length(yi);
     
     zi = zeros(length(xi),length(yi));
@@ -123,7 +125,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     dl = zm-zso;           %depth of lower form at mouth (constant)
 
     %river properties
-    [hrv,bh,~] = get_river_profile(obj,2*amp0,yi); 
+    [hrv,bh,~] = get_river_profile(obj,2*amp0,yi'); 
     
     %calculate the transformation of the x co-ordinate for given x and y values
     %and then use this to obtain a value of z
@@ -169,7 +171,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
         %in the line that defines the shoulder so that system takes account
         %of valley slope and link to river system     
         zi(ix,:) = zu+zl+zmt;           
-        isriver = yi<bh & (du-hrv)<zi(ix,:);
+        isriver = yi'<bh & (du-hrv)<zi(ix,:);
         if any(isriver)
             if yu<bh, yu=bh; end
             if yl<bh, yl=bh; end
@@ -180,7 +182,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     end
     
     %add mask to define surrounding land surface
-    zhw = repmat(zHWxi',1,nyi);
+    zhw = repmat(zHWxi,1,nyi);
     msk = (zhw+offset).*(zi>zhw);      %construct high water mask
     zi  = zi.*(zi<=zhw)+ msk;
 end

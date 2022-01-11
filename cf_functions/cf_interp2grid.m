@@ -13,9 +13,10 @@ function hydobj = cf_interp2grid(obj,resX,cstx,isflip)
 %   cstx - distances used in cst_model
 %   isflip - logical true if results are to be reversed (optional, default is false)
 % OUTPUTS
-%   cstvar - struct containing the  
+%   hydobj - updated version of CF_HydroData thaat is assigned to obj.RunParam
 % SEE ALSO
-%   used in channel_form_model and ckfa_form_model as part of ChannelForm model
+%   used in channel_form_model, pr_form_model and ckfa_form_model as part 
+%   of ChannelForm model
 %
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2022
@@ -28,25 +29,20 @@ function hydobj = cf_interp2grid(obj,resX,cstx,isflip)
     grdobj = obj.RunParam.GD_GridProps;
      
     %set-up co-ordinate system
-    xi = getGridDimensions(grdobj);   %x co-ordinates
-%     Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
-%     nintx = grdobj.Xint;             %no of intervals in the x direction
-%     delx = Lt/nintx;                 %x interval
-%     xi = 0:delx:Lt;                  
+    xi = getGridDimensions(grdobj);   %x co-ordinates         
     
     if isflip
         resX = cellfun(@fliplr,resX,'UniformOutput',false);
     end
-
-    cst_hw = resX{1}+resX{2};        %mean tide level+tidal amplitude
-    cst_mt = resX{1};                %mean tide level
-    cst_lw = resX{1}-resX{2};        %mean tide level-tidal amplitude
-
-    hydobj.zhw = interp1(cstx,cst_hw,xi,'linear','extrap'); %high water
-    hydobj.zmt = interp1(cstx,cst_mt,xi,'linear','extrap'); %mean water
-    hydobj.zlw = interp1(cstx,cst_lw,xi,'linear','extrap'); %low water
+    
+    z = interp1(cstx,resX{1},xi,'linear','extrap'); %water level
+    a = interp1(cstx,resX{2},xi,'linear','extrap'); %elevation amplitude
     U = interp1(cstx,resX{3},xi,'linear','extrap'); %tidal velocity amplitude
     v = interp1(cstx,resX{4},xi,'linear','extrap'); %river velocity 
     d = interp1(cstx,resX{5},xi,'linear','extrap'); %hydraulic depth
-    hydobj.cstres = struct('U',U,'v',v,'d',d);
+    hydobj.cstres = struct('z',z,'a',a,'U',U,'v',v,'d',d);
+    
+    hydobj.zhw = z+a;  %mean tide level+tidal amplitude
+    hydobj.zmt = z;    %mean tide level
+    hydobj.zlw = z-a;  %mean tide level-tidal amplitude 
 end
