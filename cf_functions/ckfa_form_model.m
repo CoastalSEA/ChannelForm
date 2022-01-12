@@ -45,6 +45,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
     [xi,yi,zi] = ckfa_3D_form(obj,params);
     if isempty(xi),return; end
     
+    %model x-axis is from mouth. no need to reverse data for use in ChannelForm
     [yu,yo,yl] = expPlan(obj,xi);
     yz = [yu,yo,yl];
     yz = num2cell(yz',2)';  %formatted to load into dstable
@@ -55,7 +56,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
     else                                   %return half grid
         zgrd = zi;
     end
-    zgrd = flipud(zgrd); %make orientation consistent with other models
+%     zgrd = flipud(zgrd); %make orientation consistent with other models
 end
 %%
 function params = ckfa_properties(obj)
@@ -92,7 +93,7 @@ function params = ckfa_parameters(obj)
 
     %parameters required by solver
     hydobj = obj.RunParam.CF_HydroData;
-    am0 = (hydobj.zhw(end)-hydobj.zlw(end))/2;    
+    am0 = (hydobj.zhw(1)-hydobj.zlw(1))/2;    
     [hrv,Wrv,Arv] = get_river_regime(obj,2*am0);
     
     params = struct('am',am0,...                     %tidal amplitude at mouth (m)

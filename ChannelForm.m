@@ -365,7 +365,7 @@ classdef ChannelForm < muiModelUI
                 case 'Area of Flood Plain'
                     CF_ValleyModel.checkFloodPlainArea(obj);
                 case 'CKFA Channel Dimensions'
-                    
+                    ckfa_dimensions(obj);
                 case 'Morphological Timescale'
                     CF_SediData.displayMorphTime(obj);
                 case 'Channel-Valley Sub-Plot'
@@ -383,7 +383,7 @@ classdef ChannelForm < muiModelUI
                 case 'Restore Form'
                     CF_ValleyModel.restoreForm(obj); 
                 case 'Add Modifications'
-                    MorphMods.addMorphMods(obj);
+                    CF_FormModel.addMorphMods(obj);
                 
             end            
         end  

@@ -1,12 +1,12 @@
-function hydobj = cf_interp2grid(obj,resX,cstx,isflip)
+function hydobj = cf_cst2grid(obj,resX,cstx,isflip)
 %
 %-------function help------------------------------------------------------
 % NAME
-%   cf_interp2grid.m
+%   cf_cst2grid.m
 % PURPOSE
 %   interpolate the CST water levels onto the model grid
 % USAGE
-%   cstvar = cf_interp2grid(obj,resX,cstx,isflip)
+%   cstvar = cf_cst2grid(obj,resX,cstx,isflip)
 % INPUTS
 %   obj - CF_FormModel class instance
 %   resX - along-channel results from cst_model (part of CSTmodel App)

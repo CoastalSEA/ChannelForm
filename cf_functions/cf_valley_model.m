@@ -62,7 +62,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
 %     else  
 %         zhw = hydobj.zhw(end);          %high water level at mouth
 %     end
-zhw = hydobj.zhw(end);          %high water level at mouth
+    zhw = hydobj.zhw(1);          %high water level at mouth
     %top of river valley
     coastlevel = 1;
     zmx = (zMx-(zhw+1))/Lt*xi'+zhw+coastlevel;
@@ -141,7 +141,7 @@ zhw = hydobj.zhw(end);          %high water level at mouth
 %     yz = num2cell(flipud(yz)',2);      %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                          %return full grid
-        zgrd = flipud(cat(2,fliplr(zi(:,2:end)),zi));
+        zgrd = cat(2,fliplr(zi(:,2:end)),zi);
         yi  = [-flipud(yi(2:end)); yi];
     else                               %return half grid
         zgrd = zi;

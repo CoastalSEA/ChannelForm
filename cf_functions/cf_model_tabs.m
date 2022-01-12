@@ -72,7 +72,7 @@ function tabPlot(obj,src,irec,iswidth,isfig)
     if grid.x(1)<0
         xi = max(grid.x)-grid.x;
     else
-        xi = flipud(grid.x);
+        xi = (grid.x);
     end
     yi = grid.y;
     zi = grid.z';

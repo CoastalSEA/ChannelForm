@@ -82,9 +82,9 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
 
     %water level properties based on amplitude+mtl or CST model (mAD)
     %ckfa model has origin at mouth, x positive upstream
-    zHWxi = flipud(hydobj.zhw);         %high water level(mAD)
-    zLWxi = flipud(hydobj.zlw);         %low water level(mAD) 
-    am0 = (zHWxi(1)-zLWxi(1))/2;        %tidal amplitude at mouth
+    zHWxi = hydobj.zhw;           %high water level(mAD)
+    zLWxi = hydobj.zlw;           %low water level(mAD) 
+    am0 = (zHWxi(1)-zLWxi(1))/2;  %tidal amplitude at mouth
 
     Slope = 4*am0/tp/sqrt(g*hm);
 %     [hlw,wlw,~] = river_regime(Qp,Slope,d50river,tauriver,rhos,rhow);

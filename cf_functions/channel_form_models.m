@@ -38,7 +38,7 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
     %channel properties
     if wlflag==0
         %provides initial guess of gross properties if cst_model called
-        obj= cf_set_hydroprops(obj,false);     %fixed water level surface 
+        obj= cf_set_hydroprops(obj,1);     %fixed water level surface 
         obj = channel_properties(obj); 
     end
     %set the water level variations along the estuary
@@ -48,10 +48,14 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
     [xi,yi,zi,yz] = channel_3D_form(obj);
     if isempty(xi),return; end    
     
-    yz = num2cell(yz',2);  %formatted to load into dstable
+    %model x-axis is from head. Reverse data for use in ChannelForm
+    yz = num2cell(flipud(yz)',2);  %formatted to load into dstable
+    %x is defined from head with origin at "shoulder". 
+    %Change to origin at mouth with grid ordered from x=0
+    xi = fliplr(max(xi)-xi);
     %generate complete 3D channel form by mirroring half section
     if isfull                          %return full grid
-        zgrd = cat(2,fliplr(zi(:,2:end)),zi);
+        zgrd = flipud(cat(2,fliplr(zi(:,2:end)),zi));
         yi  = [-flipud(yi(2:end)); yi];
     else                               %return half grid
         zgrd = zi;
@@ -60,15 +64,17 @@ end
 %%
 function obj = channel_properties(obj)
     %compute the summary gross properties for the channel form
-    [grid.x,yi,zi] = channel_3D_form(obj); 
+    [xi,yi,zi] = channel_3D_form(obj); 
+    grid.x = fliplr(max(xi)-xi);
     grid.y  = [-flipud(yi(2:end)); yi];
-    grid.z = cat(2,fliplr(zi(:,2:end)),zi);
+    grid.z = flipud(cat(2,fliplr(zi(:,2:end)),zi));
+    grid.ishead = false; 
     
     wl = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
-    [xj,w,csa,~] = gd_section_properties(grid,wl);
-    gp = gd_gross_properties(grid,wl,hyps,xj,w{2},csa{2});
+    [w,csa,~] = gd_section_properties(grid,wl);
+    gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
     obj.Channel.form.Wm = gp.Wm;
     obj.Channel.form.Lw = gp.Lw;
     obj.Channel.form.Am = gp.Am;
@@ -133,15 +139,15 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     zi = zeros(length(xi),length(yi));
     yz = zeros(length(xi),3);
     %water level properties based on amplitude+mtl or CST model (mAD)
-    zHWxi = hydobj.zhw;        %high water level(mAD)
-    zLWxi = hydobj.zlw;        %low water level(mAD)    
-    amp0 = (hydobj.zhw(end)-hydobj.zlw(end))/2;    %tidal amplitude at mouth 
+    zHWxi = flipud(hydobj.zhw);        %high water level(mAD)
+    zLWxi = flipud(hydobj.zlw);        %low water level(mAD)    
+    amp0 = (hydobj.zhw(1)-hydobj.zlw(1))/2;    %tidal amplitude at mouth 
     
     %river properties
     [hrv,bh,mcr] = get_river_profile(obj,2*amp0,yi);  
 
     %aspect ratio and slope coefficient (mc) at mouth    
-    dl = hydobj.zlw(end)-zm;    %depth of lower form at mouth to lw (m)
+    dl = hydobj.zlw(1)-zm;    %depth of lower form at mouth to lw (m)
     ar = 2*bl/dl;             %aspect ratio of low water channel at mouth
     mct = 2*nc/ar;   %submerged static coefficient of Coulomb friction (estimated from geometry)
     

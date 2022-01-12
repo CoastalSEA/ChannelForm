@@ -76,46 +76,7 @@ classdef CF_ModsData < muiPropertyUI
                 checkInput(obj,obj.ModLeft,obj.ModRight); 
             end
             setClassObj(mobj,'Inputs',classname,obj);
-        end     
-%%
-        function addMorphMods(mobj)
-            %add a prismatic dredge channel to a channel form
-            if isempty(mobj.Cases), return; end
-            
-            idf = contains(mobj.Cases.CaseType,'model');            
-            if isempty(idf)
-                return;
-            elseif sum(idf)>1
-                [useCase,~,ok] = ScenarioList(mobj.Cases,'_model',...
-                  'PromptText','Select Channel Form','ListSize',[200,140]);
-                if ok<1, return; end
-            else
-                useCase = find(idf);
-            end
-            robj = mobj.Cases;
-            caseid = mobj.Cases.CaseID(useCase); 
-            [h_f,id_f,prop,id_p] = getCaseRecord(robj,mobj,caseid);    
-            handle = mobj.(h_f)(id_f);
-            seldata = handle.(prop{1}){id_p};
-            x = seldata.Properties.UserData.XYZ{1};
-            y = seldata.Properties.UserData.XYZ{2};  
-            z = squeeze(seldata.zLevel);          
-            if min(x)<0, x = max(x)-x; end            
-            [X,Y] = ndgrid(x,y);
-            
-            %get channel dimensions
-            inp = mobj.(getClassHandle(mobj,'MorphMods'));
-            for i=1:length(inp.ModStart) 
-                idx = X>inp.ModStart(i) & X<inp.ModEnd(i);
-                idy = Y>inp.ModLeft(i) & Y<inp.ModRight(i);
-                z(idx & idy) = inp.ModElev(i);
-            end
-            %overwrite exisitng form data set with new form   
-            [m,n] = size(z);
-            new_z = reshape(z,1,m,n);            
-            handle.(prop{1}){id_p}.zLevel = new_z;            
-            ModelUI.myDialog('Data modified');
-        end    
+        end      
     end
 %%  
     methods

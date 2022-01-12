@@ -62,7 +62,7 @@ classdef CF_ValleyModel < GDinterface
             if size(yz,2)~=3, yz = yz'; end
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear,'ism',false);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -88,54 +88,41 @@ classdef CF_ValleyModel < GDinterface
 %%
         function addForm2Valley(mobj)
             %merge a selected form with the selected valley form 
+            muicat = mobj.Cases;
             obj = getClassObj(mobj,'Cases','CF_ValleyModel');
             if isempty(obj) 
                 warndlg('No valley model available');
                 return; 
             end
-            ftxt = 'Select Form Model to use:';
-            [fgrid,frmobj] = getGrid(obj,mobj,1,{'CF_FormModel'},ftxt);
-            xf = fgrid.x;            
-            if min(xf)<0, xf = max(xf)-xf; end
-            vtxt = 'Select Valley Model to use:';
-            [vgrid,valobj] = getGrid(obj,mobj,1,{'CF_ValleyModel'},vtxt);
             
-            [X,Y] = ndgrid(xf,fgrid.y);
+            ftxt = 'Select Form Model to use:';
+            fobj = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
+            if isempty(fobj), return; end
+            fgrid = getGrid(fobj,1);
+            vtxt = 'Select Valley Model to use:';
+            vobj = selectCaseObj(muicat,[],{'CF_ValleyModel'},vtxt);
+            vgrid = getGrid(vobj,1);
+            
+            [X,Y] = ndgrid(fgrid.x,fgrid.y);
             zv = griddata(vgrid.x,vgrid.y,vgrid.z',X,Y);    %valley elevations
             new_z = max(fgrid.z,zv);
             [m,n] = size(new_z);
             new_z = reshape(new_z,1,m,n);
-            
-%             
-%             [f_useCase,v_useCase] = selectForm(obj,mobj,promptxt);
-%             if isempty(f_useCase) || isempty(v_useCase), return; end
-%             [new_z,frmobj] = Form2Valley(obj,mobj,v_useCase,f_useCase);
-            
-            
+
             answer = questdlg('Add or update existing?','Add Valley','Add','Update','Add');
             
             if strcmp(answer,'Add')
                 %create new record
-%                 lobj = mobj.(h_f)(id_c);
-%                 irec = length(lobj.(fprop{1}))+1;
-%                 newds = lobj.(fprop{1}){id_rec};
-%                 newds.zLevel = new_z;
-%                 
-%                 lobj.ModelData{irec} = newds;                      %assign form to class property
-%                 lobj.GrossProps{irec} = lobj.GrossProps{id_rec} ;  %asign gross property results
-%                 lobj.Hypsommetry{irec} = lobj.Hypsommetry{id_rec}; %assign hypsommetry results
-%                 lobj.PrismArea{irec} = lobj.PrismArea{id_rec};     %assign area-prism results
-%                 if isa(lobj,'HydroFormModel') || isa(lobj,'CKFAmodel')
-%                     lobj.xWaterLevels{irec}  = lobj.xWaterLevels{id_rec};%assign water levels
-%                 end
-%                 lobj.cidValley(irec) = mobj.Cases.CaseID(v_useCase);
-%                 Results.saveResults(mobj,h_f,lobj);
+                fdst = copy(fobj.Data.Form);
+                fdst.Z(1,:,:) = new_z;
+                setGridObj(fobj,muicat,fdst); 
             else            
                 %overwrite exisitng form data set with new form             
-                frmobj.Data.Form.Z(1,:,:) = new_z;  
-                frmobj.MetaData.valleyID = caseID(mobj.Cases,valobj.CaseIndex);
+                fobj.Data.Form.Z(1,:,:) = new_z;  
+                fobj.MetaData.valleyID = vobj.CaseIndex;
+                classrec = classRec(muicat,caseRec(muicat,fobj.CaseIndex));
+                updateCase(muicat,fobj,classrec,true);
             end            
-            getdialog('Data modified');
         end 
 %%
         function new_z = updateValley(F,F0,zhw,trp,trg,incFP)
@@ -263,52 +250,24 @@ classdef CF_ValleyModel < GDinterface
 %%
         function checkFloodPlainArea(mobj)
             %display the area of the flood plain in a user selected combined form
-            
             promptxt = 'Select a Combined Form'; 
             obj = selectCaseObj(mobj.Cases,[],{'CF_FormModel'},promptxt);
             if isempty(obj), return; end
             grid = getGrid(obj,1);
-            
-            
-            
-%             idf = contains(mobj.Cases.CaseType,'_model'); 
-%             if isempty(idf) || all(idf==0)
-%                 warndlg('No form model available');
-%                 return;
-%             elseif sum(idf)>1
-%                 [f_useCase,~,ok] = ScenarioList(mobj.Cases,'_model',...
-%                   'PromptText','Select Combined Form','ListSize',[200,140]);
-%                 if ok<1, return; end
-%             else
-%                 f_useCase = find(idf);
-%             end
-%             robj = mobj.Cases;
-%             [xf,yf,zf,h_f,~,id_f,aprop] = getCaseGridData(robj,mobj,f_useCase); 
-            
-            
+
             %offset from high water to flood plain surface
-            fp_offset = 2*mobj.Inputs.RunProperties.histint;
+            fp_offset = 2*mobj.Inputs.GD_GridProps.histint;
             %model water level surfaces
             hydobj = obj.RunParam.CF_HydroData;
             zfp = hydobj.zhw+fp_offset;
-            Zfp = repmat(zfp',1,length(grid.y));
-            
-%             if isa(h_f,'ChannelFormModel') || isa(h_f,'PRFormModel')
-%                 hyd = mobj.(getClassHandle(mobj,'HydroFormData'));
-%                 zfp = hyd.MTLatMouth+hyd.TidalAmplitude+fp_offset;
-%                 
-%             else
-%                 cst_res = h_f.(aprop{4}){id_f};
-%                 zfp = cst_res{1}+cst_res{2}+fp_offset;
-%                 Zfp = ones(size(zf)).*zfp;
-%             end
+            Zfp = repmat(zfp,1,length(grid.y));
+
             zf = grid.z;
             zf(zf<Zfp-0.05 | zf>Zfp+0.05) = NaN;
             ndx = sum(sum(~isnan(zf)));
             [~,~,delx,dely] = getGridDimensions(obj.RunParam.GD_GridProps);
-%             delx = xf(2)-xf(1);
-%             dely = yf(2)-yf(1);
             planarea = delx*dely*ndx;
+            
             msgbox(sprintf('Area of flood plain = %.3e',planarea),'Valley area');
         end
 %%
@@ -320,7 +279,6 @@ classdef CF_ValleyModel < GDinterface
             if isempty(fobj), return; end
             fgrid = getGrid(fobj,1);
             xf = fgrid.x/1000;  %change x-y axes to km
-            if min(xf)<0, xf = max(xf)-xf; end
             yf = fgrid.y/1000;
             zf = fgrid.z;
 
@@ -328,7 +286,6 @@ classdef CF_ValleyModel < GDinterface
             [vobj,~] = selectCaseObj(muicat,[],{'CF_ValleyModel'},vtxt);
             vgrid = getGrid(vobj,1);
             xv = vgrid.x/1000;  %change x-y axes to km
-            if xv(1)<xv(end), xv =  flipud(xv); end
             yv = vgrid.y/1000;
 
             %ensure that both surface use the same grid

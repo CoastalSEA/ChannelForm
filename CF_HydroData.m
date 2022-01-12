@@ -343,9 +343,9 @@ classdef CF_HydroData < muiPropertyUI
             inp = getHydroFormProps(obj,inp);
             
             %get time dependent water level properties (due to slr and ntc)          
-            amp = (obj.zhw(end)-obj.zlw(end))/2;%tidal amplitude at mouth
+            amp = (obj.zhw(1)-obj.zlw(1))/2;     %tidal amplitude at mouth
             %inp parameters requires the following water level parameters
-            inp.MTLatMouth = obj.zmt(end);            %mean tide level at mouth (mOD)
+            inp.MTLatMouth = obj.zmt(1);         %mean tide level at mouth (mOD)
             inp.TidalAmplitude = amp;            %tidal amplitude (m)
             inp.TidalPeriod = obj.tidalperiod/3600 ;%tidal period (hr)
             

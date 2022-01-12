@@ -143,7 +143,8 @@ function cf_property_plots(obj,irec,src)
 end
 %%
 function hypsommetryplot(ax,zcentre,zsurf,zvol,wl,casedesc)
-    %plot volume and surface area as function of elevation 
+    %plot volume and surface area as function of elevation
+    ax.XDir = 'normal';
     plot(ax,zvol,zcentre,'-r');
     hold on
     plot(ax,zsurf,zcentre,'-.b');
@@ -162,22 +163,30 @@ end
 %%
 function crossectionplot(ax,grid,wl)
     %plot a series of cross-sections along length of channel
+    ax.XDir = 'normal';
     noxi=length(grid.x);
-    nx1=noxi;nx2=ceil(9*noxi/10);nx3=ceil(4*noxi/5);
-    nx4=ceil(3*noxi/5);nx5=ceil(2*noxi/5);nx6=ceil(noxi/5);
-    if grid.ism  %orientation of x-axis, x=0 is nearest the mouth
+%     nx1=noxi;nx2=ceil(9*noxi/10);nx3=ceil(4*noxi/5);
+%     nx4=ceil(3*noxi/5);nx5=ceil(2*noxi/5);nx6=ceil(noxi/5);
+    nx1=1;               nx2=ceil(1*noxi/10);  nx3=ceil(1*noxi/5);
+    nx4=ceil(2*noxi/5);  nx5=ceil(3*noxi/5);   nx6=ceil(4*noxi/5);   
+    if grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
         zgrd = flipud(grid.z);
     else
         zgrd = grid.z;
     end
-    plot(ax,grid.y,zgrd(nx1,:),'-r');
+    
+    green = mcolor('green');
+    orange = mcolor('orange');
+    purple = mcolor('purple');    
+    
+    plot(ax,grid.y,zgrd(nx1,:),'-r','LineWidth',0.6);
     hold on
-    plot(ax,grid.y,zgrd(nx2,:),'-.b');
-    plot(ax,grid.y,zgrd(nx3,:),'--g');
-    plot(ax,grid.y,zgrd(nx4,:),'-.c');
-    plot(ax,grid.y,zgrd(nx5,:),'--y');
-    plot(ax,grid.y,zgrd(nx6,:),'-.m');
-    plot(ax,grid.y,zgrd(1,:),':k');
+    plot(ax,grid.y,zgrd(nx2,:),'-.b','LineWidth',0.59);
+    plot(ax,grid.y,zgrd(nx3,:),'--','Color',green,'LineWidth',0.58);
+    plot(ax,grid.y,zgrd(nx4,:),'-.','Color',orange,'LineWidth',0.56);
+    plot(ax,grid.y,zgrd(nx5,:),'--','Color',purple,'LineWidth',0.54);
+    plot(ax,grid.y,zgrd(nx6,:),'-.m','LineWidth',0.52);
+    plot(ax,grid.y,zgrd(noxi-1,:),':k');
     
     %add water levels at mouth
     plot(xlim, wl(1)*[1 1],':','Color',[0.7,0.7,0.7]);
@@ -194,9 +203,10 @@ end
 %%
 function centrelineplot(ax,grid,yz)
     %plot centrel-line depth and width variation along channel
-    ax.Position(3) = 0.8;  
+    ax.Position(3) = 0.8;   
+    ax.XDir = 'reverse';
     zi = grid.z(:,ceil(size(grid.z,2)/2):end);
-    if grid.ism  %orientation of x-axis, x=0 is nearest the mouth
+    if grid.ishead  %orientation of x-axis, x=0 is nearest the mouth
         zi = flipud(zi);
     end
     yyaxis left
@@ -204,22 +214,23 @@ function centrelineplot(ax,grid,yz)
     xlabel('<= head       Distance along channel (m)       mouth =>');  
     ylabel('Elevation (mAD)');
     yyaxis right
-    plot(ax,grid.x,squeeze(yz(:,1)),'Color','g','LineStyle','--');
+    plot(ax,grid.x,yz(:,1),'Color','g','LineStyle','--');
     hold on
-    plot(ax,grid.x,squeeze(yz(:,2)),'Color','r','LineStyle',':');
-    plot(ax,grid.x,squeeze(yz(:,3)),'Color','b','LineStyle','-.');
+    plot(ax,grid.x,yz(:,2),'Color','r','LineStyle',':');
+    plot(ax,grid.x,yz(:,3),'Color','b','LineStyle','-.');
     hold off
     ylabel('Half-width (m)');
     hL=legend('Centre Line','High water', 'Mean tide level','Low water',...
                                                     'Location','West');
     set(hL, 'Color', 'none');
-    title(grid.desc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);    
 end
 %%
 function formwidthplot(ax,xi,W,L,casedesc)
     %plot centrel-line depth and width variation along channel
     %order of W and L is HW, MT, LW
     ax.Position(1) = 0.1;
+    ax.XDir = 'reverse';
     plot(ax,xi,W(:,1),xi,W(:,2),xi,W(:,3));
     xlabel('<= head       Distance along channel (m)       mouth =>');
     ylabel('Width (m)');
@@ -233,6 +244,7 @@ end
 %%
 function elevationareaplot(ax,zcentre,zhist,wl,casedesc)
     %histogram of amount of surface area at each elevation
+    ax.XDir = 'normal';
     barh(ax,zcentre, zhist, 'histc'); 
     hold on   
     %add water levels at mouth
@@ -247,6 +259,7 @@ end
 %%
 function hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl,casedesc)
     %plot variation of hydraulic depth with elevation
+    ax.XDir = 'normal';
     plot(ax,zvol./zsurf,zcentre);
     hold on   
     %add water levels at mouth
@@ -261,6 +274,7 @@ end
 %%
 function prismareaplot(ax,xj,APratio,casedesc)
     %plot area-prism ratio along channel
+    ax.XDir = 'reverse';
     plot(ax,xj,APratio);
     xlabel('<= head       Distance along channel (m)       mouth =>'); 
     ylabel('Area-Prism ratio');
@@ -270,6 +284,7 @@ end
 function csaplot(ax,xj,A,L,casedesc)
     %plot cross-sectional area along channel  
     %order of A and L is HW, MT, LW
+    ax.XDir = 'reverse';
     plot(ax,xj,A(:,1),xj,A(:,2),xj,A(:,3));
     xlabel('<= head       Distance along channel (m)       mouth =>');
     ylabel('CSA');
@@ -283,6 +298,7 @@ end
 %%
 function prismplot(ax,xj,Pr,casedesc)
     %plot prism along channel
+    ax.XDir = 'reverse';
     plot(ax,xj,Pr);
     xlabel('<= head       Distance along channel (m)       mouth =>');
     ylabel('Prism');
@@ -292,6 +308,7 @@ end
 function asymmratiosplot(ax,xj,ah,VsVc,casedesc)
     %plot a/h and Vs/Vc along channel
     ax.Position = [0.08,0.11,0.84,0.58];
+    ax.XDir = 'reverse';
     yyaxis left
     plot(ax,xj,ah(:,1),'Color','g','LineStyle','-');
     hold on
@@ -311,6 +328,7 @@ end
 %%
 function hydraulicsplot(ax,hydobj,x,casedesc)
     %plot the results from the CST hydraulic model or linear decay
+    ax.XDir = 'reverse';
     green = mcolor('green');
     orange = mcolor('orange');
 

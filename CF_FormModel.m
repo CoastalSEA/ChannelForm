@@ -92,7 +92,7 @@ classdef CF_FormModel < GDinterface
             if size(yz,2)~=3, yz = yz'; end
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear,'ism',false);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -115,6 +115,43 @@ classdef CF_FormModel < GDinterface
             getdialog('Run complete');
             DrawMap(mobj);
         end
+%%
+        function addMorphMods(mobj)
+            %add a prismatic dredge channel to a channel form
+            muicat = mobj.Cases;
+            ftxt = 'Select Form Model to use:';
+            formobj = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
+            if isempty(formobj), return; end
+            grid = getGrid(formobj,1);         
+            [X,Y] = ndgrid(grid.x,grid.y);
+            zi = grid.z;
+            
+            %get channel dimensions
+            obj = getClassObj(mobj,'Inputs','CF_ModsData');
+            for i=1:length(obj.ModStart) 
+                idx = X>obj.ModStart(i) & X<obj.ModEnd(i);
+                idy = Y>obj.ModLeft(i) & Y<obj.ModRight(i);
+                zi(idx & idy) = obj.ModElev(i);
+            end
+            %overwrite exisitng form data set with new form   
+            [m,n] = size(zi);
+            new_z = reshape(zi,1,m,n);            
+
+            answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
+            
+            if strcmp(answer,'Add')
+                %create new record
+                fdst = copy(formobj.Data.Form);
+                fdst.Z(1,:,:) = new_z;
+                setGridObj(formobj,muicat,fdst); 
+            else            
+                %overwrite exisitng form data set with new form             
+                formobj.Data.Form.Z(1,:,:) = new_z;  
+                formobj.MetaData.valleyID = vobj.CaseIndex;
+                classrec = classRec(muicat,caseRec(muicat,formobj.CaseIndex));
+                updateCase(muicat,formobj,classrec,true);
+            end 
+        end   
     end
 %%
     methods
