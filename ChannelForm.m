@@ -70,7 +70,7 @@ classdef ChannelForm < muiModelUI
             %before defining the next branch.         
                                     
             MenuLabels = {'File','Tools','Project','Setup','Utilities',...
-                                       'Process','Run','Analysis','Help'};
+                                                'Run','Analysis','Help'};
             menu = menuStruct(obj,MenuLabels);  %create empty menu struct
             %
             %% File menu --------------------------------------------------
@@ -137,19 +137,23 @@ classdef ChannelForm < muiModelUI
             menu.Setup(7).Separator = [repmat({'off'},[1,6]),{'on'}]; %separator preceeds item
             %% Utilities menu ---------------------------------------------------
             menu.Utilities(1).List = {'Hydraulic Model',...
+                                      'Add Form to Valley',...
+                                      'Add Modifications',...
                                       'River Dimensions',...
                                       'Valley Thalweg',...
                                       'Area of Flood Plain',...
                                       'CKFA Channel Dimensions',...
                                       'Morphological Timescale',...
                                       'Channel-Valley Sub-Plot'};
-            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,7]);
+            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,9]);
+             menu.Utilities(1).Separator = [repmat({'off'},[1,3]),{'on'},...
+                                            repmat({'off'},[1,5])]; %separator preceeds item
             
-            %% Process menu ---------------------------------------------------
-            menu.Process(1).List = {'Add Form to Valley','Add Modifications',...
-                                    'Restore Form'};
-            menu.Process(1).Callback = repmat({@obj.procMenuOptions},[1,3]);
-            
+%             %% Process menu ---------------------------------------------------
+%             menu.Process(1).List = {'Add Form to Valley','Add Modifications',...
+%                                     'Restore Form'};
+%             menu.Process(1).Callback = repmat({@obj.procMenuOptions},[1,3]);
+%             
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Exponential form model','Power form model',...
                                 'CKFA form model','Valley form model',...
@@ -240,7 +244,7 @@ classdef ChannelForm < muiModelUI
             end
         end     
 %%
-        function setCFMtabs(obj,src,evt)
+        function setCFMtabs(obj,src,~)
             %update the Settings tabs 
             switch src.Tag
 %                 case 'Saltmarsh'
@@ -358,6 +362,10 @@ classdef ChannelForm < muiModelUI
                     cobj = getClassObj(obj,'Inputs','CF_HydroData',msgtxt);
                     if isempty(cobj), return; end
                     runModel(cobj,obj);
+                case 'Add Form to Valley'
+                    CF_ValleyModel.addForm2Valley(obj);
+                case 'Restore Form'
+                    CF_ValleyModel.restoreForm(obj);     
                 case 'River Dimensions'
                     CF_HydroData.displayRiverDims(obj);
                 case 'Valley Thalweg'
@@ -374,19 +382,19 @@ classdef ChannelForm < muiModelUI
         end  
 
 
-        %% Process menu -------------------------------------------------------
-        function procMenuOptions(obj,src,~)
-            %callback functions to run model
-            switch src.Text                   
-                case 'Add Form to Valley'
-                    CF_ValleyModel.addForm2Valley(obj);
-                case 'Restore Form'
-                    CF_ValleyModel.restoreForm(obj); 
-                case 'Add Modifications'
-                    CF_FormModel.addMorphMods(obj);
-                
-            end            
-        end  
+%         %% Process menu -------------------------------------------------------
+%         function procMenuOptions(obj,src,~)
+%             %callback functions to run model
+%             switch src.Text                   
+%                 case 'Add Form to Valley'
+%                     CF_ValleyModel.addForm2Valley(obj);
+%                 case 'Restore Form'
+%                     CF_ValleyModel.restoreForm(obj); 
+%                 case 'Add Modifications'
+%                     CF_FormModel.addMorphMods(obj);
+%                 
+%             end            
+%         end  
         %%
         function gridMenuOptions(obj,src,~)
             %callback functions for grid tools options

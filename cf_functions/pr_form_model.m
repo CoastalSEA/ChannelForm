@@ -184,7 +184,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
             zdcr = (zhw-hrv).*isriver;
             zi(ix,:) = zi(ix,:).*(~isriver)+zdcr;
         end
-        yz(ix,:) = [yu, yo, yl];
+        yz(ix,:) = [yu, yo, yl]*2;   %full width  
     end
     
     %add mask to define surrounding land surface

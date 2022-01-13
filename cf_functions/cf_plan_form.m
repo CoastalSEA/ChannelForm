@@ -1,16 +1,15 @@
-function yz = cf_plan_form(zwl,grid)
+function yz = cf_plan_form(grid,zwl)
 %
 %-------function help------------------------------------------------------
 % NAME
 %   cf_pan_form.m
 % PURPOSE
-%   compute planform variation along the x-axis at specified levels 
+%   compute planform variation along the x-axis at specified planar levels 
 % USAGE
-%   yz = cf_plan_form(zwl,grid)
+%   yz = cf_plan_form(grid,zwl)
 % INPUTS
-%   zwl - struct or cell array of levels, constant value for each level
 %   grid - struct of x, y, z (eg as used in getGrid in the GDinterface)
-%          NB: at the moment this can only handle a half-grid ****
+%   zwl - struct or cell array of levels, constant value for each level
 % OUTPUTS
 %   yz - cell array of widths for each level 
 % SEE ALSO
@@ -21,51 +20,35 @@ function yz = cf_plan_form(zwl,grid)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    xi = grid.x;
-    nx = length(xi);
     if isstruct(zwl)
         zwl = struct2cell(zwl);
     end
     nlevels = length(zwl);
-%     if isvector(zwl)              
-%         %single value for each level
-%         nlevels = length(zwl);
-%     else
-%         yz=[]; return;
-%         % %levels specified along the x-axis of the grid
-%         % [m,n] = size(zwl);
-%         % yz = [];
-%         % if m==n
-%         %     warndlg('Unable to determine number of levels in cf_plan_form')
-%         %     return;
-%         % elseif m==nx
-%         %     nlevels = n;
-%         % elseif n==nx
-%         %     nlevels = m;
-%         % else
-%         %     warndlg('Levels variable, zwl, does not match x-dimension in cf_plan_form')
-%         %     return;
-%         % end
-%     end
+    xi = grid.x;
+    nx = length(xi);
     
-    zmax = max(grid.z,[],'all');
-    if zmax<zwl{1}
-        %grid does not rxtend to zhw
-        warndlg('Grid does not extend to high water level. Plan form not set');
-        yz = [];
+    dely = grid.y(2)-grid.y(1);  %grid interval
+    yz = zeros(nx,nlevels);
+    
+    zi = grid.z;
+    if grid.ishead  %orientation of x-axis, x=0 is nearest the head
+        zi = flipud(zi);
+    end
+    
+    zmax = max(zi,[],'all');
+    if zmax<zwl{1}(1)
+        %grid does not extend to zhw
+        warndlg('Grid does not does not extend to high water. Plan form not set');
+        yz = num2cell(yz',2)';      %formatted to load into dstable
         return;
     end
-    hf = figure('Tag','PlotFig','Visible','off');
-    ax = axes(hf);
-    yz = zeros(nx,nlevels);
+
     for j=1:nlevels
-        M = contour(ax,grid.y,xi,grid.z,[zwl{j},zwl{j}]);
-        xj = M(2,2:end);
-        yj = M(1,2:end); 
-        [xj,idx] = unique(xj,'stable');
-        yj = yj(idx);               
-        yz(:,j) = interp1(xj,yj,xi,'linear');
+        zij = zi;
+        zij(zij>zwl{j}(1)) = NaN;             %set values above zwl to NaN
+        for i=1:nx
+            yz(i,j) = sum(~isnan(zij(i,:))*dely); %width at zwl
+        end
     end
-    delete(hf);
     yz = num2cell(yz',2)';      %formatted to load into dstable
 end

@@ -214,13 +214,13 @@ function centrelineplot(ax,grid,yz)
     xlabel('<= head       Distance along channel (m)       mouth =>');  
     ylabel('Elevation (mAD)');
     yyaxis right
-    plot(ax,grid.x,yz(:,1),'Color','g','LineStyle','--');
+    plot(ax,grid.x,yz(:,1),'Color','g','LineStyle','--','LineWidth',0.6);
     hold on
-    plot(ax,grid.x,yz(:,2),'Color','r','LineStyle',':');
-    plot(ax,grid.x,yz(:,3),'Color','b','LineStyle','-.');
+    plot(ax,grid.x,yz(:,2),'Color','r','LineStyle',':','LineWidth',0.75);
+    plot(ax,grid.x,yz(:,3),'Color','b','LineStyle','-.','LineWidth',0.55);
     hold off
-    ylabel('Half-width (m)');
-    hL=legend('Centre Line','High water', 'Mean tide level','Low water',...
+    ylabel('Width (m)');
+    hL=legend('Grid centre line','High water', 'Mean tide level','Low water',...
                                                     'Location','West');
     set(hL, 'Color', 'none');
     title(grid.desc,'FontWeight','normal','FontSize',10);    

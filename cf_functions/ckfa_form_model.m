@@ -47,7 +47,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
     
     %model x-axis is from mouth. no need to reverse data for use in ChannelForm
     [yu,yo,yl] = expPlan(obj,xi);
-    yz = [yu,yo,yl];
+    yz = [yu,yo,yl]*2;      %full width  
     yz = num2cell(yz',2)';  %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                              %return full grid
@@ -343,20 +343,19 @@ function output = ckfa_waveprops(obj,params)
 end
 %%
 function [yu,yo,yl] = expPlan(obj,xi)
-    %compute controlling dimensions (y) for an exponential plan form
-    xexp = obj.RunParam.CF_HydroData.xTideRiver-fliplr(xi);                                              
+    %compute controlling dimensions (y) for an exponential plan form                                        
     Wm = obj.CKFAform.flow.Wm;
     Wmw = obj.CKFAform.wave.Wmw;
-    Lst = obj.CKFAform.flow.Lst; %width of lower intertidal - LW to MT (m)
+    Lst = obj.CKFAform.flow.Lst;  %width of lower intertidal - LW to MT (m)
     Wm = max(Wm,Wmw);
     bl = (Wm-2*Lst)/2;
     bu = (Wm+2*1.57*Lst)/2;
     bh = obj.CKFAform.flow.Wrv/2;
     Lw = obj.CKFAform.form.Lw;
 
-    Ls = (bu-bl)/2.57;              %Lstar in F&A, lower intertial width (lw to mtl)(m) 
-    bo = bl+Ls;                     %half-width at mtl(m)
-    yu = (bu-bh)*exp(-xexp/Lw)+bh;  %distance from centre line to hw
-    yo = (bo-bh)*exp(-xexp/Lw)+bh;  %distance from centre line to mtl
-    yl = (bl-bh)*exp(-xexp/Lw)+bh;  %distance from centre line to lw       
+    Ls = (bu-bl)/2.57;            %Lstar in F&A, lower intertial width (lw to mtl)(m) 
+    bo = bl+Ls;                   %half-width at mtl(m)
+    yu = (bu-bh)*exp(-xi/Lw)+bh;  %distance from centre line to hw
+    yo = (bo-bh)*exp(-xi/Lw)+bh;  %distance from centre line to mtl
+    yl = (bl-bh)*exp(-xi/Lw)+bh;  %distance from centre line to lw       
 end

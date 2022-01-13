@@ -263,7 +263,7 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
         zix = zds+zdu+zdl+zdc;
         %adjust mtl datum to zero datum  
         zi(ix,:)  = zix + zo; 
-        yz(ix,:) = [yu, yo, yl];       
+        yz(ix,:) = [yu, yo, yl]*2;   %full width       
     end
 end
 %%
