@@ -22,12 +22,14 @@ classdef CF_FormModel < GDinterface
     properties
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
         %Additional properties:   
-        ModelType %type of form model being used (Exp, Power, CKFA)
+%         ModelType %type of form model being used (Exp, Power, CKFA)
         Selection %struct for plan, channel and intertidal form selection
-        CKFAform  %struct for CKFA model property tables for:
-                  %form, flow and wave
-        Channel   %struct for Channel model summary parameters
     end
+%     
+    properties (Transient)
+        Channel   %struct for model summary parameters used when calling 
+                  %cst model in CF_HydroData
+    end    
     
     methods
         function obj = CF_FormModel()                   
@@ -52,7 +54,7 @@ classdef CF_FormModel < GDinterface
 %--------------------------------------------------------------------------
 % Model code
 %--------------------------------------------------------------------------
-%             wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
+            obj.Channel = [];
             hydobj = getClassObj(mobj,'Inputs','CF_HydroData');
             setTransHydroProps(hydobj,mobj); %initialise transient properties
             
@@ -61,7 +63,7 @@ classdef CF_FormModel < GDinterface
             %add water level definition to the run parameters
             [wlflag,wlstxt] = setWaterLevels(obj);
             
-            obj.ModelType = option;
+%             obj.ModelType = option;
             switch option
                 case 'Exponential'                    
                     %prompt user to select plan form and x-sect form 
@@ -97,7 +99,7 @@ classdef CF_FormModel < GDinterface
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
-            meta.source = metaclass(obj).Name;
+            meta.source = sprintf('%s(%s)',metaclass(obj).Name,option);
             obj = setGrid(obj,{griddata},dims,meta);
             obj = setPlanProps(obj,yz,meta);  %half width data
             hydobj = obj.RunParam.CF_HydroData;

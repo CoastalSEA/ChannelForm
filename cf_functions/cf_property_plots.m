@@ -71,7 +71,7 @@ function cf_property_plots(obj,irec,src)
             L = zeros(length(xj),3); W = L;
             for i=1:3
                 W(:,i) = sprop.DataTable{:,i}; %selects Widths 
-                L(i) = getconvergencelength(xj,W(:,i));
+                L(i) = -getconvergencelength(xj,W(:,i));
             end
             formwidthplot(ax,xj,W,L,grid.desc)
         case 'Elevation-Area histogram'
@@ -90,9 +90,13 @@ function cf_property_plots(obj,irec,src)
         case 'Cross-sectional area' 
             xj = sprop.Dimensions.X;   
             L = zeros(length(xj),3);
+%              width = sprop.DataTable{:,2}; %selects Widths 
+%             Lw = -getconvergencelength(grid.x,width); %width convergence length
+%             x0 = [rand(1,1),1/Lw];
+%             
             for i=1:3
                 A(:,i) = sprop.DataTable{:,3+i}; %#ok<AGROW> %selects CSAs 
-                L(i) = getconvergencelength(xj,A(:,i));
+                L(i) = -getconvergencelength(xj,A(:,i));
             end
             csaplot(ax,xj,A,L,grid.desc)
         case 'Prism'

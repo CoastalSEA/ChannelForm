@@ -75,10 +75,10 @@ function obj = channel_properties(obj)
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
     [w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
-    obj.Channel.form.Wm = gp.Wm;
-    obj.Channel.form.Lw = gp.Lw;
-    obj.Channel.form.Am = gp.Am;
-    obj.Channel.form.La = gp.La;  
+    obj.Channel.Wm = gp.Wm;
+    obj.Channel.Lw = gp.Lw;
+    obj.Channel.Am = gp.Am;
+    obj.Channel.La = gp.La;  
 end
 %%
 function [xi,yi,zi,yz] = channel_3D_form(obj)

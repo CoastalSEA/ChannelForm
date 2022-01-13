@@ -341,7 +341,7 @@ classdef CF_HydroData < muiPropertyUI
             
             %width, CSA and convergence length are form model dependent
             inp = getHydroFormProps(obj,inp);
-            
+
             %get time dependent water level properties (due to slr and ntc)          
             amp = (obj.zhw(1)-obj.zlw(1))/2;     %tidal amplitude at mouth
             %inp parameters requires the following water level parameters
@@ -370,21 +370,31 @@ classdef CF_HydroData < muiPropertyUI
             %initialise the properties required for the CST model using the
             %Form model which was used to call CF_HydroData and assigned to
             %obj.FormModel
-            if ismember(obj.FormModel.ModelType,{'Exponential','Power'})
-                frm = obj.FormModel.Channel; 
-                inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
-                inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
-                inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
-                inp.AreaELength = frm.form.La;   %area convergence length (m)              
-            elseif strcmp(obj.FormModel.ModelType,'CKFA')
-                frm = obj.FormModel.CKFAform;
-                inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
-                inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
-                inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
-                inp.AreaELength = frm.form.La;   %area convergence length (m)              
-            else
-                inp = [];   %call error
+            if isempty(obj.FormModel.Data)
+                frm = obj.FormModel.Channel;                   
+            else 
+                frm = obj.FormModel.Data.GrossProps; 
             end
+            inp.MouthWidth = frm.Wm;    %width of mouth at high water(m)
+            inp.WidthELength = frm.Lw;  %width convergence length at high water (m)
+            inp.MouthCSA = frm.Am;      %CSA of mouth at high water(m2)
+            inp.AreaELength = frm.La;   %area
+            
+%             if ismember(obj.FormModel.ModelType,{'Exponential','Power'})
+%                 frm = obj.FormModel.Channel; 
+%                 inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
+%                 inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
+%                 inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
+%                 inp.AreaELength = frm.form.La;   %area convergence length (m)              
+%             elseif strcmp(obj.FormModel.ModelType,'CKFA')
+%                 frm = obj.FormModel.CKFAform;
+%                 inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
+%                 inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
+%                 inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
+%                 inp.AreaELength = frm.form.La;   %area convergence length (m)              
+%             else
+%                 inp = [];   %call error
+%             end
         end
 %%
         function [formobj,caserec] = selectFormModel(~,mobj)    

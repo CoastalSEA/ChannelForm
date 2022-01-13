@@ -75,10 +75,10 @@ function obj = pr_properties(obj)
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
     [w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
-    obj.Channel.form.Wm = gp.Wm;
-    obj.Channel.form.Lw = gp.Lw;
-    obj.Channel.form.Am = gp.Am;
-    obj.Channel.form.La = gp.La;  
+    obj.Channel.Wm = gp.Wm;
+    obj.Channel.Lw = gp.Lw;
+    obj.Channel.Am = gp.Am;
+    obj.Channel.La = gp.La;  
 end
 %%
 function [xi,yi,zi,yz] = pr_3D_form(obj)    
@@ -123,8 +123,8 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     zi = zeros(length(xi),length(yi));
     yz = zeros(length(xi),3);
     %water level properties based on amplitude+mtl or CST model (mAD)
-    zHWxi = hydobj.zhw;                     %high water level(mAD)
-    zLWxi = hydobj.zlw;                     %low water level(mAD)
+    zHWxi = flipud(hydobj.zhw);             %high water level(mAD)
+    zLWxi = flipud(hydobj.zlw);             %low water level(mAD)
     amp0 = (hydobj.zhw(1)-hydobj.zlw(1))/2; %tidal amplitude at mouth
     zso = hydobj.zmt(1);  %mean tide level at mouth used to define the level of the 'shoulder' in the power form (constant)
     du = hydobj.zhw(end)-zso;               %depth of upper form at head relative to zso (constant)

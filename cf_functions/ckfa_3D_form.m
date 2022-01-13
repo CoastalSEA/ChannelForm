@@ -34,37 +34,37 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
     offset = 2*grdobj.histint;       %level above hw for land outside section
 
     % CKFA form properties from ckfa_form_solver    
-    hm = obj.CKFAform.form.hm;   %MTL hydraulic depth at mouth (m) 
-    LA  = obj.CKFAform.form.La;  %CSA convergence length (m)
-    LW  = obj.CKFAform.form.Lw;  %width convergence length (m)
-    Ucr = obj.CKFAform.form.Ucr; %peak tidal velocity
+    hm = params.form.hm;         %MTL hydraulic depth at mouth (m) 
+    LA  = params.form.La;        %CSA convergence length (m)
+    LW  = params.form.Lw;        %width convergence length (m)
+    Ucr = params.form.Ucr;       %peak tidal velocity
 
     % Flow only properties
-    Slw = obj.CKFAform.flow.Slw; %surface area at low water (m2)
-    Sfl = obj.CKFAform.flow.Sfl; %surface area of tidal flats (m2)
-    Wm = obj.CKFAform.flow.Wm;   %Width at mouth (m)    
-    Am = obj.CKFAform.flow.Am;   %CSA at mouth (m2)
-    Wrv = obj.CKFAform.flow.Wrv; %width of regime river (m)
-    Arv = obj.CKFAform.flow.Arv; %CSA of regime river (m2)
+    Slw = params.flow.Slw;       %surface area at low water (m2)
+    Sfl = params.flow.Sfl;       %surface area of tidal flats (m2)
+    Wm = params.flow.Wm;         %Width at mouth (m)    
+    Am = params.flow.Am;         %CSA at mouth (m2)
+    Wrv = params.flow.Wrv;       %width of regime river (m)
+    Arv = params.flow.Arv;       %CSA of regime river (m2)
     % tide+wave properties (used for Qp - commented out)
-    % Vpw = obj.CKFAform.wave.Vpw;  %tidal prism including wave effects
+    % Vpw = params.wave.Vpw;  %tidal prism including wave effects
     
     % Input parameters
-    am = params.am;              %tidal amplitude (m)
-    tp = params.tp;              %tidal period (s)    
-    Le = params.Le;              %estuary length (m)
-    Uw = params.Uw;              %wind speed at 10m (m/s)
-    d50 = params.d50;            %sediment grain size, D50 (m)
-    tau = params.taucr;          %critical bed shear stress (Pa)
-    me = params.me;              %erosion rate (kg/N/s)
-    ws = params.ws;              %sediment fall velocity (m/s)
-    rhoc = params.rhoc;          %suspended sediment concentration (kg/m3)
-    Dsm = params.Dsm;            %average depth over saltmarsh (m)
-    Dmx = params.Dmx;            %maximum depth of salt marsh (m)          
+    am = params.input.am;        %tidal amplitude (m)
+    tp = params.input.tp;        %tidal period (s)    
+    Le = params.input.Le;        %estuary length (m)
+    Uw = params.input.Uw;        %wind speed at 10m (m/s)
+    d50 = params.input.d50;      %sediment grain size, D50 (m)
+    tau = params.input.taucr;    %critical bed shear stress (Pa)
+    me = params.input.me;        %erosion rate (kg/N/s)
+    ws = params.input.ws;        %sediment fall velocity (m/s)
+    rhoc = params.input.rhoc;    %suspended sediment concentration (kg/m3)
+    Dsm = params.input.Dsm;      %average depth over saltmarsh (m)
+    Dmx = params.input.Dmx;      %maximum depth of salt marsh (m)          
     
     % Constant properties
-    g = params.g;                %acceleration due to gravity (m/s2)
-    rhos = params.rhos;          %density of sediment (default = 2650 kg
+    g = params.input.g;          %acceleration due to gravity (m/s2)
+    rhos = params.input.rhos;    %density of sediment (default = 2650 kg
     conc = rhoc/rhos;            %volume concentration (-)  
     omega = 2*pi/tp;             %tidal frequency (1/s)
     nc  = 2.0;                   %channel shape factor
@@ -82,9 +82,9 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
 
     %water level properties based on amplitude+mtl or CST model (mAD)
     %ckfa model has origin at mouth, x positive upstream
-    zHWxi = hydobj.zhw;           %high water level(mAD)
-    zLWxi = hydobj.zlw;           %low water level(mAD) 
-    am0 = (zHWxi(1)-zLWxi(1))/2;  %tidal amplitude at mouth
+    zHWxi = hydobj.zhw;          %high water level(mAD)
+    zLWxi = hydobj.zlw;          %low water level(mAD) 
+    am0 = (zHWxi(1)-zLWxi(1))/2; %tidal amplitude at mouth
 
     Slope = 4*am0/tp/sqrt(g*hm);
 %     [hlw,wlw,~] = river_regime(Qp,Slope,d50river,tauriver,rhos,rhow);
@@ -125,18 +125,18 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
         if Wlx>Wlw                      %correct for wave enlarged prism
             Wlw = Wlx;
         end  
-        if Wlw<Wrv, Wlw=Wrv; end         %make river regime channel minimum section
+        if Wlw<Wrv, Wlw=Wrv; end        %make river regime channel minimum section
         Lc  = Wlw/nbk;                  %half width of channel
         %
         if Alx>Alw                      %correct for wave enlarged prism
             Alw = Alx;
         end 
 
-        if Alw<Arv, Alw=Arv; end         %make river regime channel minimum section
+        if Alw<Arv, Alw=Arv; end        %make river regime channel minimum section
         %
         % calculate channel dimensions
-        mu  = Alw*nbk*3/Wlw^nc;        %friction angle for low water channel
-        dc  = mu*Lc/2;                 %depth at centre-line of low water channel
+        mu  = Alw*nbk*3/Wlw^nc;         %friction angle for low water channel
+        dc  = mu*Lc/2;                  %depth at centre-line of low water channel
         %
         if dlw<dc
             y0lw = Lc*(1+2*(-dlw)/mu/Lc)^(1/nc); %distance from c.l. to dlw
@@ -161,52 +161,52 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
         %this causes switching in the upper reaches where intertidal is very
         %narrow.
         if dhw>0   %wave profile exists
-            ysm = yhw*(Dmx/dhw)^1.5;   %distance from Dmx to hw on wave profile
+            ysm = yhw*(Dmx/dhw)^1.5; %distance from Dmx to hw on wave profile
         elseif ax<=Dmx
-            ysm = Lst*pi/2;            %distance from mtl to hw on flow profile
+            ysm = Lst*pi/2;          %distance from mtl to hw on flow profile
         else
             ysm = Lst*(pi/2-asin((ax-Dmx)/ax)); %distance from Dmx to hw on flow profile
         end
         %
-        y0sm = (y0hw+yhw)-ysm;      %distance from c.l. to Dmx (saltmarsh)
+        y0sm = (y0hw+yhw)-ysm;       %distance from c.l. to Dmx (saltmarsh)
         %
         %set up profile and calculate z values
         for k = 1:length(yi)
             %
             if  yi(k)<=y0lw && yi(k)<=y0hw
-                zi(j,k) = mtl-(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc));    %lw channel
+                zi(j,k) = mtl-(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc)); %lw channel
             elseif yi(k)<y0lw && yi(k)>y0hw && yi(k)<y0hw+yhw
-                zch    = -(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc));       %lw channel
-                zhw    = ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3);      %hw wave profile
+                zch    = -(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc));     %lw channel
+                zhw    = ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3);   %hw wave profile
                 zi(j,k) = mtl+min(zch,zhw);
             elseif yi(k)>y0lw && yi(k)<y0lw+ylw && yi(k)<y0hw
                 zi(j,k) = mtl-(ax+dlw*(1-(yi(k)-y0lw)/ylw)^(2/3));%lw wave profile
             elseif yi(k)>y0lw && yi(k)>y0lw+ylw && yi(k)<Lcw && yi(k)<y0hw
-                zi(j,k) = mtl-(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc));    %lw channel profile above lw wave profile    
+                zi(j,k) = mtl-(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc)); %lw channel profile above lw wave profile    
             elseif yi(k)>y0lw && yi(k)<Lcw && yi(k)>y0hw && yi(k)<y0hw+yhw && y0hw+yhw>Lcw
-                zhw    = ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3);      %hw wave profile
+                zhw    = ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3);   %hw wave profile
                 if yi(k)<y0lw+ylw
-                zlw    = -(ax+dlw*(1-(yi(k)-y0lw)/ylw)^(2/3));   %lw wave profile
+                zlw    = -(ax+dlw*(1-(yi(k)-y0lw)/ylw)^(2/3));%lw wave profile
                 else
                     zlw=zhw;
                 end
                 zi(j,k) = mtl+min(zlw,zhw);
             elseif yi(k)>y0lw && yi(k)<Lcw
-                zi(j,k) = mtl-(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc));      %lw channel
+                zi(j,k) = mtl-(ax+mu*Lc/2*(1-(yi(k)/Lc)^nc)); %lw channel
             elseif yi(k)>Lcw && yi(k)<Lcw+Lst && (yi(k)<y0hw || yi(k)>y0hw+yhw)
-                zi(j,k) = mtl+ax*((yi(k)-Lcw)/Lst-1);             %lower tidal flat
+                zi(j,k) = mtl+ax*((yi(k)-Lcw)/Lst-1);         %lower tidal flat
             elseif yi(k)>Lcw && yi(k)<Lcw+Lst && yi(k)>y0hw && yi(k)<y0hw+yhw
-                zi(j,k) = mtl+ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3);  %hw wave profile
+                zi(j,k) = mtl+ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3); %hw wave profile
             elseif yi(k)>Lcw+Lst && yi(k)<y0hw && yi(k)<y0sm
-                zi(j,k) = mtl+ax*sin((yi(k)-Lcw)/Lst-1);          %upper tidal flat
+                zi(j,k) = mtl+ax*sin((yi(k)-Lcw)/Lst-1);      %upper tidal flat
             elseif yi(k)>Lcw+Lst && yi(k)>y0hw && yi(k)<y0hw+yhw && yi(k)<y0sm
-                zi(j,k) = mtl+ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3);  %hw wave profile
+                zi(j,k) = mtl+ax-dhw*(1-(yi(k)-y0hw)/yhw)^(2/3); %hw wave profile
             elseif yi(k)>y0hw+yhw && yi(k)<Lhw && yi(k)<y0sm
-                zi(j,k) = mtl+ax*sin((yi(k)-Lcw)/Lst-1);          %upper tidal flat
+                zi(j,k) = mtl+ax*sin((yi(k)-Lcw)/Lst-1);      %upper tidal flat
             elseif yi(k)>y0sm && yi(k)<Lhw && Dmx>0
-                zi(j,k) = mtl+ax-Dsm;                          %horizontal marsh surface
+                zi(j,k) = mtl+ax-Dsm;                         %horizontal marsh surface
             else
-                zi(j,k) = mtl+ax+offset;                       %values outside section
+                zi(j,k) = mtl+ax+offset;                      %values outside section
             end
             if ~isreal(zi(j,k))
                 zi(j,k) = 9.999;

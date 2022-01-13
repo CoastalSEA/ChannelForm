@@ -38,6 +38,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
     params = ckfa_properties(obj);
 
     %set the water level variations along the estuary
+    obj.Channel = params.form;
     [obj,ok] = cf_set_hydroprops(obj,wlflag);
     if ok<1, return; end
 
@@ -46,7 +47,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
     if isempty(xi),return; end
     
     %model x-axis is from mouth. no need to reverse data for use in ChannelForm
-    [yu,yo,yl] = expPlan(obj,xi);
+    [yu,yo,yl] = expPlan(params,xi);
     yz = [yu,yo,yl]*2;      %full width  
     yz = num2cell(yz',2)';  %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
@@ -62,14 +63,14 @@ end
 function params = ckfa_properties(obj)
     %get the input parameters and then call the ckfa model components for
     %form, flow and tide+wave properties
-    params = ckfa_parameters(obj);          
+    params.input = ckfa_parameters(obj);          
     %call solver function 
     initdepth = 1;  %initial guess of hydraulic depth
-    obj.CKFAform.form = ckfa_form_solver(initdepth,params);
+    params.form = ckfa_form_solver(initdepth,params.input);
     % flow only gross properties
-    obj.CKFAform.flow = ckfa_flowprops(obj,params);
+    params.flow = ckfa_flowprops(params);
     % tide+wave gross properties (incl saltmarsh if included)
-    obj.CKFAform.wave = ckfa_waveprops(obj,params);
+    params.wave = ckfa_waveprops(params);
 end
 %%
 function params = ckfa_parameters(obj)
@@ -77,10 +78,6 @@ function params = ckfa_parameters(obj)
     
     %default model constants (NB: not as held and modifiable in UI)
     cn = getConstantStruct(muiConstants.Evoke);    
-        % g = cns.Gravity;              %acceleration due to gravity (m/s2)
-        % rhow = cns.WaterDensity;      %density of water (default = 1025 kg/m^3)
-        % rhos = cns.SedimentDensity;   %density of sediment (default = 2650 kg
-        % visc = cns.KinematicViscosity;%viscosity of water (m2/s)
     
     sedobj = obj.RunParam.CF_SediData;    
     %channel sediment properties
@@ -108,24 +105,24 @@ function params = ckfa_parameters(obj)
                     'Dsm',sedobj.AvMarshDepth,'Dmx',sedobj.MaxMarshDepth);        
 end
 %%
-function output = ckfa_flowprops(obj,params)
+function output = ckfa_flowprops(params)
     %flow only - gross properties using the CKFA model
     nbk = 2; %number of banks is assumed to be 2 in the ChannelForm model
     
     %CKFA form properties from ckfa_form_solver    
-    hm = obj.CKFAform.form.hm;     %MTL hydraulic depth at mouth (m)
-    LW = obj.CKFAform.form.Lw;     %e-folding length for width (m)
-    Wm = obj.CKFAform.form.Wm;     %MTL Width at mouth (m)
-    LA = obj.CKFAform.form.La;     %e-folding length for CSA (m2)
-    Am = obj.CKFAform.form.Am;     %MTL CSA at mouth (m2)
-    Ucr = obj.CKFAform.form.Ucr;   %peak tidal amplitude (m/s)    
+    hm = params.form.hm;           %MTL hydraulic depth at mouth (m)
+    LW = params.form.Lw;           %e-folding length for width (m)
+    Wm = params.form.Wm;           %MTL Width at mouth (m)
+    LA = params.form.La;           %e-folding length for CSA (m2)
+    Am = params.form.Am;           %MTL CSA at mouth (m2)
+    Ucr = params.form.Ucr;         %peak tidal amplitude (m/s)    
     
     %Input parameters
-    am = params.am;                %tidal amplitude (m)
-    tp = params.tp;                %tidal period (s)
-    Le = params.Le;                %estuary length (m)
-    hrv = params.hrv;              %hydraulic depth of regime river channel (m)
-    Wrv = params.Wrv;              %width of regime river channel (m)
+    am = params.input.am;          %tidal amplitude (m)
+    tp = params.input.tp;          %tidal period (s)
+    Le = params.input.Le;          %estuary length (m)
+    hrv = params.input.hrv;        %hydraulic depth of regime river channel (m)
+    Wrv = params.input.Wrv;        %width of regime river channel (m)
 
     omega = 2*pi/tp;               %tidal frequency (1/s)
     g = muiConstants.Evoke.Gravity;
@@ -157,41 +154,41 @@ function output = ckfa_flowprops(obj,params)
     output = table(Slw,Vlw,Soc,Voc,Sfl,Vfl,Vp,Wm,Am,Wrv,Arv,Lst,Vph);
 end
 %%
-function output = ckfa_waveprops(obj,params)
+function output = ckfa_waveprops(params)
     %flow+waves - gross properties using the CKFA model
     nbk = 2; %number of banks is assumed to be 2 in the ChannelForm model
     type= 4; %estuary classification type (1-7) - assumed fixed in ChannelForm
     
     % CKFA form properties from ckfa_form_solver    
-    hm = obj.CKFAform.form.hm;   %MTL hydraulic depth at mouth (m) 
-    LA  = obj.CKFAform.form.La;  %CSA convergence length (m)
-    LW  = obj.CKFAform.form.Lw;  %width convergence length (m)
+    hm = params.form.hm;         %MTL hydraulic depth at mouth (m) 
+    LA  = params.form.La;        %CSA convergence length (m)
+    LW  = params.form.Lw;        %width convergence length (m)
     
     % Flow only properties
-    Slw = obj.CKFAform.flow.Slw; %surface area at low water (m2)
-    Vlw = obj.CKFAform.flow.Vlw; %volume at low water (m3)
-    Sfl = obj.CKFAform.flow.Sfl; %surface area of tidal flats (m2)
-    Vfl = obj.CKFAform.flow.Vfl; %volume of tidal flats (m3)
-    Vp  = obj.CKFAform.flow.Vp;  %tidal prism volume (m3)    
-    Lst = obj.CKFAform.flow.Lst; %width of lower intertidal - LW to MT (m)
+    Slw = params.flow.Slw;       %surface area at low water (m2)
+    Vlw = params.flow.Vlw;       %volume at low water (m3)
+    Sfl = params.flow.Sfl;       %surface area of tidal flats (m2)
+    Vfl = params.flow.Vfl;       %volume of tidal flats (m3)
+    Vp  = params.flow.Vp;        %tidal prism volume (m3)    
+    Lst = params.flow.Lst;       %width of lower intertidal - LW to MT (m)
     
     % Input parameters
-    am = params.am;              %tidal amplitude (m)
-    tp = params.tp;              %tidal period (s)    
-    Le = params.Le;              %estuary length (m)
-    Uw = params.Uw;              %wind speed at 10m (m/s)
-    d50 = params.d50;            %sediment grain size, D50 (m)
-    tau = params.taucr;          %critical bed shear stress (Pa)
-    me = params.me;              %erosion rate (kg/N/s)
-    ws = params.ws;              %sediment fall velocity (m/s)
-    rhoc = params.rhoc;          %suspended sediment concentration (kg/m3)
-    Dsm = params.Dsm;            %average depth over saltmarsh (m)
-    Dmx = params.Dmx;            %maximum depth of salt marsh (m)
+    am = params.input.am;        %tidal amplitude (m)
+    tp = params.input.tp;        %tidal period (s)    
+    Le = params.input.Le;        %estuary length (m)
+    Uw = params.input.Uw;        %wind speed at 10m (m/s)
+    d50 = params.input.d50;      %sediment grain size, D50 (m)
+    tau = params.input.taucr;    %critical bed shear stress (Pa)
+    me = params.input.me;        %erosion rate (kg/N/s)
+    ws = params.input.ws;        %sediment fall velocity (m/s)
+    rhoc = params.input.rhoc;    %suspended sediment concentration (kg/m3)
+    Dsm = params.input.Dsm;      %average depth over saltmarsh (m)
+    Dmx = params.input.Dmx;      %maximum depth of salt marsh (m)
     
     % Constant properties
-    g = params.g;                %acceleration due to gravity (m/s2)
-    rhow = params.rhow;          %density of water (default = 1025 kg/m^3)
-    rhos = params.rhos;          %density of sediment (default = 2650 kg
+    g = params.input.g;          %acceleration due to gravity (m/s2)
+    rhow = params.input.rhow;    %density of water (default = 1025 kg/m^3)
+    rhos = params.input.rhos;    %density of sediment (default = 2650 kg
 
     % Initialise model settings
     if Dmx==0, ism = false; else, ism = true; end %include saltmarsh if Dmx>0
@@ -342,16 +339,16 @@ function output = ckfa_waveprops(obj,params)
     output = table(Slww,Vlww,Sow,Vow,Sflw,Vflw,Ssmw,Vsmw,Vpw,Wmw,Amw);
 end
 %%
-function [yu,yo,yl] = expPlan(obj,xi)
+function [yu,yo,yl] = expPlan(params,xi)
     %compute controlling dimensions (y) for an exponential plan form                                        
-    Wm = obj.CKFAform.flow.Wm;
-    Wmw = obj.CKFAform.wave.Wmw;
-    Lst = obj.CKFAform.flow.Lst;  %width of lower intertidal - LW to MT (m)
+    Wm = params.flow.Wm;
+    Wmw = params.wave.Wmw;
+    Lst = params.flow.Lst;  %width of lower intertidal - LW to MT (m)
     Wm = max(Wm,Wmw);
     bl = (Wm-2*Lst)/2;
     bu = (Wm+2*1.57*Lst)/2;
-    bh = obj.CKFAform.flow.Wrv/2;
-    Lw = obj.CKFAform.form.Lw;
+    bh = params.flow.Wrv/2;
+    Lw = params.form.Lw;
 
     Ls = (bu-bl)/2.57;            %Lstar in F&A, lower intertial width (lw to mtl)(m) 
     bo = bl+Ls;                   %half-width at mtl(m)
