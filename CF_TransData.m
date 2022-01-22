@@ -16,31 +16,30 @@ classdef CF_TransData < muiPropertyUI
 %      
     properties (Hidden)
         %abstract properties in muiPropertyUI to define input parameters
-        PropertyLabels = {'Rate of sea level rise (m/yr)',...
-                          'Linear or exponential slr (1 or 0)',...
-                          'Change in tidal amplitude (m)',...
-                          'Open coast transgression ratio (-)',...
-                          'Integration distance from mouth (m)',...
+        PropertyLabels = {'Include flood plain in mass balance (1 or 0)',...                          
                           'High water constraint (1 or 0)',...
-                          'Start of channel bed constraints (m)',...
-                          'End of channel bed constraints (m)',...
+                          'Geological constraint (1 or 0)',...
+                          'Start of geological constraints (m)',...
+                          'End of geological constraints (m)',...
+                          'Integration distance from mouth (m)',...
+                          'Flood plain offset above high water (m)',...
+                          'Open coast transgression ratio (L/h)',...
                           'Constant sediment flux (m^3/yr) if reqd'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
     end
     
     properties
-        dSLR                     %rate of sea level rise (m/yr)
-        isLinSLR = 1             %linear or exponential slr (1 or 0)
-        delTidalAmp = 0          %change in tidal amplitude (m) - linear increase
-        BruunRatio = 0           %open coast erosion ratio (Bruun scaling of dx = slr.L/h)
-        IntDist                  %distance to use for volume integration (m)
-                                 %uses estuary length if empty
-        isConstrained = 0        %flag to include a constraint at high water
-        StConstraints            %start and end distance from mouth for 
-        NdConstraints            %a set of geological constraints   
-        SedFlux                  %user specified value of sediment exchange
-    end                          %calculated using get_sed_flux if empty   
+        inclFloodPlain = false
+        inclHWConstraint = false %flag to include a constraint at high water
+        inclGeoConstraint = false%flag to include geological constaints
+        StConstraints = 0        %start and end distance from mouth for 
+        NdConstraints = 0        %a set of geological constraints         
+        IntDist = 0              %distance to use for volume integration (m)
+        FPoffset = 0.2           %flood plain offset - default consistent with form models (m)
+        BruunRatio = 0           %open coast erosion ratio, L/h (Bruun scaling of dx = slr.L/h)  
+        SedFlux = 0              %user specified value of sediment exchange
+    end                            
 
 %%   
     methods (Access=protected)
@@ -73,6 +72,9 @@ classdef CF_TransData < muiPropertyUI
                 %add nrec to limit length of props UI (default=12)
                 obj = editProperties(obj);  
                 %add any additional manipulation of the input here
+            end
+            if length(obj.StConstraints)~=length(obj.NdConstraints)
+                warndlg('Number of start and end constraints must be the same')
             end
             setClassObj(mobj,'Inputs',classname,obj);
         end     

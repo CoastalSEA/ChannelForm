@@ -6,12 +6,12 @@ classdef CF_FormModel < GDinterface
 % PURPOSE
 %   Class for exponential and power plan form model used in ChannelForm App
 % NOTES
-%   Co-ordinate convention is that the x-axis is seaward from the head or
-%   tidal limit. The y-axis is the cross-channel axis mirrored about the
+%   Co-ordinate convention is that the x-axis is landward from the mouth to
+%   the tidal limit. The y-axis is the cross-channel axis, mirrored about the
 %   centre-line.
-%   If a hydraulic surface (based on CSTmodel) is not included the
-%   surrounding surface is at high water level +a small offset and the 
-%   tidal amplitude is assumed to decay linearly to the tidal limit.
+%   If a hydraulic surface can be based on the CSTmodel, a tidal amplitude
+%   that decays linearly to the tidal limit, or constant high and low water 
+%   levels. The surrounding surface is at high water level + a small offset
 % SEE ALSO
 %   muiDataSet and GDinterface
 %
@@ -22,12 +22,11 @@ classdef CF_FormModel < GDinterface
     properties
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
         %Additional properties:   
-%         ModelType %type of form model being used (Exp, Power, CKFA)
         Selection %struct for plan, channel and intertidal form selection
     end
 %     
     properties (Transient)
-        Channel   %struct for model summary parameters used when calling 
+        CSTparams %struct for model summary parameters used when calling 
                   %cst model in CF_HydroData
     end    
     
@@ -54,16 +53,15 @@ classdef CF_FormModel < GDinterface
 %--------------------------------------------------------------------------
 % Model code
 %--------------------------------------------------------------------------
-            obj.Channel = [];
             hydobj = getClassObj(mobj,'Inputs','CF_HydroData');
             setTransHydroProps(hydobj,mobj); %initialise transient properties
             
             %assign the run parameters to the model instance           
             setRunParam(obj,mobj); 
             %add water level definition to the run parameters
-            [wlflag,wlstxt] = setWaterLevels(obj);
+            [obj.Selection.wlflag,wlstxt] = setWaterLevels(obj);
             
-%             obj.ModelType = option;
+            obj.Selection.modeltype = option;
             switch option
                 case 'Exponential'                    
                     %prompt user to select plan form and x-sect form 
@@ -71,21 +69,18 @@ classdef CF_FormModel < GDinterface
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
                     hf = setFormSelection(obj); 
                     waitfor(hf);
-                    [xi,yi,zi,yz] = channel_form_models(obj,wlflag);
+                    [xi,yi,zi,yz] = channel_form_models(obj);
                     sel = obj.Selection;
                     meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
                                         sel.planform,sel.intertidalform,...
                                         sel.channelform,wlstxt);
                 case 'Power'
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
-                    [xi,yi,zi,yz] = pr_form_model(obj,wlflag);
+                    [xi,yi,zi,yz] = pr_form_model(obj);
                     meta.data = sprintf('PR power form, %s',wlstxt);
                 case 'CKFA'
-                    [xi,yi,zi,yz] = ckfa_form_model(obj,wlflag);
+                    [xi,yi,zi,yz] = ckfa_form_model(obj);
                     meta.data = sprintf('CKFA exogenous form, %s',wlstxt);
-%                 case 'Valley'
-%                     [xi,yi,zi,yz] = cf_valley_model(obj,iscst);
-%                     meta.data = sprintf('Valley form, %s',wlstxt);
             end
             if isempty(xi), return; end
             
@@ -94,7 +89,7 @@ classdef CF_FormModel < GDinterface
             if size(yz,2)~=3, yz = yz'; end
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false,'xM',0);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   

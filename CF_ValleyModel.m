@@ -6,8 +6,8 @@ classdef CF_ValleyModel < GDinterface
 % PURPOSE
 %   Class for valley form model used in ChannelForm App
 % NOTES
-%   Co-ordinate convention is that the x-axis is seaward from the head or
-%   tidal limit. The y-axis is the cross-valley axis mirrored about the
+%   Co-ordinate convention is that the x-axis is landward from the mouth to
+%   the tidal limit. The y-axis is the cross-channel axis, mirrored about the
 %   centre-line.
 % SEE ALSO
 %   muiDataSet and GDinterface
@@ -62,7 +62,7 @@ classdef CF_ValleyModel < GDinterface
             if size(yz,2)~=3, yz = yz'; end
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false,'xM',0);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -220,7 +220,7 @@ classdef CF_ValleyModel < GDinterface
             zH = cobj.zValleyHead;    %elevation at valley head (mAD)
             
             [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,ztl-1,xH,zH,z0);  
-            if zm0==0
+            if zm0<eps
                 warndlg('No solution found for convergence length')
                 return;
             end
@@ -231,10 +231,12 @@ classdef CF_ValleyModel < GDinterface
             %lower marine valley
             xi = 0:delx:xr;
             zv = zm0*(exp(xi/Lv)-1)+z0;
-
+       
+            % Pxz =  InterX([xi;zv],[xI;zV]);
+            
             figure('Name','Thalweg plot','Tag','PlotFog');
             yyaxis left
-            hp = plot(xi,zv,'LineWidth',1);
+            plot(xi,zv,'LineWidth',1);
             % hp.Annotation.LegendInformation.IconDisplayStyle = 'off';
             hold on
             plot(xI,zV)
@@ -324,7 +326,25 @@ classdef CF_ValleyModel < GDinterface
             valley = vobj.Data.Form.Description;
             ht = sgtitle(sprintf('Form using %s and %s',channel,valley));
             ht.FontSize = 12;        
-        end               
+        end   
+%%
+        function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
+            %iterative solution for the convergence length of a valley with
+            %defined levels at the head, zH, and tidal limit, zr, and a 
+            %basal level, z0, at the mouth
+            % zm0 - elevation adjustment at mouth (offset to be applied to thalweg)
+            % Lv - along channel convergence length of valley bottom
+            %NB - also used in cf_valley_model.m
+            drp = zr-z0;       %depth between river invert at tidal limit and mouth
+            dHp = zH-z0;       %depth between valley head and mouth
+            lv_fun = @(lv) drp/dHp-(exp(xr/lv)-1)/(exp(xH/lv)-1);
+            Lv = fzero(lv_fun,xH/2);
+            zm0 = drp/(exp(xr/Lv)-1);  
+            if zm0<eps
+                Lv = fzero(lv_fun,2*xH);
+                zm0 = drp/(exp(xr/Lv)-1);  
+            end
+        end         
     end
 %%
     methods
@@ -346,18 +366,5 @@ classdef CF_ValleyModel < GDinterface
             obj.RunParam.CF_HydroData.zlw = ones(size(xi))*hydobj.zlw; %low water
             obj.RunParam.CF_HydroData.cstres = [];
         end
-    end
-%%
-    methods (Static, Access=private)
-        function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
-            %iterative solution for the convergence length of a valley with
-            %defined levels at the head, zH, and tidal limit, zr, and a 
-            %basal level, z0, at the mouth
-            zrp = zr-z0;
-            zHp = zH-z0;
-            lv_fun = @(lv) zrp/zHp-(exp(xr/lv)-1)/(exp(xH/lv)-1);
-            Lv = fzero(lv_fun,xH/2);
-            zm0 = zrp/(exp(xr/Lv)-1);
-        end        
     end
 end

@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
+function [xi,yi,zgrd,yz] = channel_form_models(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -7,10 +7,10 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
 %   construct idealised channel form using exponential functions in y to 
 %   determine width and CKFA cross-section to determine z at each x interval
 % USAGE
-%   [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
+%   [xi,yi,zgrd,yz] = channel_form_models(obj,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   wlflag - flag to indicate type of water surface to use
+%         obj.Selection.wlflag - indicates type of water surface to use
 %            0=CSTmodel used to define water levels
 %            1=constant HW tapering LW 
 %            2=constant HW & LW
@@ -36,13 +36,13 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
     end
     
     %channel properties
-    if wlflag==0
+    if obj.Selection.wlflag==0
         %provides initial guess of gross properties if cst_model called
         obj= cf_set_hydroprops(obj,1);     %fixed water level surface 
         obj = channel_properties(obj); 
     end
     %set the water level variations along the estuary
-    [obj,ok] = cf_set_hydroprops(obj,wlflag);
+    [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
 
     [xi,yi,zi,yz] = channel_3D_form(obj);
@@ -75,10 +75,10 @@ function obj = channel_properties(obj)
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
     [w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
-    obj.Channel.Wm = gp.Wm;
-    obj.Channel.Lw = gp.Lw;
-    obj.Channel.Am = gp.Am;
-    obj.Channel.La = gp.La;  
+    obj.CSTparams.Wm = gp.Wm;
+    obj.CSTparams.Lw = gp.Lw;
+    obj.CSTparams.Am = gp.Am;
+    obj.CSTparams.La = gp.La;  
 end
 %%
 function [xi,yi,zi,yz] = channel_3D_form(obj)
@@ -101,7 +101,7 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     Lwu = expobj.HWwidthELength;     %width convergence length at high water (m)
     Lwl = expobj.LWwidthELength;     %width convergence length at low water (m)
     nu = expobj.HWwidthPower;        %width exponent at high water (-)
-    nl = expobj.LWwidhPoser;         %width exponent at low water (-)   
+    nl = expobj.LWwidthPower;         %width exponent at low water (-)   
     zm = expobj.zMouthInvert;        %thalweg bed level at mouth to zero datum (m)
     ki = expobj.FlatShapeParam;      %intertidal shape parameter[ki*100; range:0.01-0.5]
     Ll = hydobj.xTideRiver;          %distance from mouth to estuary/river switch
@@ -245,8 +245,8 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
                 end
             case 'Rectangular'
                 if yl>0
-                    %hydep = mc*yl/2*nc/(nc+1); %only correct if nc=2
-                    hydep = mc*yl/(nc+1);
+                    %hd = mc.Wlw/2/(nc+1), or %hd = nc.hc/(nc+1),
+                    hydep = mc*yl/(nc+1);        
                     zdco = ones(size(yi))*hydep.*(yi<yl); %depth at yl
                     zdc = -ax.*(zdco>0) -zdco;
                     isriver = yi<bh & hrv>-zdc;

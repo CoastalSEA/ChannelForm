@@ -4,11 +4,16 @@ classdef CF_HydroData < muiPropertyUI
 % NAME
 %   CF_HydroData.m
 % PURPOSE
-%  C lass for hydraulic parameters used by CSTmodel in ChannelForm model
+%  Class for hydraulic parameters used by CSTmodel in ChannelForm model
 % USAGE
 %   obj = CF_HydroData.setInput(mobj); %mobj is a handle to Main UI
+% NOTES
+%   Co-ordinate convention is that the x-axis is landward from the mouth to
+%   the tidal limit. The y-axis is the cross-channel axis, mirrored about the
+%   centre-line.
 % SEE ALSO
 %   inherits muiPropertyUI. Very similar to CSThydraulics in Asmita
+%   used in CF_FormModel and CT_Transgression in the ChannelForm model
 %
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2022
@@ -42,6 +47,8 @@ classdef CF_HydroData < muiPropertyUI
         zhw = 0         %high and low water level from amplitude+mtl 
         zmt = 0         %or CST model if varying along channel and/or
         zlw = 0         %time dependent (mOD)
+        dhw = 0         %change in high water during time step
+        dslr = 0        %rate of sea level rise at time t (only changes if SLRrate is not constant)
         Qr = 0          %time dependent river discharge
         FormModel       %definition of morphological form
         cstres          %struct with velocity and hyd.depth from cst model
@@ -112,7 +119,6 @@ classdef CF_HydroData < muiPropertyUI
             msgbox(sprintf('River input is %gm^3/s, slope is %g\nWidth is %0.1fm and hydraulic depth is %0.2fm',...
                       Qr,Sr,Wrv,hrv));
         end       
-        
     end
 %%
     methods
@@ -239,6 +245,22 @@ classdef CF_HydroData < muiPropertyUI
             [obj.zhw,obj.zmt,obj.zlw] = newWaterLevels(wlvobj,0,0);
             obj.Qr = obj.RiverDischarge;  %initialise transient river discharge
             obj.tidalperiod = wlvobj.TidalPeriod*3600; %tidal period in seconds
+        end 
+%%
+        function newWaterLevels(obj,mobj,robj)
+            %update water levels when running transgression model
+            % robj is the run time object that defines the time step
+            % ie CF_Transgression in the ChannelForm model
+            % WaterLevels provides water levels at the mouth. To get 
+            % alongchannel values call cf_set_hydroprops after calling
+            % newWaterLevels.
+            WaterLevels.setWaterLevels(mobj,robj);
+            wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
+            obj.zhw = wlvobj.HWaterLevel;
+            obj.zmt = wlvobj.MeanSeaLevel;
+            obj.zlw = wlvobj.LWaterLevel;
+            obj.dhw = wlvobj.dHWchange;  %change in high water over a time step
+            obj.dslr = wlvobj.dslr;
         end        
     end
 %%    
@@ -371,7 +393,7 @@ classdef CF_HydroData < muiPropertyUI
             %Form model which was used to call CF_HydroData and assigned to
             %obj.FormModel
             if isempty(obj.FormModel.Data)
-                frm = obj.FormModel.Channel;                   
+                frm = obj.FormModel.CSTparams;                   
             else 
                 frm = obj.FormModel.Data.GrossProps; 
             end
@@ -416,16 +438,16 @@ classdef CF_HydroData < muiPropertyUI
             inp.RiverCSA = Arv;                  %upstream river cross-sectional area (m^2)
         end
 %%
-        function dsp1 = modelDSproperties(~)
+        function dsp = modelDSproperties(~)
             %define a dsproperties struct and add the model metadata
-            dsp1 = struct('Variables',[],'Row',[],'Dimensions',[]);
+            dsp = struct('Variables',[],'Row',[],'Dimensions',[]);
             %define each variable to be included in the data table and any
             %information about the dimensions. dstable Row and Dimensions can
             %accept most data types but the values in each vector must be unique
 
             %struct entries are cell arrays and can be column or row vectors
             %static ouput (mean tide values)
-            dsp1.Variables = struct(...
+            dsp.Variables = struct(...
                 'Name',{'MeanTideLevel','TidalElevAmp','TidalVelAmp',...
                         'RiverVel','HydDepth'},...
                 'Description',{'Mean water level',...
@@ -439,13 +461,13 @@ classdef CF_HydroData < muiPropertyUI
                          'Velocity amplitude (m/s)',...
                          'Velocity (m/s)','Depth (m)'},...
                 'QCflag',repmat({'model'},1,5));
-            dsp1.Row = struct(...
+            dsp.Row = struct(...
                 'Name',{''},...
                 'Description',{''},...
                 'Unit',{''},...
                 'Label',{''},...
                 'Format',{''});
-            dsp1.Dimensions = struct(...
+            dsp.Dimensions = struct(...
                 'Name',{'X'},...
                 'Description',{'Chainage'},...
                 'Unit',{'m'},...

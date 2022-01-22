@@ -38,10 +38,11 @@ classdef ChannelForm < muiModelUI
             %classes required to run model, format:
             %obj.ModelInputs.<model classname> = {'Param_class1',Param_class2',etc}
             defaultprops = {'CF_HydroData','CF_SediData','GD_GridProps'};
-            obj.ModelInputs.CF_FormModel = defaultprops;
+            obj.ModelInputs.CF_FormModel = [defaultprops,{'WaterLevels'}];
             obj.ModelInputs.CF_ValleyModel = [defaultprops,{'CF_ValleyData'}];
             obj.ModelInputs.CF_HydroData = {'CF_HydroData','CF_SediData'};
-            obj.ModelInputs.CF_TransModel = defaultprops;
+            obj.ModelInputs.CF_TransModel = [defaultprops,...
+                           {'CF_TransData','RunProperties','WaterLevels'}];
             %tabs to include in DataUIs for plotting and statistical analysis
             %select which of the options are needed and delete the rest
             %Plot options: '2D','3D','4D','2DT','3DT','4DT'
@@ -51,8 +52,6 @@ classdef ChannelForm < muiModelUI
             
             modelLogo = 'ChannelForm_logo.jpg';  %default splash figure - edit to alternative
             initialiseUI(obj,modelLogo); %initialise menus and tabs   
-            
-            
         end    
         
 %% ------------------------------------------------------------------------
@@ -132,9 +131,10 @@ classdef ChannelForm < muiModelUI
             
             menu.Setup(7).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
-                                  'Combine Grids','Add Surface','Export xyz Grid'};                                                                        
-            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,7]);
-            menu.Setup(7).Separator = [repmat({'off'},[1,6]),{'on'}]; %separator preceeds item
+                                  'Combine Grids','Add Surface',...
+                                  'Difference Plot','Export xyz Grid'};                                                                        
+            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,8]);
+            menu.Setup(7).Separator = [repmat({'off'},[1,6]),{'on','on'}]; %separator preceeds item
             %% Utilities menu ---------------------------------------------------
             menu.Utilities(1).List = {'Hydraulic Model',...
                                       'Add Form to Valley',...
@@ -157,10 +157,9 @@ classdef ChannelForm < muiModelUI
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Exponential form model','Power form model',...
                                 'CKFA form model','Valley form model',...
-                                'Hydro-Form model','Transgression model',...
-                                'Derive Output'};
-            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,7]);
-            menu.Run(1).Separator = [repmat({'off'},[1,6]),{'on'}]; %separator preceeds item
+                                'Transgression model','Derive Output'};                                
+            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,6]);
+            menu.Run(1).Separator = [repmat({'off'},[1,5]),{'on'}]; %separator preceeds item
             
             %% Plot menu --------------------------------------------------  
             menu.Analysis(1).List = {'Plots','Statistics'};
@@ -222,7 +221,7 @@ classdef ChannelForm < muiModelUI
                 'CF_SediData','Sediments',[0.90,0.50],{180,70}, 'Sediment parameters:';... 
                 'RunProperties','Run Parameters',[0.40,0.50],{170,80},'Run time parameters:';...
                 'GD_GridProps','Run Parameters',[0.90,0.50],{160,90}, 'Grid parameters:';...
-                'CF_TransData','Transgression',[0.90,0.50],{180,70}, 'Transgression parameters:'}; 
+                'CF_TransData','Transgression',[0.90,0.70],{220,120}, 'Transgression parameters:'}; 
         end    
  %%
         function setTabAction(obj,src,cobj)
@@ -398,7 +397,8 @@ classdef ChannelForm < muiModelUI
         %%
         function gridMenuOptions(obj,src,~)
             %callback functions for grid tools options
-            gridclasses = {'CF_FormModel','CF_ValleyModel','GD_ImportData'};
+            gridclasses = {'CF_FormModel','CF_ValleyModel',...
+                                          'CF_TransModel','GD_ImportData'};
             CF_FormModel.gridMenuOptions(obj,src,gridclasses);
             DrawMap(obj);
         end
@@ -415,8 +415,8 @@ classdef ChannelForm < muiModelUI
                     CF_FormModel.runModel(obj,'CKFA');
                 case 'Valley form model'
                     CF_ValleyModel.runModel(obj);
-                case 'Hydro-Form model'
                 case 'Transgression model'
+                    CF_TransModel.runModel(obj);
                 case 'Derive Output'
                     obj.mUI.Manip = muiManipUI.getManipUI(obj);
             end            

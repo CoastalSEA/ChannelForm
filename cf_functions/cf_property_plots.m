@@ -124,10 +124,12 @@ function cf_property_plots(obj,irec,src)
             asymmratiosplot(ax,xj,ah,VsVc,grid.desc);             
         case 'Hydraulics'
             xi = zprop.Dimensions.X;
-            if isempty(hydobj) || isempty(hydobj.cstres)
-                hydobj = wprop;
+            if ~isempty(hydobj.cstres)
+                watobj = hydobj;
+            else
+                watobj = wprop;
             end
-            hydraulicsplot(ax,hydobj,xi,grid.desc); 
+            hydraulicsplot(ax,watobj,xi,grid.desc); 
         case 'Transgression'
             if ~isa(obj,'CF_TransModel')
                 warndlg('Trangression model required for this plot');
@@ -169,10 +171,10 @@ function crossectionplot(ax,grid,wl)
     %plot a series of cross-sections along length of channel
     ax.XDir = 'normal';
     noxi=length(grid.x);
-%     nx1=noxi;nx2=ceil(9*noxi/10);nx3=ceil(4*noxi/5);
-%     nx4=ceil(3*noxi/5);nx5=ceil(2*noxi/5);nx6=ceil(noxi/5);
-    nx1=1;               nx2=ceil(1*noxi/10);  nx3=ceil(1*noxi/5);
-    nx4=ceil(2*noxi/5);  nx5=ceil(3*noxi/5);   nx6=ceil(4*noxi/5);   
+    ix0 = find(grid.x>=grid.xM-eps,1,'first'); 
+    noxi = noxi-ix0;
+    nx1=ix0; nx2=ix0+ceil(0.1*noxi); nx3=ix0+ceil(0.2*noxi);
+    nx4=ix0+ceil(0.4*noxi); nx5=ix0+ceil(0.6*noxi); nx6=ix0+ceil(0.8*noxi);   
     if grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
         zgrd = flipud(grid.z);
     else

@@ -10,7 +10,7 @@ classdef CF_ExpData < muiPropertyUI
 % SEE ALSO
 %   inherits muiPropertyUI
 % NOTES
-%   Notation used in model, with exobj an instance of this class:
+%   Notation used in model, with expobj an instance of this class:
 %     Le = expobj.ChannelLength;     %total length of channel (m)
 %     bu = expobj.HWmouthWidth/2;    %half-width of mouth at high water(m)
 %     bl = expobj.LWmouthWidth/2;    %half-width of mouth at low water level(m)
@@ -48,7 +48,7 @@ classdef CF_ExpData < muiPropertyUI
         HWwidthELength      %Lwu - width convergence length at high water (m)
         LWwidthELength      %Lwl- width convergence length at low water (m)
         HWwidthPower        %nu - width exponent at high water (-)
-        LWwidhPoser         %nl - width exponent at low water (-)
+        LWwidthPower        %nl - width exponent at low water (-)
         zMouthInvert        %zm - thalweg bed level at mouth to zero datum (m)
         FlatShapeParam      %ki - intertidal shape parameter[ki*100; range:0.01-0.5]
     end    

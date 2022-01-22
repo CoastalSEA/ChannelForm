@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
+function [xi,yi,zgrd,yz] = ckfa_form_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -6,10 +6,10 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
 % PURPOSE
 %   construct idealised channel form using 3D CKFA model
 % USAGE
-%   [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
+%   [xi,yi,zgrd,yz] = ckfa_form_model(obj,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   wlflag - flag to indicate type of water surface to use
+%         obj.Selection.wlflag - indicates type of water surface to use
 %            0=CSTmodel used to define water levels
 %            1=constant HW tapering LW 
 %            2=constant HW & LW
@@ -38,8 +38,8 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,wlflag,isfull)
     params = ckfa_properties(obj);
 
     %set the water level variations along the estuary
-    obj.Channel = params.form;
-    [obj,ok] = cf_set_hydroprops(obj,wlflag);
+    obj.CSTparams = params.form;
+    [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
 
     %generate 3D surface of CKFA model

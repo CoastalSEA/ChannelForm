@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = pr_form_model(obj,wlflag,isfull)
+function [xi,yi,zgrd,yz] = pr_form_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -7,10 +7,10 @@ function [xi,yi,zgrd,yz] = pr_form_model(obj,wlflag,isfull)
 %   function to compute 3D form of a creek or tidal channel
 %   useing power laws to define width and hydraulic depth variations.
 % USAGE
-%   [xi,yi,zgrd,yz] = channel_form_models(obj,wlflag,isfull)
+%   [xi,yi,zgrd,yz] = channel_form_models(obj,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   wlflag - flag to indicate type of water surface to use
+%         obj.Selection.wlflag - indicates type of water surface to use
 %            0=CSTmodel used to define water levels
 %            1=constant HW tapering LW 
 %            2=constant HW & LW
@@ -36,13 +36,13 @@ function [xi,yi,zgrd,yz] = pr_form_model(obj,wlflag,isfull)
     end
 
     %channel properties
-    if wlflag==0
+    if obj.Selection.wlflag==0
         %provides initial guess of gross properties if cst_model called
         obj= cf_set_hydroprops(obj,1);     %fixed water level surface 
         obj = pr_properties(obj); 
     end
     %set the water level variations along the estuary
-    [obj,ok] = cf_set_hydroprops(obj,wlflag);
+    [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
     
     [xi,yi,zi,yz] = pr_3D_form(obj);
@@ -75,10 +75,10 @@ function obj = pr_properties(obj)
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
     [w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
-    obj.Channel.Wm = gp.Wm;
-    obj.Channel.Lw = gp.Lw;
-    obj.Channel.Am = gp.Am;
-    obj.Channel.La = gp.La;  
+    obj.CSTparams.Wm = gp.Wm;
+    obj.CSTparams.Lw = gp.Lw;
+    obj.CSTparams.Am = gp.Am;
+    obj.CSTparams.La = gp.La;  
 end
 %%
 function [xi,yi,zi,yz] = pr_3D_form(obj)    

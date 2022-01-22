@@ -78,8 +78,8 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     %river properties
     Qr = hydobj.Qr;                  %river discharge (m^3/s)
     %examined using river slope (too wide and shallow)
-    [zm0,Lv] = findconvergencelength(xr,ztl-1,xH,zH,z0);
-    zv = (zm0*(exp(xi'/Lv)-1)+z0);
+    [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,ztl-1,xH,zH,z0);
+    zv = zm0*(exp(xi'/Lv)-1)+z0;
     gradV = gradient(zv)/delx;
     Sr = interp1(xi',gradV,xr);
     % Sr  = 2*am/xr;   %energy slope at tidal limit (-); **estimate**
@@ -89,7 +89,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     zr = ztl-hrv;                 %elevation of river bed at TL (mAD)
 
     %get convergence length for river valley longitudinal elevation
-    [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0);
+    [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,zr,xH,zH,z0);
     zv = (zm0*(exp(xi'/Lv)-1)+z0)';
     %get cross-valley convergence length between mtl and max elevation
     Ls0 = bv/log((zhw+zm0-z0)/zm0);
@@ -126,18 +126,11 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     zi(idy) = zi(idy)-(mu*Lc/2*(1-(yix(idy)/Lc).^2)); %add river channel
 
     %plot half-sections along channel
-    figure
-    plot(yi,zi(1,:))
-    hold on
-    nx = length(xi);
-    for i=1:50:nx
-        plot(yi,zi(i,:))
-    end
-    hold off
+    plotValley(xi,yi,zi)
     
-    grid = struct('x',xi,'y',yi,'z',zi);
+    grid = struct('x',xi,'y',yi,'z',zi,'ishead',false);
     zwl = {hydobj.zhw(end),hydobj.zmt(end),hydobj.zlw(end)};
-    yz = cf_plan_form(zwl,grid);
+    yz = cf_plan_form(grid,zwl);
 %     yz = num2cell(flipud(yz)',2);      %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                          %return full grid
@@ -150,16 +143,34 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     Lv = round(Lv); Ls0 = round(Ls0); %report to nearest metre
 end
 %%
-function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
-    %iterative solution for the convergence length of a valley with
-    %defined levels at the head, zH, and tidal limit, zr, and a 
-    %basal level, z0, at the mouth
-    zrp = zr-z0;
-    zHp = zH-z0;
-    lv_fun = @(lv) zrp/zHp-(exp(xr/lv)-1)/(exp(xH/lv)-1);
-    Lv = fzero(lv_fun,xH/2);
-    zm0 = zrp/(exp(xr/Lv)-1);
+function plotValley(xi,yi,zi)
+    %contour plot of valley form
+    hf = figure('Name','Valley Plot','Units','normalized','Tag','PlotFig');  
+    hf.Position(1) = 0.7;
+    plot(yi,zi(1,:))
+    hold on
+    nx = length(xi);
+    for i=1:50:nx
+        plot(yi,zi(i,:))
+    end
+    hold off
+    xlabel('Width (m)')
+    ylabel('Elevation (m)')
+    title('Valley cross-section at intervals along channel';
 end
+% function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
+%     %iterative solution for the convergence length of a valley with
+%     %defined levels at the head, zH, and tidal limit, zr, and a 
+%     %basal level, z0, at the mouth
+%     % zm0 - elevation adjustment at mouth (offset to be applied to thalweg)
+%     % Lv - along channel convergence length of valley bottom
+%     %NB -same as findconvergencelength function in CF_ValleyModel
+%     drp = zr-z0;       %depth between river invert at tidal limit and mouth
+%     dHp = zH-z0;       %depth between valley head and mouth
+%     lv_fun = @(lv) drp/dHp-(exp(xr/lv)-1)/(exp(xH/lv)-1);
+%     Lv = fzero(lv_fun,xH/2);
+%     zm0 = drp/(exp(xr/Lv)-1);
+% end
 %%
 % function yz = planForm(hydobj,xi,yi,zi)
 %     %compute controlling dimensions (y) for an exponential plan form

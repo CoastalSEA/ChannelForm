@@ -1,4 +1,4 @@
-function [obj,ok] = cf_set_hydroprops(obj,wlflag)
+function [obj,ok] = cf_set_hydroprops(obj)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -11,7 +11,7 @@ function [obj,ok] = cf_set_hydroprops(obj,wlflag)
 % INPUTS
 %   obj - CF_FormModel class instance with grid and water level model
 %         inputs defined in RunParam versions of GD_GridProps and CF_HydroData
-%   wlflag - flag to indicate type of water surface to use
+%         obj.Selection.wlflag - flag to indicate type of water surface to use
 %            0=CSTmodel used to define water levels
 %            1=constant HW tapering LW 
 %            2=constant HW & LW
@@ -28,23 +28,23 @@ function [obj,ok] = cf_set_hydroprops(obj,wlflag)
 %--------------------------------------------------------------------------
 %
     hydobj = obj.RunParam.CF_HydroData; 
-    if wlflag==0
+    grdobj = obj.RunParam.GD_GridProps;
+    xi = getGridDimensions(grdobj);
+    
+    if obj.Selection.wlflag==0
         %use cst_model to set-up water levels for model           
         [resX,~,~,xyz] = runHydroModel(hydobj,obj);
-        if isempty(resX), ok = 0; return; end
+        if isempty(resX), ok = 0; return; end        
         %interpolate CSTmodel results onto model grid + reverse for xmin @ head
         obj.RunParam.CF_HydroData = cf_cst2grid(obj,resX,xyz{:},false);
     else
         %use constant high water level and linear reducing low water
-        grdobj = obj.RunParam.GD_GridProps;
-        % Lt = diff(grdobj.XaxisLimits);         %length of model domain (m)
-        Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit
-        xi = getGridDimensions(grdobj);
+        Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit 
         zhw = hydobj.zhw(1); 
         zlw = hydobj.zlw(1);
         zHWxi = ones(size(xi))*zhw;            %assume constant HW surface
         amp0 = (zhw-zlw)/2;                    %tidal amplitude at mouth
-        if wlflag==1            
+        if obj.Selection.wlflag==1            
             ampx = amp0*(1-xi/Lt);  %linear reducing low water
             ampx(xi>Lt) = 0;
         else
@@ -54,6 +54,26 @@ function [obj,ok] = cf_set_hydroprops(obj,wlflag)
         obj.RunParam.CF_HydroData.zmt = zHWxi-ampx;   %mean tide level
         obj.RunParam.CF_HydroData.zlw = zHWxi-2*ampx; %low water
         obj.RunParam.CF_HydroData.cstres = [];
+    end
+    
+    %if mouth is offset from x=0 adjust the along channel values accordingly
+    %NB 'cstres' is NOT adjusted in code below.
+    if isprop(obj,'Grid') && ~isempty(obj.Grid) && obj.Grid.xM>0
+        %coast is not at x=0
+        ix0 = find(xi<obj.Grid.xM,1,'last'); 
+        if ~isempty(ix0) && ix0>1
+            zhw = obj.RunParam.CF_HydroData.zhw; %high water
+            zmt = obj.RunParam.CF_HydroData.zmt; %mean tide level
+            zlw = obj.RunParam.CF_HydroData.zlw; %low water
+
+            mask = ones(ix0,1);
+            zHWxM = [mask*zhw(1);zhw(1:end-ix0)];
+            zMTxM = [mask*zmt(1);zmt(1:end-ix0)];     
+            zLWxM = [mask*zlw(1);zlw(1:end-ix0)];
+            obj.RunParam.CF_HydroData.zhw = zHWxM; %high water
+            obj.RunParam.CF_HydroData.zmt = zMTxM; %mean tide level
+            obj.RunParam.CF_HydroData.zlw = zLWxM; %low water
+        end
     end
     ok = 1;
 end
