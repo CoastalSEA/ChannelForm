@@ -1,13 +1,13 @@
-function [xi,yi,zgrd,yz] = channel_form_models(obj,isfull)
+function [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
-%   channel_form_models.m
+%   cf_exp_models.m
 % PURPOSE
 %   construct idealised channel form using exponential functions in y to 
 %   determine width and CKFA cross-section to determine z at each x interval
 % USAGE
-%   [xi,yi,zgrd,yz] = channel_form_models(obj,isfull)
+%   [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
 %         obj.Selection.wlflag - indicates type of water surface to use
@@ -38,11 +38,13 @@ function [xi,yi,zgrd,yz] = channel_form_models(obj,isfull)
     %channel properties
     if obj.Selection.wlflag==0
         %provides initial guess of gross properties if cst_model called
-        obj= cf_set_hydroprops(obj,1);     %fixed water level surface 
+        obj.Selection.wlflag = 1;
+        obj= cf_set_hydroprops(obj);     %fixed water level surface 
+        obj.Selection.wlflag = 0;
         obj = channel_properties(obj); 
     end
     %set the water level variations along the estuary
-    [obj,ok] = cf_set_hydroprops(obj);
+    [obj,ok] = cf_set_hydroprops(obj); 
     if ok<1, return; end
 
     [xi,yi,zi,yz] = channel_3D_form(obj);
@@ -75,6 +77,7 @@ function obj = channel_properties(obj)
     hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
     [w,csa,~] = gd_section_properties(grid,wl);
     gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
+    %used in CSTmodel
     obj.CSTparams.Wm = gp.Wm;
     obj.CSTparams.Lw = gp.Lw;
     obj.CSTparams.Am = gp.Am;

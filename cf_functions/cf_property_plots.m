@@ -135,16 +135,7 @@ function cf_property_plots(obj,irec,src)
                 warndlg('Trangression model required for this plot');
                 return;
             end
-            steptable = obj.StepData;
-            transgressionplot(ax,steptable)
-        case 'xHydraulics'
-%             cst = h_data.(aprop{4}){idr};
-            xi = zprop.Dimensions.X;
-            yi = zprop.Dimensions.Y;
-            yz = reshape(obj.Data.Plan.DataTable{1,:},length(xi),3);
-            zi = squeeze(zprop.Z);
-%             zi = zi(:,size(zi,2)/2+1:end);
-            projectionplot(ax,xi,hydobj,yi,yz,zi);
+            transgressionplot(ax,obj.Data.Transgression);
     end   
 end
 %%
@@ -386,22 +377,27 @@ function hydraulicsplot(ax,hydobj,x,casedesc)
     title(casedesc,'FontWeight','normal','FontSize',10);
 end
 %%
-function transgressionplot(ax,stepT)
+function transgressionplot(ax,trans)
     %plot transgression time step results
-    t = stepT.Time;
-    varnames = stepT.Properties.VariableNames(2:end);
+    t = trans.RowNames;
+    vardesc = trans.VariableDescriptions;
     ok=1;
     hold on
     while ok>0
         [idx,ok] = listdlg('Name','Properties','PromptString','Select variable',...                         
-                           'ListSize',[120,200],'SelectionMode','single',...
-                           'ListString',varnames);
+                           'ListSize',[220,200],'SelectionMode','single',...
+                           'ListString',vardesc);
         if ok==0, continue; end
-        var = varnames{idx};
-        plot(ax,t,stepT.(var),'DisplayName',var);
+        var = trans.VariableNames{idx};
+        plot(ax,t,trans.(var),'DisplayName',vardesc{idx});
+        idlast = idx;
     end
     hold off
     xlabel('Time (years)')
+    ylabel(trans.VariableLabels{idlast})
+    ax.Position(1) = 0.1;
+    ytickformat('%3.2g')
     legend
+    title(trans.Description)
 end
     

@@ -17,7 +17,7 @@ function [hrv,bh,mur] = get_river_profile(obj,tr,yi)
 %   mur - effective submerged static coefficient of Coulomb friction 
 %         (estimated from geometry)
 % SEE ALSO
-%   used in channel_form_models and pr_form_model
+%   used in cf_exp_models and cf_pow_model
 %
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2022

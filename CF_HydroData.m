@@ -383,8 +383,8 @@ classdef CF_HydroData < muiPropertyUI
             end
 
             %rnp parameters requires the following
-            rnp.TimeInt = 1;     %time increment in analytical model (hrs)
-            rnp.DistInt = 1000;  %distance increment along estuary (m)
+            rnp.TimeInt = 0;     %time increment in analytical model (hrs) - only needed if tidal cycle output required
+            rnp.DistInt = 100;   %distance increment along estuary (m)
             rnp.useObs = false;  %flag to indicate whether to use observations
         end
 %%
@@ -401,22 +401,6 @@ classdef CF_HydroData < muiPropertyUI
             inp.WidthELength = frm.Lw;  %width convergence length at high water (m)
             inp.MouthCSA = frm.Am;      %CSA of mouth at high water(m2)
             inp.AreaELength = frm.La;   %area
-            
-%             if ismember(obj.FormModel.ModelType,{'Exponential','Power'})
-%                 frm = obj.FormModel.Channel; 
-%                 inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
-%                 inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
-%                 inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
-%                 inp.AreaELength = frm.form.La;   %area convergence length (m)              
-%             elseif strcmp(obj.FormModel.ModelType,'CKFA')
-%                 frm = obj.FormModel.CKFAform;
-%                 inp.MouthWidth = frm.form.Wm;    %width of mouth at high water(m)
-%                 inp.WidthELength = frm.form.Lw;  %width convergence length at high water (m)
-%                 inp.MouthCSA = frm.form.Am;      %CSA of mouth at high water(m2)
-%                 inp.AreaELength = frm.form.La;   %area convergence length (m)              
-%             else
-%                 inp = [];   %call error
-%             end
         end
 %%
         function [formobj,caserec] = selectFormModel(~,mobj)    

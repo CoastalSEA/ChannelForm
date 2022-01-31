@@ -24,10 +24,11 @@ classdef CF_FormModel < GDinterface
         %Additional properties:   
         Selection %struct for plan, channel and intertidal form selection
     end
-%     
+ 
     properties (Transient)
         CSTparams %struct for model summary parameters used when calling 
-                  %cst model in CF_HydroData
+                  %cst model in CF_HydroData, or get_sed_flux in
+                  %CF_TransModel
     end    
     
     methods
@@ -69,14 +70,14 @@ classdef CF_FormModel < GDinterface
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
                     hf = setFormSelection(obj); 
                     waitfor(hf);
-                    [xi,yi,zi,yz] = channel_form_models(obj);
+                    [xi,yi,zi,yz] = cf_exp_models(obj);
                     sel = obj.Selection;
                     meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
                                         sel.planform,sel.intertidalform,...
                                         sel.channelform,wlstxt);
                 case 'Power'
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
-                    [xi,yi,zi,yz] = pr_form_model(obj);
+                    [xi,yi,zi,yz] = cf_pow_model(obj);
                     meta.data = sprintf('PR power form, %s',wlstxt);
                 case 'CKFA'
                     [xi,yi,zi,yz] = ckfa_form_model(obj);
@@ -103,11 +104,10 @@ classdef CF_FormModel < GDinterface
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  
-            obj = setFormProps(obj,meta,0); %0=use grid to determin hypsometry limits         
+            obj = setFormProps(obj,meta,0); %0=use grid to determine hypsometry limits         
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             
-%             setDataSetRecord(obj,mobj.Cases,dst,'form_model');
             setCase(mobj.Cases,obj,'form_model');
             getdialog('Run complete');
             DrawMap(mobj);

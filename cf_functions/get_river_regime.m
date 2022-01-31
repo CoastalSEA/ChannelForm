@@ -4,7 +4,7 @@ function [hav,Wrv,Arv] = get_river_regime(obj,tr,Qr)
 % NAME
 %   get_river_regime.m
 % PURPOSE
-%   get river profile using regime theoretical profile (Cao & Knight,1996)
+%   get river regime properties using regime theoretical profile (Cao & Knight,1996)
 % USAGE
 %   [hrv,bh,mur] = get_river_regime(mobj,tr,Qr)
 % INPUTS
@@ -16,7 +16,7 @@ function [hav,Wrv,Arv] = get_river_regime(obj,tr,Qr)
 %   Wrv - width of regime channel (m)
 %   Arv - CSA of regime channel (m2)
 % SEE ALSO
-%   used in channel_form_models and pr_form_model
+%   used in cf_exp_models and cf_pow_model
 %
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2022

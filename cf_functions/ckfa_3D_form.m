@@ -4,7 +4,7 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
 % NAME
 %   ckfa_3D_form.m
 % PURPOSE
-%   construct idealised channel form using 3D CKFA model
+%   construct 3D form of an idealised channel based on the CKFA model
 % USAGE
 %   [xi,yi,zgrd,yz] = ckfa_3D_form(obj)
 % INPUTS

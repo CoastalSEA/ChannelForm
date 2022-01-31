@@ -25,18 +25,100 @@
 % * *Export/Import > Export*: user selects a Case class instance to export as a mat file.
 % * *Export/Import > Import*: user selects an exported Case class instance (mat file) to be loaded.
 %%
-% *NB*: to export the data from a Case for use in another application 
+% <html>
+% <table border=1><tr><td><u>Note</u>: to export the data from a Case for use in another application 
 % (eg text file, Excel, etc), use the *Project>Cases>Edit Data Set* option 
 % to make a selection and then use the ‘Copy to Clipboard’ button to paste 
 % the selection to the clipboard.
+% </td></tr></table>
+% </html>
 
-%% Setup
-% * *Import Data*: dialogue to import data from a file.
-% * *Input Parameters*: dialogue to define model input parameters.
-% * *Model Constants*: a number of constants are used in the model. Generally, the default values are appropriate but these can be adjusted and saved with the project if required.
+%% Setup > Form Parameters
+% * *Exp Form Parameters*: UI to input the parameters needed for the
+% exponential form model. 
+% * *Power Form Parameters*: UI to input the parameters needed for the
+% power form model. 
+% * *Valley Parameters*: UI to input the parameters needed for the
+% valley form model. 
+%%
+% <html>
+% <table border=1><tr><td><u>Note</u>: the CKFA model input parameters are 
+% derived from the water level, hydrodynamic and sediment parameter settings.
+% </td></tr></table>
+% </html>
+
+%% Setup > System Parameters
+% * *Hydraulic Parameters > Tidal Forcing*: UI to input water level parameters including 
+% sea level rise and any cyclic variations in tidal range. 
+% * *Hydraulic Parameters > Hydraulic Model*: UI to input parameters needed
+% for the CST hydraulic model.
+% * *Sediment Parameters*: UI to input parameters needed to determine
+% external sediment exchange.
+% * *Transgression Parameters*: UI to set inclusion/exclusion of various
+% constraints, computation parameters and open coast erosion settings.
+% * *Morphological Modifications*: UI to input the x,y,z definitions of
+% the, one or more, boxout forms that can be imposed on model forms. 
+
+%% Setup > Run Parameters
+% * *Grid Parameters*:
+% * *Run Time Parameters*: 
+
+%% Setup > Import Grid
+% Load x,y,z data from a file. To create a new instance (e.g. for a
+% different location or data source) use Load. To add data to an
+% existing data set, use Add.
+%%
+% * *Load*: prompts user for file to be loaded. Once files have been read, user is prompted for a description (working title) for the data set. 
+% * *Add*: prompts user for file to be loaded (only one file at a time can be added). Only files with the same dimensions as the existing data set can be used to Add data to a data record.
+% * *Delete*: delete a grid from an existing Case table (ie a row).
+
+%% Setup > Grid Tools
+% * *Translate Grid*: interactively translate grid x-y
+% coordinates.
+% * *Rotate Grid*: interactively flip or rotate grid.   
+% * *Re-Grid*: regrid a gridded dataset to match another grid or to user
+% specified dimensions.
+% * *Sub-Grid*: interactively define a subgrid and save grid as a new Case.               
+% * *Combine Grids*: superimpose one grid on another based on maximum
+% or minimum set of values.
+% * *Add Surface*: add horizontal surface to an existing grid.
+% * *To curvilinear*: map grid from cartesian to curvilinear coordinates. 
+% * *From curvilinear*: map grid from curvilinear to cartesian coordinates.
+% * *Difference Plot*: generate a plot of the difference between two grids.
+% * *Export xyz Grid*: select a Case and export grid as xyz tuples.
+
+%% Setup (other)
+% * *Add Properties*: add form properties to a gridded data
+% set.
+% * *Delete Properties*: delete ALL property tables associated with a 
+% selected gridded data set.
+% * *Model Constants*: various constants are defined for use in models, such as the acceleration due to gravity, viscosity and density of sea water, and density of sediment. 
+
+%% Utilities 
+% * *Hydraulic Model*: runs the CSTmodel (if CSTmodel App is installed).
+% * *Add Form to Valley*: combines channel and valley grids.
+% * *Add Modifications*: adds defined modifications to a grid.
+% * *River Dimensions*: calculates the river dimensions based on the
+% current input parameters.
+% * *Valley Thalweg*: plots the valley centre-line along the x-axis.
+% * *Area of Flood Plain*: calculates the area of the flood plain.
+% * *CKFA Channel Dimensions*: calculates the governing dimensions that
+% would be used in the CKFA model based on the current input parameters.
+% * *Morphological Timescale*: calculate the morphological timescale using
+% the ASMITA model parameterisation and the current input parameters.
+% * *Channel-Valley Sub-Plot*: create a plot showing the channel, valley
+% and combined form as 3 sub-plots.
 
 %% Run
-% * *Run Model*: runs model, prompts for a Case description, which is added to the listing on the Cases tab.
+% * *Exponential form model*: run the exponential model. Prompts to select
+% type of water surface and additional form selection properties.
+% * *Power form model*:  run the power model. Prompts to select
+% type of water surface
+% * *CKFA form model*:  run the CKFA model. Prompts to select
+% type of water surface.
+% * *Valley form model*: run the Valley model
+% * *Transgression model*: run the transgression model. Prompts to select
+% source channel and valley models to use.
 % * *Derive Output*: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.
 
 %% Analysis

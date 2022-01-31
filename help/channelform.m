@@ -1,5 +1,6 @@
-%% SedTools
-% Toolbox for sediment related analyses
+%% ChannelForm
+% Matlab(TM) App to model the interaction of estuary channels and the surrounding 
+% flood plain and valley landscape.
 
 %% Licence
 % The code is provided as Open Source code (issued under a GNU General 
@@ -11,35 +12,55 @@
 % <matlab:doc('muitoolbox') muitoolbox>
 
 %% Background
+% ChannelForm is a Matlab(TN) App that provides a framework for studying 
+% estuary and inlet morphological landforms in the context of the 
+% surrounding landscape (valley and flood plain). A set of tools allow digital 
+% terrain models (DTMs) to be created from models or imported. The 
+% models/data can define the channel form and the surrounding or 
+% antecedent landscape. A set of grid manipulation tools allow the grids 
+% to be manipulated and combined to generate composite DTMs of the channel 
+% in the landscape. Several idealised models are provided that use some 
+% combination of the plan form and cross-section to generate a 3D form, or 
+% generate the form using parameters that are not a function of the 
+% estuary itself (i.e. they are exogenous). In both cases, the water level 
+% surface can be defined using plane surfaces, or derived from a 
+% quasi-analytical hydrodynamic model that accounts for tides and river 
+% flows. Using channel and valley forms, marine transgression as a 
+% function of sea level rise can also be examined. This identifies the 
+% horizontal transgression of the initial form to achieve a net mass 
+% balance when any exchange with the external environment is accounted 
+% for. The output includes the gross properties of the channel, various 
+% well-known parameter relationships, and a time series of DTMs
 
-%% SedTools classes
-% *ModelUI* - defines the behaviour of the main UI.
+%% Bibliography
+% Townend I H and Pethick J, 2002, Estuarine flooding and managed retreat. 
+% Phil.Trans.R.Soc.Lond.A, 360 (1796), 1477-1495.
+%
+% Townend I H, 2010, An exploration of equilibrium in Venice Lagoon using 
+% an idealised form model. Continental Shelf Research, 30 (8), 984-999.
+%
+% Townend I H, 2012, The estimation of estuary dimensions using a 
+% simplified form model and the exogenous controls. Earth Surface 
+% Processes and Landforms, 37, 1573-1583.
+%
+% Townend I H, Zhou Z, Guo L and Coco G, 2021, A morphological 
+% investigation of marine transgression in estuaries. Earth Surf. Process. 
+% Landf., 46, 626–641, https://doi.org/10.1002/esp.5050.
 
-%% SedTools functions
-%  Currently provides:
-%      1) tool to analyse settling column data
-% 	
-%  Quick Guide to setting up a new analysis:
-% 
-%  File>New 
-%      To create a new project space.
-% 	
-%  Setup>Setup>Settling Parameters
-%      Define input parameters for settling column analysis. To see the parameters that are currently
-%      set for the model use the Setup tab.
-% 	
-%  File>Save as
-%      Save project to a *.mat file.
-% 	
-%  Run>Run Settling Data 
-%      Runs the model and prompts user for a description of the scenario. The results can be viewed
-%      on the Plot tab.
-% 	
-%  Completed scenarios are listed based on the user descriptions on the Scenarios tab.
-% 
-%  Plot>Plot Menu
-%      Select data and generate plots of results
-%      Use Plot tab to generate customised analysis plot and see statistical output
+%% Acknowledgements
+% The ChannelForm App makes use of several functions from the MatlabTM 
+% File Exchange Form, including:
+%%
+% * InterX - NS (2010). https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections 
+% * xy2sn and sn2xy - Juernjakob Dugge (2015). jdugge/xy2sn, https://github.com/jdugge/xy2sn 
+%%
+% which requires:
+%%
+% * arclength - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34871-arclength 
+% * distance2curve - John D'Errico, 2013,
+% http://www.mathworks.de/matlabcentral/fileexchange/34869-distance2curve
+% * interparc - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34874-interparc 
+
 %% Manual
 % The <matlab:open_manual manual> provides further details of setup and 
 % configuration of the model. The files for the example use case can be found in

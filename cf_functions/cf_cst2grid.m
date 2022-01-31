@@ -15,7 +15,7 @@ function hydobj = cf_cst2grid(obj,resX,cstx,isflip)
 % OUTPUTS
 %   hydobj - updated version of CF_HydroData thaat is assigned to obj.RunParam
 % SEE ALSO
-%   used in channel_form_model, pr_form_model and ckfa_form_model as part 
+%   used in cf_exp_model, cf_pow_model and ckfa_form_model as part 
 %   of ChannelForm model
 %
 % Author: Ian Townend

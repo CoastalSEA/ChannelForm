@@ -55,13 +55,6 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     rhos = cns.SedimentDensity;   %density of sediment (default = 2650 kg/m^3) 
     
     %hydraulic parameters
-%     zm0 = hydobj.zmt(end);
-%     if isscalar(hydobj.zhw)
-%         am = (hydobj.zhw-hydobj.zlw)/2; %tidal amplitude at mouth
-%         zhw = zm0+am;
-%     else  
-%         zhw = hydobj.zhw(end);          %high water level at mouth
-%     end
     zhw = hydobj.zhw(1);          %high water level at mouth
     %top of river valley
     coastlevel = 1;
@@ -156,33 +149,5 @@ function plotValley(xi,yi,zi)
     hold off
     xlabel('Width (m)')
     ylabel('Elevation (m)')
-    title('Valley cross-section at intervals along channel';
+    title('Valley cross-section at intervals along channel');
 end
-% function [zm0,Lv] = findconvergencelength(xr,zr,xH,zH,z0)
-%     %iterative solution for the convergence length of a valley with
-%     %defined levels at the head, zH, and tidal limit, zr, and a 
-%     %basal level, z0, at the mouth
-%     % zm0 - elevation adjustment at mouth (offset to be applied to thalweg)
-%     % Lv - along channel convergence length of valley bottom
-%     %NB -same as findconvergencelength function in CF_ValleyModel
-%     drp = zr-z0;       %depth between river invert at tidal limit and mouth
-%     dHp = zH-z0;       %depth between valley head and mouth
-%     lv_fun = @(lv) drp/dHp-(exp(xr/lv)-1)/(exp(xH/lv)-1);
-%     Lv = fzero(lv_fun,xH/2);
-%     zm0 = drp/(exp(xr/Lv)-1);
-% end
-%%
-% function yz = planForm(hydobj,xi,yi,zi)
-%     %compute controlling dimensions (y) for an exponential plan form
-%     zwl(1) = hydobj.zhw(end); %constant so does not matter which end
-%     zwl(2) = hydobj.zmt(end);
-%     zwl(3) = hydobj.zlw(end);
-%     
-%     yz = zeros(length(xi),3);
-%     for j=1:3
-%         M = contour(yi,xi,zi,[zwl(j),zwl(j)]);
-%         xj = M(2,2:end);
-%         yj = M(1,2:end);
-%         yz(:,j) = interp1(xj,yj,xi,'linear');
-%     end
-% end

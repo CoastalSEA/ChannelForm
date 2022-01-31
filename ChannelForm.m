@@ -4,7 +4,7 @@ classdef ChannelForm < muiModelUI
 % NAME
 %   ChannelForm.m
 % PURPOSE
-%   Main GUI for a generic model interface, which implements the 
+%   Main UI for the ChannelForm interface, which implements the 
 %   muiModelUI abstract class to define main menus.
 % SEE ALSO
 %   Abstract class muiModelUI.m and tools provided in muitoolbox
@@ -46,9 +46,9 @@ classdef ChannelForm < muiModelUI
             %tabs to include in DataUIs for plotting and statistical analysis
             %select which of the options are needed and delete the rest
             %Plot options: '2D','3D','4D','2DT','3DT','4DT'
-            obj.DataUItabs.Plot = {'2D','3D','4D','2DT','3DT','4DT'};  
+            obj.DataUItabs.Plot = {'2D','3D','2DT','3DT'};  
             %Statistics options: 'General','Timeseries','Taylor','Intervals'
-            obj.DataUItabs.Stats = {'General','Timeseries','Taylor','Intervals'};  
+            obj.DataUItabs.Stats = {'General','Timeseries','Taylor'};  
             
             modelLogo = 'ChannelForm_logo.jpg';  %default splash figure - edit to alternative
             initialiseUI(obj,modelLogo); %initialise menus and tabs   
@@ -113,8 +113,8 @@ classdef ChannelForm < muiModelUI
             menu.Setup(1).Separator = [repmat({'off'},[1,3]),{'on'},...
                                        repmat({'off'},[1,3]),{'on'}]; %separator preceeds item
             menu.Setup(2).List = {'Exp Form Parameters','Power Form Parameters',...
-                                  'CKFA Form Parameters','Valley Parameters'};
-            menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,4]); 
+                                                     'Valley Parameters'};
+            menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,3]); 
             
             menu.Setup(3).List = {'Hydraulic Parameters','Sediment Parameters',...
                                   'Transgression Parameters','Morphological Modifications'};
@@ -132,9 +132,11 @@ classdef ChannelForm < muiModelUI
             menu.Setup(7).List = {'Translate Grid','Rotate Grid',...
                                   'Re-Grid','Sub-Grid',...
                                   'Combine Grids','Add Surface',...
+                                  'To curvilinear','From curvilinear',... 
                                   'Difference Plot','Export xyz Grid'};                                                                        
-            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,8]);
-            menu.Setup(7).Separator = [repmat({'off'},[1,6]),{'on','on'}]; %separator preceeds item
+            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,10]);
+            menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
+                                              {'on','off','on','on'}]; %separator preceeds item
             %% Utilities menu ---------------------------------------------------
             menu.Utilities(1).List = {'Hydraulic Model',...
                                       'Add Form to Valley',...
@@ -218,7 +220,7 @@ classdef ChannelForm < muiModelUI
                 'CF_ModsData','Modifications',[0.90,0.96],{240,260},'Morphological modifications:';...
                 'WaterLevels','Forcing',[0.90,0.48],{160,80},'Hydraulic forcing parameters:';...
                 'CF_HydroData','Forcing',[0.90,0.96],{160,80},'Hydraulic model parameters:';...
-                'CF_SediData','Sediments',[0.90,0.50],{180,70}, 'Sediment parameters:';... 
+                'CF_SediData','Sediments',[0.90,0.60],{220,70}, 'Sediment parameters:';... 
                 'RunProperties','Run Parameters',[0.40,0.50],{170,80},'Run time parameters:';...
                 'GD_GridProps','Run Parameters',[0.90,0.50],{160,90}, 'Grid parameters:';...
                 'CF_TransData','Transgression',[0.90,0.70],{220,120}, 'Transgression parameters:'}; 
@@ -418,7 +420,7 @@ classdef ChannelForm < muiModelUI
                 case 'Transgression model'
                     CF_TransModel.runModel(obj);
                 case 'Derive Output'
-                    obj.mUI.Manip = muiManipUI.getManipUI(obj);
+                    obj.mUI.ManipUI = muiManipUI.getManipUI(obj);
             end            
         end               
             

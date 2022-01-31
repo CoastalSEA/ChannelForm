@@ -127,19 +127,11 @@ classdef CF_ValleyModel < GDinterface
 %%
         function new_z = updateValley(F,F0,zhw,trp,trg,incFP)
             %add the valley form to the channel form 
-%             fp_offset = 0.1; 
-
             [X,Y] = ndgrid(F.xi,F.yi);
             zv = griddata(F.xv,F.yv,F.zv',X,Y);    %valley elevations
             
             new_z = max(F.zi,zv);
 
-%             idx = F.zi>trp.Zhw & zv<=trp.Zhw;  %areas that are undefined
-%             F.zi(F.zi>trp.Zhw) = 0;
-%             zv(zv<=trp.Zhw) = 0;
-%             new_z = F.zi+zv;
-%             new_z(idx) = trp.newHW(idx);
-            
             if ~trg.isConstrained && ~incFP
                 fact = 4; %needs to be consistent with value in TransgressionModel.applyConstraints
                 idz = Y<(F.Yhw+fact*trp.dy) & Y>(F.Yhw);
@@ -157,49 +149,9 @@ classdef CF_ValleyModel < GDinterface
             end       
         end
 %%
-        function restoreForm(mobj)
+        function restoreForm(~)
             %remove valley data from form to restore base form
-            if isempty(mobj.Cases), return; end
-
-            %idf = strcmp(mobj.Cases.CaseType,'_model');  
-            idf = contains(mobj.Cases.CaseType,'_model');
-            if isempty(idf)
-                return;
-            elseif sum(idf)>1
-                [f_useCase,~,ok] = ScenarioList(mobj.Cases,'_model',...
-                                                    'ListSize',[200,140]);
-                if ok<1, return; end
-            else
-                f_useCase = find(idf);
-            end
-            
-            robj = mobj.Cases;
-            f_caseid = mobj.Cases.CaseID(f_useCase);             
-            [h_f,id_c,fprop,id_rec,aprop] = getCaseRecord(robj,mobj,f_caseid);  
-            localObj = mobj.(h_f)(id_c);
-            zf = localObj.(fprop{1}){id_rec}.zLevel;            
-            rnp = mobj.(getClassHandle(mobj,'CFRunProps'));
-            
-            if isa(localObj,'ChannelFormModel') || isa(localObj,'PRFormModel')
-                hyd = mobj.(getClassHandle(mobj,'HydroFormData'));
-                zhw = hyd.MTLatMouth+hyd.TidalAmplitude;
-                zf(zf>zhw) = zhw+2*rnp.histint;
-            else
-                cst_res = localObj.(aprop{4}){id_rec};
-                zhw = cst_res{1}+cst_res{2};
-                zf = squeeze(zf);
-                [m,n] = size(zf);
-                for i=1:m
-                    idx = zf(i,:)>zhw(i); %areas that are undefined
-                    zf(i,idx) = zhw(i)+2*rnp.histint;
-                end
-                zf = reshape(zf,1,m,n);
-            end     
-
-            %overwrite exisitng form data set with new form
-            localObj.(fprop{1}){id_rec}.zLevel = zf;
-            localObj.cidValley = [];
-            ModelUI.myDialog('Data modified');
+            %NOT used in new version
         end 
         
 %% ------------------------------------------------------------------------

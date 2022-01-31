@@ -16,29 +16,25 @@ classdef CF_ValleyData < muiPropertyUI
 %      
     properties (Hidden)
         %abstract properties in muiPropertyUI to define input parameters
-        PropertyLabels = {'Width & depth exponents at high water [m1 n1]',...
-                          'Width & depth exponents at low water [m2 n2]',...
-                          'Cut-off valley elevation (mAD)',...
-                          'Valley width at mouth (m)',...
+        PropertyLabels = {'Valley width at mouth (m)',...
                           'Valley depth at mouth (mAD)',...
                           'Distance to tidal limit (m)',...
                           'Elevation of tidal limit (mAD)',...
                           'Distance to head of valley (m)',...
-                          'Elevation of head of valley (mAD)'};
+                          'Elevation of head of valley (mAD)',...
+                          'Cut-off valley elevation (mAD)'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
     end
     
-    properties
-        numu = 1        %width exponent at high water (-) can be two values nu and mu*
-        nlml = 1        %width exponent at low water (-) can be two values nl and ml*
-        ValleyEle       %cut-off valley elevation (mAD)
+    properties        
         ValleyWidth     %valley mouth at mouth (m) 
         ValleyDepth     %valley depth at mouth (mAD)
         xTidalLimit     %distance to tidal limit(m)
         zTidalLimit     %elevation of tidal limit (mAD)
         xValleyHead     %distance to head of valley (m)
         zValleyHead     %elevation of head of valley  (mAD)
+        ValleyEle       %cut-off valley elevation (mAD)
     end    
 
 %%   

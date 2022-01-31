@@ -5,8 +5,42 @@
 
 %% Summary of Tabs
 % * *Cases*: lists the cases that have been run with a case id and description.
-% * *Inputs*: summmary of the properties that have been defined
-% * *Q-Plot*: user selects a variable from imported data or model output, and creates a plot on the tab. The plot cannot be edited.
+% * *Form*: summary of the properties that have been defined
+%%
+% <html>
+% <ul><ul>
+% <li>Exponential - tabulates the parameters required for the exponential form model.</li>
+% <li>Power - tabulates the parameters required for the power law form model.</li>
+% <li>Valley - tabulates the parameters required for the valley form model.</li>
+% </ul></ul>
+% </html>
+%%
+% * *Settings*: tabulates the current model settings (display only). 
+% This tab has the following sub-tabs:
+%%
+% <html>
+% <ul><ul>
+% <li>Forcing - tabulates the water level and hydrodynamic parameters.</li>
+% <li>Sediments - tabulates the sediment parameters.</li>
+% <li>Transgression - tabulates the additional parameters needed for the transgression model.</li>
+% <li>Modifications - tabulates constant modifications to the channel form.</li>
+% <li>Run Parameters - tabulates the key run parameters, conditions and equilibrium coefficients).</li>
+% </ul></ul>
+% </html>
+%%
+% * *Hydro-Props*
+%%
+% <html>
+% <ul><ul>
+% <li>Water Levels - plots the water levels as a function of time.</li>
+% <li>Hydraulics - plots the along channel variation of water levels.</li>
+% </ul></ul>
+% </html>
+%%
+% * *Form-Props*: tabulates the gross properties together with a
+% range of property plots.
+% * *Q-Plot*: user selects a variable from imported data or model output, and a plot is created on the tab. The plot cannot be edited.
+% * *Stats*: tabulates the results from statistics UI.
 
 %% Accessing Case meta-data
 % On the *Cases* tab, using the mouse to click on a case record generates a

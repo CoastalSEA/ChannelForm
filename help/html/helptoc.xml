@@ -22,9 +22,22 @@
         <!-- User Guide comes next -->
         <tocitem target="channelform_guide.html" 
             image="HelpIcon.USER_GUIDE">ChannelForm User Guide
-            <tocitem target="channelform.html">Menu options</tocitem>    
-            <tocitem target="channelform_tabs.html">Tab options</tocitem>    
+            <tocitem target="channelform_menus.html">Menu options</tocitem>    
+            <tocitem target="channelform_tabs.html">Tab options</tocitem>   
+             <tocitem target="channelform_output.html">Output</tocitem>
             <tocitem target="channelform_examples.html">ChannelForm examples</tocitem>  
+        </tocitem>
+        <!-- Developers Guide comes next -->
+        <tocitem target="channelform_dev_guide.html"
+            image="HelpIcon.USER_GUIDE">ChannelForm Developers Guide
+            <tocitem target="channelform_classes.html">ChannelForm classes</tocitem>
+            <tocitem target="channelform_functions.html">ChannelForm functions</tocitem>
+            <tocitem target="grid_class_fcns.html">Grid classes and functions</tocitem>
+            <tocitem target="gdinterface.html">GDinterface abstract class</tocitem>
+        </tocitem>
+        <!-- Optional link or links to your or other Web sites -->
+        <tocitem target="http://www.coastalsea.uk" 
+                 image="coastalsea_logo.png"> Developers web site       
         </tocitem>
     </tocitem>    
         <!-- Optional List of Examples, with hyperlinks to examples in other files -->

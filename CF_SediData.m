@@ -22,6 +22,8 @@ classdef CF_SediData < muiPropertyUI
                           'Equilibrium sediment density (kg/m^3)', ...                          
                           'Bulk density of bed (kg/m^3)',...
                           'Transport coefficient (+/-n)',...
+                          'Equilibrium scale coeffient (0=scale initial)',...
+                          'Equilibrium shape coeffient (-)',...
                           'Average depth over marsh (m)',...
                           'Maximum marsh depth (m), 0=no marsh',...
                           'Sediment load in river (kg/m^3)',...
@@ -35,11 +37,13 @@ classdef CF_SediData < muiPropertyUI
         SedimentSize         %sediment grain size, D50 (m)
         CritBedShear         %critical bed shear stress (Pa)
         ErosionRate = 0.002  %erosion rate constant (kg/N/s)
-        EqDensity = 0        %equilibrium concentration density(kg/m^3)        
+        EqDensity = 0        %equilibrium concentration density (kg/m^3)        
         BedDensity = 0       %bed density (kg/m^3)
-        TransportCoeff = 0   %transport coefficient n (3-5) 
-        AvMarshDepth = 0     %average depth of marsh surface
-        MaxMarshDepth = 0    %maximum depth of saltmarsh   
+        TransportCoeff = 3   %transport coefficient n (3-5) 
+        EqScaleCoeff = 0.84  %equilibrium scale coeffient, alpha, UK default - set to zero to scale to initial volume
+        EqShapeCoeff = 1     %equilibrium shape coeffient, beta, UK default      
+        AvMarshDepth = 0     %average depth of marsh surface (m)
+        MaxMarshDepth = 0    %maximum depth of saltmarsh (m)
         RiverDensity = 0     %river load imported by advection (kg/m^3)
         d50river             %sediment grain size in river, D50 (m)
         tauriver             %critical bed shear stress in river (Pa)
@@ -79,7 +83,7 @@ classdef CF_SediData < muiPropertyUI
             %use muiPropertyUI function to generate UI
             if nargin<2 || editflag
                 %add nrec to limit length of props UI (default=12)
-                obj = editProperties(obj);  
+                obj = editProperties(obj,13);  
                 %add any additional manipulation of the input here
             end
             setClassObj(mobj,'Inputs',classname,obj);
@@ -111,10 +115,11 @@ classdef CF_SediData < muiPropertyUI
   
             answer = inputdlg('Rate of slr (m/yr)','SLR rate',1,{'0.002'});
             slr = str2double(answer);
+
             %get_sed_flux_returns change in morphological volume/yr, dvol 
             %hence negative is infilling and import of sediment
             %delV is the water volume change (S x slr)
-            [dvol,delV] = get_sed_flux(sedinp,slr,false);
+            [dvol,delV] = get_sed_flux(sedinp,slr);
             msg1 = sprintf('SEM morphological timescale = %0.3f years',tau);
             msg2 = sprintf('Volume change due to SLR (m3/yr) = %0.3e',delV);
             msg3 = sprintf('Volume imported/exported (m3/yr) = %0.3e',-dvol);
@@ -155,6 +160,7 @@ classdef CF_SediData < muiPropertyUI
             else
                 sed = formobj.RunParam.CF_SediData;                
             end
+
             cn = getConstantStruct(mobj.Constants); %model constants 
             sedinp.y2s = cn.y2s;
             ws = settling_velocity(sed.SedimentSize,cn.g,cn.rhow,...
@@ -167,7 +173,7 @@ classdef CF_SediData < muiPropertyUI
             gprop = formobj.Data.GrossProps(1,:);
             sedinp.Volume = gprop.Vhw;              %element volume at start of run (m^3)
             sedinp.SurfaceArea = gprop.Shw;         %element surface area (m^2)
-            sedinp.Prism = gprop.Vhw-gprop.Vlw;     %tidal prism of channel (m^3)
+            sedinp.Prism = gprop.Pr;                %tidal prism of channel (m^3)
             
             hydobj = formobj.RunParam.CF_HydroData;
             sedinp.RiverDischarge = hydobj.RiverDischarge;  %river discharge (m^3/s)
@@ -186,8 +192,16 @@ classdef CF_SediData < muiPropertyUI
             delx = u*wlvobj.TidalPeriod/4*3600;     %tidal excursion length
             sedinp.HorizontalExchange = D*A/delx;   %horizontal exchange (m/s)
             sedinp.TransportCoeff = sed.TransportCoeff;%transport coefficient n (3-5)
-            rnpobj = mobj.Inputs.RunProperties;
-            sedinp.TimeInt = rnpobj.TimeStep;
+            %equilibrium volume definition
+            if sed.EqScaleCoeff==0
+                sedinp.EqScaleCoeff = gprop.Vhw/gprop.Pr; 
+                sedinp.EqShapeCoeff = 1;
+            else
+                sedinp.EqScaleCoeff = sed.EqScaleCoeff;
+                sedinp.EqShapeCoeff = sed.EqShapeCoeff;
+            end
+%             rnpobj = mobj.Inputs.RunProperties;
+%             sedinp.TimeInt = rnpobj.TimeStep;
 %             sedinp.NumSteps = rnpobj.NumSteps;
         end        
     end
