@@ -163,7 +163,7 @@ classdef CF_HydroData < muiPropertyUI
             for i=1:nrow
                 inp = updateModelParameters(obj,inp,i);
                 try
-                    [res,~,~,xy] = cst_model(inp,rnp,est);
+                    [res,xy,~,~] = cst_model(inp,rnp,est);
                     resX(i,:) = res;
                 catch
                     %remove the waitbar if program did not complete
@@ -196,7 +196,7 @@ classdef CF_HydroData < muiPropertyUI
             getdialog('Run complete');            
         end
 %%
-        function [resX,resXT,time,xyz] = runHydroModel(obj,estobj)
+        function [resX,xyz,resXT,time] = runHydroModel(obj,estobj)
             %run model when updating models eg adding surface to form model or in
             %transgression model (i) no checks made; (ii) uses current transient
             %properties for water levels; and (iii) specified form model. 
@@ -209,7 +209,7 @@ classdef CF_HydroData < muiPropertyUI
             [inp,rnp] = getHydroModelParams(obj,true);
             
             try
-                [resX,resXT,time,xyz] = cst_model(inp,rnp,[]);
+                [resX,xyz,resXT,time] = cst_model(inp,rnp,[]);
             catch ME
                 %remove the waitbar if program did not complete
                 model_catch(ME,'cst_model','Qr',inp.RiverDischarge);                
@@ -359,7 +359,10 @@ classdef CF_HydroData < muiPropertyUI
             inp = getPropertiesStruct(obj);         
             
             %inp parameters requires the following form parameters
-            inp.EstuaryLength = obj.xTidalLimit;%total length of channel (m)
+            %in the CSTmodel estuary length is the length of model domain
+            %and inp.xTidalLimit is not used
+            xlength = obj.FormModel.RunParam.GD_GridProps.XaxisLimits(2);
+            inp.EstuaryLength = xlength;%total length of channel (m)
             
             %width, CSA and convergence length are form model dependent
             inp = getHydroFormProps(obj,inp);
@@ -384,7 +387,7 @@ classdef CF_HydroData < muiPropertyUI
 
             %rnp parameters requires the following
             rnp.TimeInt = 0;     %time increment in analytical model (hrs) - only needed if tidal cycle output required
-            rnp.DistInt = 100;   %distance increment along estuary (m)
+            rnp.DistInt = 5000;  %distance increment along estuary (m)
             rnp.useObs = false;  %flag to indicate whether to use observations
         end
 %%

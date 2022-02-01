@@ -53,19 +53,6 @@ function tabPlot(obj,src,irec,iswidth,isfig)
         isfig = false; 
     end
 
-%     dst = obj.Data.Form;
-%     
-%     if height(dst)>1
-%         %propmpt user to select timestep
-%         list = dst.DataTable.Properties.RowNames;
-%         irec = listdlg('PromptString','Select timestep:',...
-%                        'Name','Tab plot','SelectionMode','single',...
-%                        'ListSize',[250,100],'ListString',list);
-%         if isempty(irec), return; end
-%     else
-%         irec = 1;
-%     end
-
     grid = getGrid(obj,irec);
     if isempty(grid.z), return; end
     
@@ -170,7 +157,7 @@ function tabProperties(obj,tabsrc,irec)
         popup = uicontrol('Parent',tabsrc,'Style','popup',...
            'String',plotlist,'Tag','PlotList',...
            'Units','Normalized','Position', [0.05 0.74 0.9 0.05],...
-           'Callback', @(src,evdat)cf_property_plots(obj,irec,src));
+           'Callback', @(src,evdat)cf_property_plots(obj,irec,src)); %#ok<NASGU>
 
         %Create push button to copy data to clipboard
         uicontrol('Parent',tabsrc,'Style','pushbutton',...                    

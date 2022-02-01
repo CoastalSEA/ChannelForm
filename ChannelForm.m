@@ -148,14 +148,9 @@ classdef ChannelForm < muiModelUI
                                       'Morphological Timescale',...
                                       'Channel-Valley Sub-Plot'};
             menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,9]);
-             menu.Utilities(1).Separator = [repmat({'off'},[1,3]),{'on'},...
+            menu.Utilities(1).Separator = [repmat({'off'},[1,3]),{'on'},...
                                             repmat({'off'},[1,5])]; %separator preceeds item
-            
-%             %% Process menu ---------------------------------------------------
-%             menu.Process(1).List = {'Add Form to Valley','Add Modifications',...
-%                                     'Restore Form'};
-%             menu.Process(1).Callback = repmat({@obj.procMenuOptions},[1,3]);
-%             
+             
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Exponential form model','Power form model',...
                                 'CKFA form model','Valley form model',...
@@ -164,8 +159,13 @@ classdef ChannelForm < muiModelUI
             menu.Run(1).Separator = [repmat({'off'},[1,5]),{'on'}]; %separator preceeds item
             
             %% Plot menu --------------------------------------------------  
-            menu.Analysis(1).List = {'Plots','Statistics'};
-            menu.Analysis(1).Callback = repmat({@obj.analysisMenuOptions},[1,2]);
+            menu.Analysis(1).List = {'Plots','Statistics','Transgression Plots'};
+            menu.Analysis(1).Callback = [repmat({@obj.analysisMenuOptions},[1,2]),{'gcbo;'}];
+            menu.Analysis(1).Separator = {'off','off','on'};
+            
+            menu.Analysis(2).List = {'Grid Plot','Change Plot',...
+                                            'Section Plot','Transgression Plot'};
+            menu.Analysis(2).Callback = repmat({@obj.analysisPlotOptions},[1,4]);
             
             %% Help menu --------------------------------------------------
             menu.Help(1).Callback = {@obj.Help}; %make model specific?
@@ -380,22 +380,7 @@ classdef ChannelForm < muiModelUI
                 case 'Channel-Valley Sub-Plot'
                     CF_ValleyModel.componentsPlot(obj);
             end            
-        end  
-
-
-%         %% Process menu -------------------------------------------------------
-%         function procMenuOptions(obj,src,~)
-%             %callback functions to run model
-%             switch src.Text                   
-%                 case 'Add Form to Valley'
-%                     CF_ValleyModel.addForm2Valley(obj);
-%                 case 'Restore Form'
-%                     CF_ValleyModel.restoreForm(obj); 
-%                 case 'Add Modifications'
-%                     CF_FormModel.addMorphMods(obj);
-%                 
-%             end            
-%         end  
+        end   
         %%
         function gridMenuOptions(obj,src,~)
             %callback functions for grid tools options
@@ -426,6 +411,7 @@ classdef ChannelForm < muiModelUI
             
         %% Analysis menu ------------------------------------------------------
         function analysisMenuOptions(obj,src,~)
+            %callback functions for plot and stats menus
             switch src.Text
                 case 'Plots'
                     obj.mUI.PlotsUI = muiPlotsUI.getPlotsUI(obj);
@@ -433,7 +419,23 @@ classdef ChannelForm < muiModelUI
                     obj.mUI.StatsUI = muiStatsUI.getStatsUI(obj);
             end            
         end
-
+%%
+        function analysisPlotOptions(obj,src,~)
+            %callback functions for summary transgression plots
+            promptxt = 'Select a Case to plot'; 
+            cobj = selectCaseObj(obj.Cases,[],{'CF_TransModel'},promptxt);
+            if isempty(cobj), return; end
+            switch src.Text
+                case 'Grid Plot'
+                    cf_summarygridplot(cobj);
+                case 'Change Plot'
+                    cf_changeplot(cobj);
+                case 'Section Plot'
+                    cf_sectionplot(cobj);
+                case'Transgression Plot'
+                    cf_summarytransplot(cobj);
+            end
+        end
         %% Help menu ------------------------------------------------------
         function Help(~,~,~)
             docsearch ChannelForm 

@@ -4,7 +4,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
 % NAME
 %   cf_valley_model.m
 % PURPOSE
-%   construct idealised channel form using 3D CKFA model
+%   construct idealised channel form using 3D exponential form model
 % USAGE
 %   [xi,yi,zgrd,Lv,Ls0] = cf_valley_model(obj,isfull)
 % INPUTS

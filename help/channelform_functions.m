@@ -7,9 +7,12 @@
 % Functions that implement various form models
 
 %%
+% * *cf_changeplot* - plot volume difference over the model run and the
+% variation of sediment exchange with transgression distance.
 % * *cf_cst2grid* - interpolate the CST water levels onto the model grid.
-% * *cf_exp_models* - construct idealised channel form using
-% exponential functions in 'y' to determine width and CKFA cross-section.
+% * *cf_exp_models* - construct idealised channel form using exponential 
+% functions in y to determine width and CKFA cross-section to determine 
+% z at each x interval.
 % * *cf_model_tabs* - generate tabPlot and tabProperties for any
 % GDinterface model.
 % * *cf_plan_form* - compute planform variation along the x-axis at
@@ -18,11 +21,14 @@
 %   using power laws to define width and hydraulic depth variations.
 % * *cf_property_plots* - plots displayed on Proprety tab in ChannelForm
 % model.
+% * *cf_sectionplot* - plot a set of along-channel cross-sections and the channel centre-line
+% (thalweg) for the initial and final grid.
 % * *cf_set_hydroprops* - set water levels for form model using either the surface defined by the
 % cst_model or high water at the mouth and a reducing tidal amplitude.
-% * *cf_valley_model* - construct idealised channel form using 3D CKFA
-% model.
-% to determine z at each x interval.
+% * *cf_summarygridplot* - plot initial grid, new grid and difference.
+% * *cf_summarytransplot* - composite set of plots to show 
+% results form Transgression table.
+% * *cf_valley_model* -  construct idealised channel form using 3D exponential form model
 % * *ckfa_3D_form* - construct 3D form of an idealised channel based on the CKFA model.
 % * *ckfa_dimensions* - utility to get the CKFA channel form properties:
 % hydraulic depth, hm, width convergence length, Lw, critical tidal velocity amplitude, Ucr.

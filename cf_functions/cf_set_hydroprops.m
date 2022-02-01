@@ -33,7 +33,7 @@ function [obj,ok] = cf_set_hydroprops(obj)
     
     if obj.Selection.wlflag==0
         %use cst_model to set-up water levels for model           
-        [resX,~,~,xyz] = runHydroModel(hydobj,obj);
+        [resX,xyz,~,~] = runHydroModel(hydobj,obj);
         if isempty(resX), ok = 0; return; end        
         %interpolate CSTmodel results onto model grid + reverse for xmin @ head
         obj.RunParam.CF_HydroData = cf_cst2grid(obj,resX,xyz{:},false);

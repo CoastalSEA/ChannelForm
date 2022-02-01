@@ -135,7 +135,7 @@ function cf_property_plots(obj,irec,src)
                 warndlg('Trangression model required for this plot');
                 return;
             end
-            transgressionplot(ax,obj.Data.Transgression);
+            transgressionplot(ax,obj.Data.Transgression);            
     end   
 end
 %%
@@ -381,7 +381,7 @@ function transgressionplot(ax,trans)
     %plot transgression time step results
     t = trans.RowNames;
     vardesc = trans.VariableDescriptions;
-    ok=1;
+    ok=1; idlast = [];
     hold on
     while ok>0
         [idx,ok] = listdlg('Name','Properties','PromptString','Select variable',...                         
@@ -393,11 +393,13 @@ function transgressionplot(ax,trans)
         idlast = idx;
     end
     hold off
-    xlabel('Time (years)')
-    ylabel(trans.VariableLabels{idlast})
-    ax.Position(1) = 0.1;
-    ytickformat('%3.2g')
-    legend
-    title(trans.Description)
+    if ~isempty(idlast)
+        xlabel('Time (years)')
+        ylabel(trans.VariableLabels{idlast})
+        ax.Position(1) = 0.1;
+        ytickformat('%3.2g')
+        legend
+        title(trans.Description)
+    end
 end
     
