@@ -163,9 +163,10 @@ classdef ChannelForm < muiModelUI
             menu.Analysis(1).Callback = [repmat({@obj.analysisMenuOptions},[1,2]),{'gcbo;'}];
             menu.Analysis(1).Separator = {'off','off','on'};
             
-            menu.Analysis(2).List = {'Grid Plot','Change Plot',...
-                                            'Section Plot','Transgression Plot'};
-            menu.Analysis(2).Callback = repmat({@obj.analysisPlotOptions},[1,4]);
+            menu.Analysis(2).List = {'Grid Plot','Change Plot','Section Plot',...
+                                    'Transgression Plot','Export Tables'};
+            menu.Analysis(2).Callback = repmat({@obj.analysisPlotOptions},[1,5]);
+            menu.Analysis(2).Separator = [repmat({'off'},[1,4]),{'on'}]; 
             
             %% Help menu --------------------------------------------------
             menu.Help(1).Callback = {@obj.Help}; %make model specific?
@@ -365,8 +366,8 @@ classdef ChannelForm < muiModelUI
                     runModel(cobj,obj);
                 case 'Add Form to Valley'
                     CF_ValleyModel.addForm2Valley(obj);
-                case 'Restore Form'
-                    CF_ValleyModel.restoreForm(obj);     
+                case 'Add Modifications'
+                    CF_FormModel.addMorphMods(obj);     
                 case 'River Dimensions'
                     CF_HydroData.displayRiverDims(obj);
                 case 'Valley Thalweg'
@@ -422,7 +423,12 @@ classdef ChannelForm < muiModelUI
 %%
         function analysisPlotOptions(obj,src,~)
             %callback functions for summary transgression plots
-            promptxt = 'Select a Case to plot'; 
+            if strcmp(src.Text,'Export Tables')
+                promptxt = 'Select a Case to export';                 
+            else
+                promptxt = 'Select a Case to plot'; 
+            end
+            
             cobj = selectCaseObj(obj.Cases,[],{'CF_TransModel'},promptxt);
             if isempty(cobj), return; end
             switch src.Text
@@ -433,7 +439,9 @@ classdef ChannelForm < muiModelUI
                 case 'Section Plot'
                     cf_sectionplot(cobj);
                 case'Transgression Plot'
-                    cf_summarytransplot(cobj);
+                    cf_summarytransplot(cobj); 
+                case 'Export Tables'
+                    cf_writetable(cobj);
             end
         end
         %% Help menu ------------------------------------------------------

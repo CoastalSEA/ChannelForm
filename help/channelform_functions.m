@@ -28,7 +28,9 @@
 % * *cf_summarygridplot* - plot initial grid, new grid and difference.
 % * *cf_summarytransplot* - composite set of plots to show 
 % results form Transgression table.
-% * *cf_valley_model* -  construct idealised channel form using 3D exponential form model
+% * *cf_valley_model* -  construct idealised channel form using 3D
+% exponential form model.
+% * *cf_writetable* - write GrossProps and Transgression output tables to a file.
 % * *ckfa_3D_form* - construct 3D form of an idealised channel based on the CKFA model.
 % * *ckfa_dimensions* - utility to get the CKFA channel form properties:
 % hydraulic depth, hm, width convergence length, Lw, critical tidal velocity amplitude, Ucr.

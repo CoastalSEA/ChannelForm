@@ -50,6 +50,6 @@ function cf_summarygridplot(obj)
     h3 = colorbar; 
     h3.Label.String = 'Change in elevation (m)';
     title('Difference plot (showing +/-2.slr)')
-    casedesc = sprintf('Summary of change, slr=%0.1g',slr);
+    casedesc = sprintf('Summary of change, slr=%0.1g m',slr);
     sgtitle(casedesc,'FontWeight','normal','FontSize',10); 
 end

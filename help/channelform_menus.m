@@ -125,16 +125,19 @@
 % * *Plots*: initialises the Plot UI to select variables and produce various types of plot. The user selects the Case, Dataset and Variable to used, along with the Plot type and any Scaling to be applied from a series of drop down lists, 
 % * *Statistics*: initialiss the Statistics UI to select data and run a range of standard statistical methods.
 % * *Trangression Plots*: summary plots to present the results of the
-% transgression model
-% * *Trangression Plots>Grid Plot*: plot initial grid, new grid and
+% transgression model or export the GrossProps and Transgression output
+% tables to a file (see <matlab:doc('channelform_output') Output help> for details).
+% * *Transgression Plots>Grid Plot*: plot initial grid, new grid and
 % difference.
-% * *Trangression Plots>Change Plot*: plot volume difference over the 
+% * *Transgression Plots>Change Plot*: plot volume difference over the 
 % model run and the variation of sediment exchange with transgression
 % distance.
-% * *Trangression Plots>Section Plot*: plot a set of along-channel cross-sections and the channel centre-line
-% (thalweg) for the intial and final grid.
-% * *Trangression Plots>Transgression Plot*: composite set of plots to show 
+% * *Transgression Plots>Section Plot*: plot a set of along-channel cross-sections and the channel centre-line
+% (thalweg) for the initial and final grid.
+% * *Transgression Plots>Transgression Plot*: composite set of plots to show 
 % results form Transgression table.
+% * *Transgression Plots>Export Table*: write GrossProps and Transgression 
+% output tables from the Transgression model to a file.
 
 %% Help
 % * *Help*: access the online documentation for CoastalTools.

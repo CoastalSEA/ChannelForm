@@ -35,7 +35,7 @@ classdef CF_ValleyModel < GDinterface
             %function to run a simple 2D diffusion model
             obj = CF_ValleyModel;             
             %now check that the input data has been entered
-            %isValidModel checks the InputHandles defined in ModelUI
+            %isValidModel checks the InputHandles defined in ChannelForm
             if ~isValidModel(mobj, metaclass(obj).Name)  
                 warndlg('Use Setup to define model input parameters');
                 return;

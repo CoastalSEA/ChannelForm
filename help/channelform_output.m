@@ -113,6 +113,23 @@
 %%
 % _Dimensions_ of time (table rows), and X.
 
+%%% Transgresion
+% When the Transgression model is run as additional table is included
+% in the model output tables containing a set of output properties that
+% summarise the changes of form over time, with the following variables:
+%%
+% * delX - Unadjusted transgression distance (m)
+% * estdX - Adjusted transgression distance (m)
+% * cstdX - Open coast transgression distance (m)
+% * dSLR - Cumulative sea level rise (m)
+% * Lt - Distance to tidal limit (m)
+% * FPA - Flood plain area (m)
+% * waterVol - Water volume change due to changes in HW (m^3)
+% * sedVol - Cumulative sediment flux (+ve=sediment import) (m^3)
+% * vdiffx - Volume change for [0,delX/2,delX,3delX/2] (m^3)
+%%
+% _Dimensions_ of time (table rows)
+
 %% See Also
 % The <matlab:open_manual manual> provides further details of setup and 
 % configuration of the model.

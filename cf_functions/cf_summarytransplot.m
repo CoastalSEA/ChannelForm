@@ -23,7 +23,7 @@ function cf_summarytransplot(obj)
     slr = dst.dSLR(end);
     t = dst.RowNames;
     vardesc = dst.VariableDescriptions;
-    %varnames: 'delX','estdX','cstdX','dSLR','Lt','FPA','sedVol','vdiffx'
+    %varnames: 'delX','estdX','cstdX','dSLR','Lt','FPA','waterVol','sedVol','vdiffx'
     varnames =  dst.VariableNames;
     figure('Name','Trans Plot','Units','normalized','Tag','PlotFig'); 
     %
@@ -43,8 +43,11 @@ function cf_summarytransplot(obj)
     plot(t,dst.(varnames{4}),'DisplayName',vardesc{4});
     ylabel(dst.VariableLabels{4})
     yyaxis right
-    plot(t,dst.(varnames{7}),'DisplayName',vardesc{7});
-    plot_labels(dst,7)
+    plot(t,dst.(varnames{7}),'--b','DisplayName',vardesc{7});
+    hold on
+    plot(t,dst.(varnames{8}),'DisplayName',vardesc{8});
+    hold off
+    plot_labels(dst,8)
     %
     subplot(2,2,3)
     %
@@ -58,15 +61,15 @@ function cf_summarytransplot(obj)
     %
     subplot(2,2,4)
     %plot Volume change for [0,dx/2,dx,3dx/2]
-    vardescs = {[varnames{8},'-0'],[varnames{8},'-dx/2'],...
-                [varnames{8},'-dx'],[varnames{8},'-3dx/2']};
-    hp = plot(t,dst.(varnames{8}));
+    vardescs = {[varnames{9},'-0'],[varnames{9},'-dx/2'],...
+                [varnames{9},'-dx'],[varnames{9},'-3dx/2']};
+    hp = plot(t,dst.(varnames{9}));
     for i=1:4
         hp(i).DisplayName = vardescs{i};
     end
-    plot_labels(dst,8)
+    plot_labels(dst,9)
     
-    sgtitle(sprintf('%s, slr=%0.1g',dst.Description,slr),'FontSize',12);
+    sgtitle(sprintf('%s, slr=%0.1g m',dst.Description,slr),'FontSize',12);
 end
 %%
 function plot_labels(dst,idx)

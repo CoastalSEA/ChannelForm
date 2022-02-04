@@ -34,6 +34,10 @@ classdef CF_FormModel < GDinterface
     methods
         function obj = CF_FormModel()                   
             %class constructor
+            %model being run, selections for cf_exp_model, wlflag for wl 
+            %selection, flag to indicate if modifiaction have been added
+            obj.Selection = struct('modeltype','','planform',0,'intertidalform',0,...
+                                   'channelform',0,'wlflag',0,'incmods',false);
         end
     end      
 %%
@@ -45,7 +49,7 @@ classdef CF_FormModel < GDinterface
             %function to run a simple 2D diffusion model
             obj = CF_FormModel;             
             %now check that the input data has been entered
-            %isValidModel checks the InputHandles defined in ModelUI
+            %isValidModel checks the InputHandles defined in ChannelForm
             if ~isValidModel(mobj, metaclass(obj).Name)  
                 warndlg('Use Setup to define model input parameters');
                 return;
@@ -117,45 +121,58 @@ classdef CF_FormModel < GDinterface
             %add a prismatic dredge channel to a channel form
             muicat = mobj.Cases;
             ftxt = 'Select Form Model to use:';
-            formobj = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
-            if isempty(formobj), return; end
-            grid = getGrid(formobj,1);         
-            [X,Y] = ndgrid(grid.x,grid.y);
-            zi = grid.z;
+            obj = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
+            if isempty(obj), return; end
+ 
+            grid = getGrid(obj,1);
+            %apply the modifications defined in CF_ModsData to define new grid
+            obj.RunParam.CF_ModsData = getClassObj(mobj,'Inputs','CF_ModsData');
+            new_z = setMorphMods(obj,grid);
+            obj.Selection.incmods = true;
+            %overwrite exisitng form data set with new form             
+            obj.Data.Form.Z(1,:,:) = new_z;  
+            classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
+            updateCase(muicat,obj,classrec,true);
             
-            %get channel dimensions
-            obj = getClassObj(mobj,'Inputs','CF_ModsData');
-            for i=1:length(obj.ModStart) 
-                idx = X>obj.ModStart(i) & X<obj.ModEnd(i);
-                idy = Y>obj.ModLeft(i) & Y<obj.ModRight(i);
-                zi(idx & idy) = obj.ModElev(i);
-            end
-            %overwrite exisitng form data set with new form   
-            [m,n] = size(zi);
-            new_z = reshape(zi,1,m,n);            
-
-            answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
-            
-            if strcmp(answer,'Add')
-                %create new record
-                fdst = copy(formobj.Data.Form);
-                fdst.Z(1,:,:) = new_z;
-                setGridObj(formobj,muicat,fdst); 
-            else            
-                %overwrite exisitng form data set with new form             
-                formobj.Data.Form.Z(1,:,:) = new_z;  
-                formobj.MetaData.valleyID = vobj.CaseIndex;
-                classrec = classRec(muicat,caseRec(muicat,formobj.CaseIndex));
-                updateCase(muicat,formobj,classrec,true);
-            end 
-        end   
-    end
+            % answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
+            % 
+            % if strcmp(answer,'Add')
+            %     %create new record
+            %     fdst = copy(obj.Data.Form);
+            %     fdst.Z(1,:,:) = new_z;
+            %     setGridObj(obj,muicat,fdst); %copies form property table to new instance
+            % else            
+            %     %overwrite exisitng form data set with new form             
+            %     obj.Data.Form.Z(1,:,:) = new_z;  
+            %     classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
+            %     updateCase(muicat,obj,classrec,true);
+            % end 
+        end 
+    end        
 %%
     methods
         function tabPlot(obj,src) %abstract class method for muiDataSet
             %generate plot for display on Q-Plot tab
             cf_model_tabs(obj,src);
         end
+%%
+        function new_z = setMorphMods(obj,grid)
+            %apply the modifications defined in CF_ModsData to define new grid          
+            %also called in CF_TransModel
+            [X,Y] = ndgrid(grid.x,grid.y);
+            zi = grid.z;
+            
+            %get channel dimensions    
+            modobj = obj.RunParam.CF_ModsData;
+            for i=1:length(modobj.ModStart) 
+                idx = X>modobj.ModStart(i) & X<modobj.ModEnd(i);
+                idy = Y>modobj.ModLeft(i) & Y<modobj.ModRight(i);
+                zi(idx & idy) = modobj.ModElev(i);
+            end
+            %return the updated form   
+            [m,n] = size(zi);
+            new_z = reshape(zi,1,m,n); 
+        end     
     end 
 %%    
     methods (Access = private) 

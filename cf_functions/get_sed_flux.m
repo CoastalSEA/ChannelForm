@@ -57,7 +57,7 @@ function [dvol,delV] = get_sed_flux(inp,slr)
     alpha = ((k*q+d)/(q+d))^(1/n);         %external exchange correction                    
  
     delV = S*slr;                          %water volume change (m3/yr)
-    Ve = a*P*b;                            %equilbirum volume
+    Ve = a*P^b;                            %equilbrium volume
     Gam = (alpha*Ve/(V+delV))^n;           %gamma reflects difference from equilibrium
     dvol = C*((q+d)*Gam-(k*q+d))*inp.y2s;  %morphological change (m3/yr)
     

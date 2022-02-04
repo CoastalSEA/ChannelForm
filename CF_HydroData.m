@@ -27,6 +27,7 @@ classdef CF_HydroData < muiPropertyUI
                           'Distance to tidal limit (m)',...
                           'Manning friction coefficient [mouth switch head]',...
                           'Intertidal storage ratio [mouth switch head]',...
+                          'CSTmodel distance increment (m)',...
                           'River discharge range [Q1 Q2 ...Qn]'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
@@ -38,7 +39,8 @@ classdef CF_HydroData < muiPropertyUI
         xTideRiver            %distance from mouth to estuary/river switch (m)
         xTidalLimit           %distance from mouth to tidal limit (m)
         Manning               %Manning friction coefficient [estuary river]
-        StorageRatio          %Intertidal storage ratio [estuary river]
+        StorageRatio          %intertidal storage ratio [estuary river]
+        DistInt = 5000        %distance increment along estuary (m) 
         Qrange                %vector of input river discharges (m^3/s)
     end     
     
@@ -386,9 +388,9 @@ classdef CF_HydroData < muiPropertyUI
             end
 
             %rnp parameters requires the following
-            rnp.TimeInt = 0;     %time increment in analytical model (hrs) - only needed if tidal cycle output required
-            rnp.DistInt = 5000;  %distance increment along estuary (m)
-            rnp.useObs = false;  %flag to indicate whether to use observations
+            rnp.TimeInt = 0;           %time increment in analytical model (hrs) - only needed if tidal cycle output required
+            rnp.DistInt = obj.DistInt; %distance increment along estuary (m)
+            rnp.useObs = false;        %flag to indicate whether to use observations
         end
 %%
         function inp = getHydroFormProps(obj,inp)

@@ -22,8 +22,8 @@ classdef CF_SediData < muiPropertyUI
                           'Equilibrium sediment density (kg/m^3)', ...                          
                           'Bulk density of bed (kg/m^3)',...
                           'Transport coefficient (+/-n)',...
-                          'Equilibrium scale coeffient (0=scale initial)',...
-                          'Equilibrium shape coeffient (-)',...
+                          'Equilibrium scale coefficient (0=scale initial)',...
+                          'Equilibrium shape coefficient (-)',...
                           'Average depth over marsh (m)',...
                           'Maximum marsh depth (m), 0=no marsh',...
                           'Sediment load in river (kg/m^3)',...
@@ -40,8 +40,8 @@ classdef CF_SediData < muiPropertyUI
         EqDensity = 0        %equilibrium concentration density (kg/m^3)        
         BedDensity = 0       %bed density (kg/m^3)
         TransportCoeff = 3   %transport coefficient n (3-5) 
-        EqScaleCoeff = 0.84  %equilibrium scale coeffient, alpha, UK default - set to zero to scale to initial volume
-        EqShapeCoeff = 1     %equilibrium shape coeffient, beta, UK default      
+        EqScaleCoeff = 0.84  %equilibrium scale coefficient, alpha, UK default - set to zero to scale to initial volume
+        EqShapeCoeff = 1     %equilibrium shape coefficient, beta, UK default      
         AvMarshDepth = 0     %average depth of marsh surface (m)
         MaxMarshDepth = 0    %maximum depth of saltmarsh (m)
         RiverDensity = 0     %river load imported by advection (kg/m^3)
@@ -121,8 +121,8 @@ classdef CF_SediData < muiPropertyUI
             %delV is the water volume change (S x slr)
             [dvol,delV] = get_sed_flux(sedinp,slr);
             msg1 = sprintf('SEM morphological timescale = %0.3f years',tau);
-            msg2 = sprintf('Volume change due to SLR (m3/yr) = %0.3e',delV);
-            msg3 = sprintf('Volume imported/exported (m3/yr) = %0.3e',-dvol);
+            msg2 = sprintf('Volume change due to SLR (m^3/yr) = %0.3e',delV);
+            msg3 = sprintf('Volume imported/exported (m^3/yr) = %0.3e',-dvol);
             msgtxt = sprintf('%s\n%s\n%s',msg1,msg2,msg3);
             msgbox(msgtxt,'Morphological Time');
         end
@@ -149,7 +149,7 @@ classdef CF_SediData < muiPropertyUI
             eqConc = obj.RiverDensity/cn.SedimentDensity;
         end
     end
-    
+%%    
     methods (Access=private)
         function sedinp = getSedFluxInputs(obj,mobj,formobj)
             %use model definition to construct sedflux input parameters
@@ -179,7 +179,7 @@ classdef CF_SediData < muiPropertyUI
             sedinp.RiverDischarge = hydobj.RiverDischarge;  %river discharge (m^3/s)
 
             if ~isempty(hydobj.cstres)  %hydraulic results from CST model
-                u = hydobj.cstres.U(end);             %velocity at mouth
+                u = hydobj.cstres.U(1);             %velocity at mouth
                 H = mean(hydobj.cstres.d);               %average hydraulic depth
             else                        %no hydraulic data
                 u = 1;                              %assumed velocity at mouth
@@ -200,9 +200,6 @@ classdef CF_SediData < muiPropertyUI
                 sedinp.EqScaleCoeff = sed.EqScaleCoeff;
                 sedinp.EqShapeCoeff = sed.EqShapeCoeff;
             end
-%             rnpobj = mobj.Inputs.RunProperties;
-%             sedinp.TimeInt = rnpobj.TimeStep;
-%             sedinp.NumSteps = rnpobj.NumSteps;
         end        
     end
 end

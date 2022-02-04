@@ -95,7 +95,7 @@ function crossectionPlot(obj,ax,slr)
     ylabel('Change in level (m)');
     hL=legend('0pre','0post','0.1pre','0.1post','0.2pre','0.2post','Location','SouthEast');
     set(hL, 'Color', 'none');
-    casedesc = sprintf('Cross-sections difference plot, slr=%0.1g',slr);
+    casedesc = sprintf('Cross-sections difference plot, slr=%0.1g m',slr);
     title(casedesc,'FontWeight','normal','FontSize',10);            
 end
 %%
