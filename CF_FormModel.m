@@ -117,6 +117,29 @@ classdef CF_FormModel < GDinterface
             DrawMap(mobj);
         end
 %%
+        function addShoreline(mobj)
+            %add shoreline strip based on the idealised beach profile
+            muicat = mobj.Cases;
+            ftxt = 'Select Form Model to use:';
+            obj = selectCaseObj(muicat,[],{'CF_FormModel','CF_ValleyModel'},ftxt);
+            if isempty(obj), return; end
+ 
+            grid = getGrid(obj,1);
+            %add shoreline strip based on equilibrium profile 
+            obj.RunParam.CF_ShoreData = getClassObj(mobj,'Inputs','CF_ShoreData');
+            grid = setShoreline(obj.RunParam.CF_ShoreData,grid,true);
+
+            %create new grid dstable and update  
+            formdst = copy(obj.Data.Form);
+            formdst.Dimensions.X = grid.x;
+            sz = num2cell(size(grid.z));
+            formdst.DataTable.Z = reshape(grid.z,1,sz{:}); 
+            formdst.UserData.xM = grid.xM;
+
+            %save as a new case
+            setGridObj(obj,muicat,formdst); 
+        end
+%%
         function addMorphMods(mobj)
             %add a prismatic dredge channel to a channel form
             muicat = mobj.Cases;
@@ -127,7 +150,7 @@ classdef CF_FormModel < GDinterface
             grid = getGrid(obj,1);
             %apply the modifications defined in CF_ModsData to define new grid
             obj.RunParam.CF_ModsData = getClassObj(mobj,'Inputs','CF_ModsData');
-            new_z = setMorphMods(obj,grid);
+            new_z = setMorphMods(obj.RunParam.CF_ModsData,grid);
             obj.Selection.incmods = true;
             %overwrite exisitng form data set with new form             
             obj.Data.Form.Z(1,:,:) = new_z;  
@@ -155,24 +178,6 @@ classdef CF_FormModel < GDinterface
             %generate plot for display on Q-Plot tab
             cf_model_tabs(obj,src);
         end
-%%
-        function new_z = setMorphMods(obj,grid)
-            %apply the modifications defined in CF_ModsData to define new grid          
-            %also called in CF_TransModel
-            [X,Y] = ndgrid(grid.x,grid.y);
-            zi = grid.z;
-            
-            %get channel dimensions    
-            modobj = obj.RunParam.CF_ModsData;
-            for i=1:length(modobj.ModStart) 
-                idx = X>modobj.ModStart(i) & X<modobj.ModEnd(i);
-                idy = Y>modobj.ModLeft(i) & Y<modobj.ModRight(i);
-                zi(idx & idy) = modobj.ModElev(i);
-            end
-            %return the updated form   
-            [m,n] = size(zi);
-            new_z = reshape(zi,1,m,n); 
-        end     
     end 
 %%    
     methods (Access = private) 

@@ -108,13 +108,13 @@ classdef ChannelForm < muiModelUI
                                   'Delete Properties','Model Constants'}; 
             menu.Setup(1).Callback = [repmat({'gcbo;'},[1,5]),...
                                       repmat({@obj.gridMenuOptions},[1,2]),...
-                                      {@obj.setupMenuOptions}];                  
+                                      {@obj.loadMenuOptions}];                  
             %add separators to menu list (optional - default is off)
             menu.Setup(1).Separator = [repmat({'off'},[1,3]),{'on'},...
                                        repmat({'off'},[1,3]),{'on'}]; %separator preceeds item
             menu.Setup(2).List = {'Exp Form Parameters','Power Form Parameters',...
-                                                     'Valley Parameters'};
-            menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,3]); 
+                                        'Valley Parameters','Shore Parameters'};
+            menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,4]); 
             
             menu.Setup(3).List = {'Hydraulic Parameters','Sediment Parameters',...
                                   'Transgression Parameters','Morphological Modifications'};
@@ -140,6 +140,7 @@ classdef ChannelForm < muiModelUI
             %% Utilities menu ---------------------------------------------------
             menu.Utilities(1).List = {'Hydraulic Model',...
                                       'Add Form to Valley',...
+                                      'Add Shoreline',...
                                       'Add Modifications',...
                                       'River Dimensions',...
                                       'Valley Thalweg',...
@@ -147,8 +148,8 @@ classdef ChannelForm < muiModelUI
                                       'CKFA Channel Dimensions',...
                                       'Morphological Timescale',...
                                       'Channel-Valley Sub-Plot'};
-            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,9]);
-            menu.Utilities(1).Separator = [repmat({'off'},[1,3]),{'on'},...
+            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,10]);
+            menu.Utilities(1).Separator = [repmat({'off'},[1,4]),{'on'},...
                                             repmat({'off'},[1,5])]; %separator preceeds item
              
             %% Run menu ---------------------------------------------------
@@ -191,6 +192,7 @@ classdef ChannelForm < muiModelUI
             subtabs.Form(1,:) = {' Exponential ',@obj.InputTabSummary};
             subtabs.Form(2,:) = {'  Power  ',@obj.InputTabSummary};
             subtabs.Form(3,:) = {'  Valley  ',@obj.InputTabSummary};
+            subtabs.Form(4,:) = {'  Shore  ',@obj.InputTabSummary};
             tabs.Settings = {'  Settings  ',''};
             subtabs.Settings(1,:) = {' Forcing ',@obj.InputTabSummary}; 
             subtabs.Settings(2,:) = {' Sediments ',@obj.InputTabSummary};
@@ -218,6 +220,7 @@ classdef ChannelForm < muiModelUI
                 'CF_ExpData','Exponential',[0.90,0.60],{220,70}, 'Exponential model parameters:';...  
                 'CF_PowerData','Power',[0.90,0.60],{220,70}, 'Power model parameters:';...
                 'CF_ValleyData','Valley',[0.90,0.60],{220,70}, 'Valley model parameters:';... 
+                'CF_ShoreData','Shore',[0.90,0.60],{220,70}, 'Shore model parameters:';... 
                 'CF_ModsData','Modifications',[0.90,0.96],{240,260},'Morphological modifications:';...
                 'WaterLevels','Forcing',[0.90,0.48],{160,80},'Hydraulic forcing parameters:';...
                 'CF_HydroData','Forcing',[0.90,0.96],{160,80},'Hydraulic model parameters:';...
@@ -282,62 +285,41 @@ classdef ChannelForm < muiModelUI
             switch src.Text
                 case 'Exp Form Parameters'
                     CF_ExpData.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Exponential');
-                    InputTabSummary(obj,tabsrc);
+                    tabtxt = 'Exponential';
                 case 'Power Form Parameters'
                     CF_PowerData.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Power');
-                    InputTabSummary(obj,tabsrc);
-                case 'CKFA Form Parameters'
-                    CF_CKFAdata.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','CKFA');
-                    InputTabSummary(obj,tabsrc);
+                    tabtxt = 'Power';
                 case 'Valley Parameters'    
-                    CF_ValleyData.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Valley');
-                    InputTabSummary(obj,tabsrc);
+                    CF_ValleyData.setInput(obj); 
+                    tabtxt = 'Valley';
+                case 'Shore Parameters'
+                    CF_ShoreData.setInput(obj);  
+                    tabtxt = 'Shore';
                 case 'Tidal Forcing'
-                    WaterLevels.setInput(obj);                    
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Forcing');
-                    InputTabSummary(obj,tabsrc);
+                    WaterLevels.setInput(obj);    
+                    tabtxt = 'Forcing';
                 case 'Hydraulic Model'
-                    CF_HydroData.setInput(obj);                      
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Forcing');
-                    InputTabSummary(obj,tabsrc);   
+                    CF_HydroData.setInput(obj);      
+                    tabtxt = 'Forcing'; 
                 case 'Sediment Parameters'   
                     CF_SediData.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Sediments');
-                    InputTabSummary(obj,tabsrc);
+                    tabtxt = 'Sediments';
                 case 'Transgression Parameters'
                     CF_TransData.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Run Parameters');
-                    InputTabSummary(obj,tabsrc);
+                    tabtxt = 'Transgression';
                 case 'Morphological Modifications'
                     CF_ModsData.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Run Parameters');
-                    InputTabSummary(obj,tabsrc);
+                    tabtxt = 'Modifications';
                 case 'Grid Parameters'
                     GD_GridProps.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Run Parameters');
-                    InputTabSummary(obj,tabsrc);
+                    tabtxt = 'Run Parameters';
                 case 'Run Time Parameters'
                     RunProperties.setInput(obj);  
-                    %update tab display with input data
-                    tabsrc = findobj(obj.mUI.Tabs,'Tag','Run Parameters');
-                    InputTabSummary(obj,tabsrc);
-                case 'Model Constants'
-                    obj.Constants = setInput(obj.Constants);
+                    tabtxt = 'Run Parameters';
             end
+            %update tab display with input data
+            tabsrc = findobj(obj.mUI.Tabs,'Tag',tabtxt);            
+            InputTabSummary(obj,tabsrc);            
         end  
 %%
         function loadMenuOptions(obj,src,~)
@@ -351,6 +333,8 @@ classdef ChannelForm < muiModelUI
                     useCase(obj.Cases,'single',{classname},'addData');
                 case 'Delete'
                     useCase(obj.Cases,'single',{classname},'deleteGrid');
+                case 'Model Constants'
+                    obj.Constants = setInput(obj.Constants);
             end
             DrawMap(obj);
         end   
@@ -366,6 +350,8 @@ classdef ChannelForm < muiModelUI
                     runModel(cobj,obj);
                 case 'Add Form to Valley'
                     CF_ValleyModel.addForm2Valley(obj);
+                case 'Add Shoreline'
+                    CF_FormModel.addShoreline(obj);
                 case 'Add Modifications'
                     CF_FormModel.addMorphMods(obj);     
                 case 'River Dimensions'

@@ -16,6 +16,7 @@
 % * *CF_ValleyData* - handles data input for valley form parameters.
 % * *CF_HydroData* - handles data input of the hydraulic parameters used by CSTmodel App.
 % * *CF_SediData* - handles data input for sediment flux parameters.
+% * *CF_ShoreData* – handles data input for shoreline form parameters.
 % * *CF_ModsData* - handles data input for imposed modifications to the form. 
 % * *CF_TransData* - handles data input for channel transgression
 % parameter settings.

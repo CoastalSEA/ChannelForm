@@ -1,4 +1,4 @@
-function [dvol,delV] = get_sed_flux(inp,slr)
+function [dvol,delV,conc] = get_sed_flux(inp,slr)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -26,6 +26,7 @@ function [dvol,delV] = get_sed_flux(inp,slr)
 % OUTPUT
 %   dvol - change in morphological volume in a year (m3)
 %   delV - change in water volume (S*slr) in a year (m3)
+%   conc - suspended sediment concentration in element (-)
 % NOTE
 %   if transport coefficient, n, is positive, dvol is change in water
 %   volume and if n<0 it is change in sediment volume. delV is change in
@@ -60,4 +61,5 @@ function [dvol,delV] = get_sed_flux(inp,slr)
     Ve = a*P^b;                            %equilbrium volume
     Gam = (alpha*Ve/(V+delV))^n;           %gamma reflects difference from equilibrium
     dvol = C*((q+d)*Gam-(k*q+d))*inp.y2s;  %morphological change (m3/yr)
-    
+    % cie = cE*Gam;                          %local equilibrium concentration in element (-)
+    conc = cE*(d+q+w*S)/(w*S*Gam+k*q+d);   %sediment concentration in element (-)

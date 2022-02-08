@@ -54,8 +54,9 @@ function netchangePlot(obj,ax,slr)
     
     grid0 = getGrid(obj,1);
     z0 = grid0.z; %intial grid
-
-    grid1 = getGrid(obj,height(dst));
+    
+    nrec = height(dst);
+    grid1 = getGrid(obj,nrec);
     xs = grid1.x; 
     ys = grid1.y;
     zs = grid1.z;%final grid
@@ -63,11 +64,10 @@ function netchangePlot(obj,ax,slr)
     zdiff = zs-z0;
 
     wls = obj.Data.Plan;
-    yzhw = wls.Whw/2;
-    yzlw = wls.Wlw/2;
+    yzhw = wls.Whw(nrec,:)/2;
+    yzlw = wls.Wlw(nrec,:)/2;
     zyz = ones(size(xs))*max(max(zdiff));
-    
-    
+
     adX = dst.estdX(end);  %cumulative estuary trangression
     cdX = dst.cstdX(end);  %cumulative coastal trangression
 
@@ -87,7 +87,7 @@ function netchangePlot(obj,ax,slr)
     h_c = colorbar(ax);   
     h_c.Label.String = 'Change in elevation (m) for +/-2.slr';
     timetxt = cellstr(grid1.t);
-    infotxt = sprintf('Dashed lines are Hw/Lw at T=%s',timetxt{1});
+    infotxt = sprintf('Dashed lines are HW/LW at T=%s',timetxt{1});
     tltxt = sprintf('dV=0 for: SLR = %0.1g m, Transgression = %d m, Coast erosion = %d m\n%s',...
                                 slr,round(adX),round(cdX),infotxt);
     title(tltxt,'FontSize',10);
@@ -119,7 +119,7 @@ function rateofchangePlot(obj,ax)
     hold off
     txt1 = 'Channel only';
     if trnobj.inclFloodPlain
-        txt1 = 'Include flood plain';
+        txt1 = 'Including flood plain';
     end
     txt2 = 'No bed constraint';
     if trnobj.inclGeoConstraint

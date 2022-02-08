@@ -15,6 +15,8 @@
 % z at each x interval.
 % * *cf_model_tabs* - generate tabPlot and tabProperties for any
 % GDinterface model.
+% * *cf_offset_wls* - translate water levels landwards when mouth is some distance from x=0 
+% and pad the water level vectors with values at the mouth.
 % * *cf_plan_form* - compute planform variation along the x-axis at
 % specified planar levels.
 % * *cf_pow_model* - function to compute 3D form of a creek or tidal channel

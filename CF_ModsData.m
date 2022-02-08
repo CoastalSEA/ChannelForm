@@ -92,5 +92,22 @@ classdef CF_ModsData < muiPropertyUI
                 ok = 1;
             end
         end
+%%
+        function new_z = setMorphMods(obj,grid)
+            %apply the modifications defined in CF_ModsData to define new grid          
+            %also called in CF_TransModel
+            [X,Y] = ndgrid(grid.x,grid.y);
+            zi = grid.z;
+            
+            %get channel dimensions    
+            for i=1:length(obj.ModStart) 
+                idx = X>obj.ModStart(i) & X<obj.ModEnd(i);
+                idy = Y>obj.ModLeft(i) & Y<obj.ModRight(i);
+                zi(idx & idy) = obj.ModElev(i);
+            end
+            %return the updated form   
+            [m,n] = size(zi);
+            new_z = reshape(zi,1,m,n); 
+        end  
     end  
 end

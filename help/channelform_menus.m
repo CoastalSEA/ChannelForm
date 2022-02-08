@@ -40,6 +40,8 @@
 % power form model. 
 % * *Valley Parameters*: UI to input the parameters needed for the
 % valley form model. 
+% * *Shore Parameters*: UI to input parameters needed for the shore profile,
+% when adding a shoreline strip to Channel or Valley models.
 %%
 % <html>
 % <table border=1><tr><td><u>Note</u>: the CKFA model input parameters are 

@@ -71,6 +71,7 @@ function obj = pr_properties(obj)
     grid.y  = [-flipud(yi(2:end)); yi];
     grid.z = flipud(cat(2,fliplr(zi(:,2:end)),zi));
     grid.ishead = false; 
+    grid.xM = 0;
     
     wl = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;

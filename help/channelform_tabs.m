@@ -12,6 +12,7 @@
 % <li>Exponential - tabulates the parameters required for the exponential form model.</li>
 % <li>Power - tabulates the parameters required for the power law form model.</li>
 % <li>Valley - tabulates the parameters required for the valley form model.</li>
+% <li>Shore - tabulates the parameters required for the shore profile form model.</li>
 % </ul></ul>
 % </html>
 %%
