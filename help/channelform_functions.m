@@ -64,16 +64,25 @@
 % - compute the gross properties of a gridded bathymetry.
 % * *gd_section_properties*
 % - compute the width, cross-sectional area and prism along channel.
+% * *gd_xy2sn*
+% - map grid from cartesian to curvilinear coordinates with option to return 
+% the elevations on the source cartesian grid, or as a curvilinear grid.
+% * *gd_sn2xy*
+% - map grid from curvilinear to cartesian coordinates.
 % * *getconvergencelength* -  least squares fit using fminsearch to
 % find the convergence length of a channel from a distance-width xy data set 
 % * *InterX* - intersection of two curves. MATLAB Central File Exchange, 
 % Author: NS, 2010, https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections.
-% * *xy2sn* - Juernjakob Dugge, 2015, jdugge/xy2sn, https://github.com/jdugge/xy2sn 
-% * *sn2xy* - Juernjakob Dugge, 2015, jdugge/xy2sn, https://github.com/jdugge/xy2sn 
-% * *arclength* - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34871-arclength 
-% * *distance2curve* - John D'Errico, 2013,
-% http://www.mathworks.de/matlabcentral/fileexchange/34869-distance2curve
-% * *interparc* - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34874-interparc
+% * *xy2sn* - Bart Vermeulen,2022, Cartesian to Curvilinear 
+%   coordinate forward and backward transformation. 
+%   https://www.mathworks.com/matlabcentral/fileexchange/55039-cartesian-to-curvilinear-coordinate-forward-and-backward-transformation 
+% * *sn2xy* - as above.
+    % * *xy2sn* - Juernjakob Dugge, 2015, jdugge/xy2sn, https://github.com/jdugge/xy2sn 
+    % * *sn2xy* - Juernjakob Dugge, 2015, jdugge/xy2sn, https://github.com/jdugge/xy2sn 
+    % * *arclength* - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34871-arclength 
+    % * *distance2curve* - John D'Errico, 2013,
+    % http://www.mathworks.de/matlabcentral/fileexchange/34869-distance2curve
+    % * *interparc* - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34874-interparc
 %%
 % Further details can be found in <matlab:doc('grid_class_fcns') Grid classes and functions>, 
 % or by using the >>help _function name_ command in the Command Window.

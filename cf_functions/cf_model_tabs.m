@@ -35,7 +35,7 @@ function cf_model_tabs(obj,src)
 
     switch src.Tag
         case 'Plot'
-            tabPlot(obj,src,irec);
+            tabPlot(obj,src,irec,false,false);
         case 'FormProps'
             tabProperties(obj,src,irec);
     end
@@ -44,12 +44,12 @@ end
 function tabPlot(obj,src,irec,iswidth,isfig)
     %generate plot for display on Plot tab. To produce stand alone plots 
     %set the flags to true as required. Can also use button on tab
-    if nargin<5
+    if nargin<4
         %to create stand alone figure set isfig=true   
         isfig = false; 
         %to use the high and low water widths rather than interpolated values
         iswidth = false; 
-    elseif nargin<6
+    elseif nargin<5
         isfig = false; 
     end
 

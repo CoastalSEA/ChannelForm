@@ -260,8 +260,9 @@ classdef CF_TransModel < GDinterface
             %update grid based on transgression
             fgrid = getNewChannel(obj);            %new channel form
             if isempty(fgrid.x), return; end
+            fgrid = updateMeander(obj,fgrid);
             %figure; contourf(squeeze(fgrid.z));
-            fgrid = updateValley(obj,fgrid,true);  %new combined form
+            fgrid = updateValley(obj,fgrid,true);  %new combined form            
             obj.Grid = updateShoreline(obj,fgrid); %shoreline adjusted 
             obj = cf_offset_wls(obj);              %translate wls if coast erodes
             obj.dTrans.FPA = floodPlainArea(obj);  %modified flood plain area
@@ -543,6 +544,20 @@ classdef CF_TransModel < GDinterface
                 % slope = (zM-zmn)*(0.05-0.005)/(zmx-zmn)+0.005;
                 % delz = zM-(grid.x(ixM)-grid.x(1:ixM))*slope;
                 % grid.z(1:ixM,:) = min(grid.z(ixM+1,:),delz);
+            end
+        end
+%%      
+        function grid = updateMeander(obj,grid)
+            %modify the grid if a meander is to be included
+            ismeander = obj.RunParam.CF_TransData.isMeander;
+            if ~isnan(ismeander) && ~isempty(grid.cline)
+                if ismeander>0
+                    %meander migrates with the coast
+                    
+                else      
+                    %meander is fixed as initially defined
+                    
+                end
             end
         end
 %%

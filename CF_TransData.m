@@ -16,7 +16,7 @@ classdef CF_TransData < muiPropertyUI
 %      
     properties (Hidden)
         %abstract properties in muiPropertyUI to define input parameters
-        PropertyLabels = {'Include flood plain in mass balance (1 or 0)',...                          
+        PropertyLabels = {'Include flood plain in mass balance (1 or 0)',...                                                   
                           'High water constraint (1 or 0)',...
                           'Geological constraint (1 or 0)',...
                           'Start of geological constraints (m)',...
@@ -24,13 +24,14 @@ classdef CF_TransData < muiPropertyUI
                           'Integration distance from mouth (m)',...
                           'Flood plain offset above high water (m)',...
                           'Open coast transgression ratio (L/h)',...
+                          'Include migrating meander (NaN, 1, or 0)',...
                           'Constant sediment flux (m^3/yr) if reqd'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
     end
     
     properties
-        inclFloodPlain = false
+        inclFloodPlain = false        
         inclHWConstraint = false %flag to include a constraint at high water
         inclGeoConstraint = false%flag to include geological constaints
         StConstraints = 0        %start and end distance from mouth for 
@@ -38,6 +39,7 @@ classdef CF_TransData < muiPropertyUI
         IntDist = 0              %distance to use for volume integration (m)
         FPoffset = 0.2           %flood plain offset - default consistent with form models (m)
         BruunRatio = 0           %open coast erosion ratio, L/h (Bruun scaling of dx = slr.L/h)  
+        isMeander = NaN          %include meander - NaN=exclude,1=migrate,0=fixed
         SedFlux = 0              %user specified value of sediment exchange
     end                            
 
