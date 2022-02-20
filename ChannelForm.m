@@ -140,6 +140,7 @@ classdef ChannelForm < muiModelUI
             %% Utilities menu ---------------------------------------------------
             menu.Utilities(1).List = {'Hydraulic Model',...
                                       'Add Form to Valley',...
+                                      'Add Meander',...
                                       'Add Shoreline',...
                                       'Add Modifications',...
                                       'River Dimensions',...
@@ -148,8 +149,8 @@ classdef ChannelForm < muiModelUI
                                       'CKFA Channel Dimensions',...
                                       'Morphological Timescale',...
                                       'Channel-Valley Sub-Plot'};
-            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,10]);
-            menu.Utilities(1).Separator = [repmat({'off'},[1,4]),{'on'},...
+            menu.Utilities(1).Callback = repmat({@obj.utilsMenuOptions},[1,11]);
+            menu.Utilities(1).Separator = [repmat({'off'},[1,5]),{'on'},...
                                             repmat({'off'},[1,5])]; %separator preceeds item
              
             %% Run menu ---------------------------------------------------
@@ -350,8 +351,15 @@ classdef ChannelForm < muiModelUI
                     runModel(cobj,obj);
                 case 'Add Form to Valley'
                     CF_ValleyModel.addForm2Valley(obj);
+                    DrawMap(obj);
+                case 'Add Meander'
+                    gridclasses = {'CF_FormModel','CF_TransModel'};
+                    gd.Text = 'To curvilinear';
+                    CF_FormModel.gridMenuOptions(obj,gd,gridclasses);
+                    DrawMap(obj);
                 case 'Add Shoreline'
                     CF_FormModel.addShoreline(obj);
+                    DrawMap(obj);
                 case 'Add Modifications'
                     CF_FormModel.addMorphMods(obj);     
                 case 'River Dimensions'

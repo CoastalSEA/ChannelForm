@@ -46,6 +46,7 @@ classdef CF_TransModel < GDinterface
                        % hrv - hydraulic depthof river (m)
                        % Wrv - width of river (m)
                        % xM = distance to mouth in the grid
+        CLatT          %struct array for x and y coordinates of meander centreline at each time step
         zGrid          %z grids at each sampled time step  
         zWL            %alongchannel water levels at each sampled time step
         tPlan          %plan form, Whw,Wmt,Wlw, at each sampled time step
@@ -129,7 +130,7 @@ classdef CF_TransModel < GDinterface
             %now assign results to object properties  
             mtime = years(obj.StepTime/obj.cns.y2s);
             dims = struct('x',obj.Grid.x,'y',obj.Grid.y,'t',mtime,...
-                                     'ishead',false,'xM',obj.Trans.cstdX);
+                          'ishead',false,'xM',obj.Trans.cstdX,'cline',obj.CLatT);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -182,6 +183,7 @@ classdef CF_TransModel < GDinterface
             fgrid.Wz = table2cell(Wz);  %COULD change to use a table***
             obj.Grid = updateValley(obj,fgrid,false);
             obj.Grid.xM = 0;  %initialise mouth location at x=0
+%             obj.CLatT = []; %initialise meander centreline
             %model selection options(wlflag,modeltype,etc)
             obj.Selection = obj.Channel.Selection;
             obj.CSTparams = obj.Channel.CSTparams;
@@ -260,8 +262,7 @@ classdef CF_TransModel < GDinterface
             %update grid based on transgression
             fgrid = getNewChannel(obj);            %new channel form
             if isempty(fgrid.x), return; end
-            fgrid = updateMeander(obj,fgrid);
-            %figure; contourf(squeeze(fgrid.z));
+            fgrid = updateMeander(obj,fgrid);            
             fgrid = updateValley(obj,fgrid,true);  %new combined form            
             obj.Grid = updateShoreline(obj,fgrid); %shoreline adjusted 
             obj = cf_offset_wls(obj);              %translate wls if coast erodes
@@ -279,6 +280,8 @@ classdef CF_TransModel < GDinterface
             %add grid of new form (incl valley)
             sz = num2cell(size(obj.Grid.z));
             obj.zGrid = [obj.zGrid;reshape(obj.Grid.z,1,sz{:})];
+            %add meander centreline coordinates
+            obj.CLatT = [obj.CLatT,obj.Grid.cline];
             %add plan form description
             Wz = obj.Grid.Wz';
             tPlani = table(Wz{:},'VariableNames',{'Whw','Wmt','Wlw'});
@@ -416,13 +419,17 @@ classdef CF_TransModel < GDinterface
             %apply any vertical constraints
             trnobj = obj.RunParam.CF_TransData; 
             if trnobj.inclGeoConstraint && ~isempty(trnobj.StConstraints)
+                 %elevation of initial flood plain
+                hydobj0 = obj.Channel.Data.WaterLevels; %source form water levels
+                zFP0 = hydobj0.zhw+trnobj.FPoffset;     %initial flood plain levels
+                zFP0 = repmat(zFP0',1,length(grid.y));
                 ids = length(trnobj.StConstraints);
                 for i=1:ids
-                    %fixes valley as well because z0 includes valley but 
-                    %this should not matter because valley is constant form
+                    %fixes channel only because only modifies below initial
+                    %flood plain elevation, zFP0
                     x = grid.x;
                     idx = x>trnobj.StConstraints(i) & ...
-                          x<trnobj.NdConstraints(i) & grid.z<z0;
+                          x<trnobj.NdConstraints(i) & grid.z<zFP0;
                     grid.z(idx)=z0(idx);  %remove any erosion over constrained bed
                 end
             end            
@@ -553,10 +560,17 @@ classdef CF_TransModel < GDinterface
             if ~isnan(ismeander) && ~isempty(grid.cline)
                 if ismeander>0
                     %meander migrates with the coast
-                    
+                    cline = grid.cline;
+                    ixM = floor(grid.xM/(grid.x(2)-grid.x(1)));
+                    if ixM>0
+                        cline.y = [ones(ixM,1)*cline.y(1);cline.y(1:end-ixM)];
+                        grid.cline = cline;
+                    end
+                    grid = gd_xy2sn(grid,cline,true,false);
                 else      
                     %meander is fixed as initially defined
-                    
+                    cline = grid.cline;
+                    grid = gd_xy2sn(grid,cline,true,false);
                 end
             end
         end
