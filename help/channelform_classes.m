@@ -20,6 +20,9 @@
 % * *CF_ModsData* - handles data input for imposed modifications to the form. 
 % * *CF_TransData* - handles data input for channel transgression
 % parameter settings.
+% * *RunProperties* - define the model run time parameters.
+% * *WaterLevels* - setup and access to water level definitions, tidal 
+% parameters and changes over time.
 %%
 % Model classes:
 %%
@@ -31,12 +34,6 @@
 % channel within a valley in response to sea level rise using a simple
 % kinetic model.
 
-%% Generic Classes
-% Other functions used in ChannelForm, include:
-%%
-% * *RunProperties* - define the model run time parameters.
-% * *WaterLevels* - setup and access to water level definitions, tidal 
-% parameters and changes over time.
 
 %% Grid Classes
 % Classes used to manipulate cartesian grids can be found in the

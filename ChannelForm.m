@@ -440,7 +440,7 @@ classdef ChannelForm < muiModelUI
         end
         %% Help menu ------------------------------------------------------
         function Help(~,~,~)
-            docsearch ChannelForm 
+            doc channelform 
         end
 %% ------------------------------------------------------------------------
 % Overload muiModelUI.MapTable to customise Tab display of records (if required)

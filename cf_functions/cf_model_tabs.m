@@ -35,7 +35,7 @@ function cf_model_tabs(obj,src)
 
     switch src.Tag
         case 'Plot'
-            tabPlot(obj,src,irec,false,true);
+            tabPlot(obj,src,irec,false,false);
         case 'FormProps'
             tabProperties(obj,src,irec);
     end
@@ -117,7 +117,7 @@ function tabPlot(obj,src,irec,iswidth,isfig)
     cb = colorbar;
     %c.Limits = [-10,10]; %constrain the range of the colorbar
     cb.Label.String = 'Elevation (mAD)';
-    %ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
+    ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
     
     hb = findobj(src,'Style','pushbutton');
     delete(hb) %delete button so that new axes is assigned to callback

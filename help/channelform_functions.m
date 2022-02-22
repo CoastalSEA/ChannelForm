@@ -46,8 +46,6 @@
 % profile (Cao & Knight,1996).
 % * *get_river_regime* - get river regime properties using regime
 % theoretical profile (Cao & Knight,1996).
-% * *get_sed_flux* - single element ASMITA model to compute amount of
-% sedimentation.
 
 
 %% Grid functions
@@ -77,12 +75,7 @@
 %   coordinate forward and backward transformation. 
 %   https://www.mathworks.com/matlabcentral/fileexchange/55039-cartesian-to-curvilinear-coordinate-forward-and-backward-transformation 
 % * *sn2xy* - as above.
-    % * *xy2sn* - Juernjakob Dugge, 2015, jdugge/xy2sn, https://github.com/jdugge/xy2sn 
-    % * *sn2xy* - Juernjakob Dugge, 2015, jdugge/xy2sn, https://github.com/jdugge/xy2sn 
-    % * *arclength* - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34871-arclength 
-    % * *distance2curve* - John D'Errico, 2013,
-    % http://www.mathworks.de/matlabcentral/fileexchange/34869-distance2curve
-    % * *interparc* - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34874-interparc
+
 %%
 % Further details can be found in <matlab:doc('grid_class_fcns') Grid classes and functions>, 
 % or by using the >>help _function name_ command in the Command Window.
@@ -90,6 +83,8 @@
 %% Generic functions
 % Other functions used in ChannelForm, include:
 %%
+% * *get_sed_flux* - single element ASMITA model to compute amount of
+% sedimentation.
 % * *river_regime* 
 % - function to compute the width and hydraulic depth of a river section given the
 %   discharge and energy slope.
@@ -103,6 +98,6 @@
 
 
 %% See Also
-% The <matlab:doc('asmita_classes') additional classes> used in Asmita and
+% The <matlab:doc('channelform_classes') additional classes> used in ChannelForm and
 % the <matlab:open_manual manual>, which provides further details of setup and 
 % configuration of the model.
