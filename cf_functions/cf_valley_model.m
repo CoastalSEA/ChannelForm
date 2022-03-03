@@ -123,7 +123,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     
     grid = struct('x',xi,'y',yi,'z',zi,'ishead',false);
     zwl = {hydobj.zhw(end),hydobj.zmt(end),hydobj.zlw(end)};
-    yz = cf_plan_form(grid,zwl);
+    yz = gd_plan_form(grid,zwl);
 %     yz = num2cell(flipud(yz)',2);      %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section
     if isfull                          %return full grid

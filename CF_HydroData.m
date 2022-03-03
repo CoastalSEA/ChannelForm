@@ -411,9 +411,10 @@ classdef CF_HydroData < muiPropertyUI
         function [formobj,caserec] = selectFormModel(~,mobj)    
             %prompt user to select a form model from existing cases
             muicat = mobj.Cases;
-            promptxt = 'Select Form Model to use:';            
+            promptxt = 'Select Form Model to use:'; 
+            gridclasses = {'CF_FormModel','GD_ImportData'};
             [caserec,ok] = selectRecord(muicat,'PromptText',promptxt,...
-                              'CaseType',{'form_model'},'CaseClass',[],...
+                              'CaseType',[],'CaseClass',gridclasses,...
                               'SelectionMode','single','ListSize',[250,200]);
             if ok<1, formobj = []; return; end
             formobj = getCase(muicat,caserec);             
@@ -422,7 +423,8 @@ classdef CF_HydroData < muiPropertyUI
         function inp = updateModelParameters(obj,inp,idx)
             %update additional properties that change with river discharge
             inp.RiverDischarge = obj.Qrange(idx);%value to use in cst_model
-            [~,Wrv,Arv] = get_river_regime(obj.FormModel,obj.Qrange(idx));
+            tr = (obj.zhw(1)-obj.zlw(1));  
+            [~,Wrv,Arv] = get_river_regime(obj.FormModel,tr,obj.Qrange(idx));
             inp.RiverWidth = Wrv;                %upstream river width (m) 
             inp.RiverCSA = Arv;                  %upstream river cross-sectional area (m^2)
         end

@@ -89,8 +89,8 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
     Slope = 4*am0/tp/sqrt(g*hm);
 %     [hlw,wlw,~] = river_regime(Qp,Slope,d50river,tauriver,rhos,rhow);
 %     wlwm=wlw; alwm=wlw*hlw;
-    eqtr = Slope*Le;
-    [~,wlwm,alwm] = get_river_regime(obj,eqtr);
+    eqtr = Slope*Le; %equivalent tidal range to use Slope in get_river_regime
+    [~,wlwm,alwm] = get_river_regime(obj,eqtr); %Cao & Knight, 1996, uses Qr in RunParam.CF_HydroData
     
 
     Wbs = 1.2*(Slw+Sfl)/LW/(1-exp(-Le/LW)); %high water width to generate basin area

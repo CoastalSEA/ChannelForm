@@ -12,7 +12,7 @@
 % <matlab:doc('muitoolbox') muitoolbox>
 
 %% Background
-% ChannelForm is a Matlab(TN) App that provides a framework for studying 
+% ChannelForm is a Matlab(TM) App that provides a framework for studying 
 % estuary and inlet morphological landforms in the context of the 
 % surrounding landscape (valley and flood plain). A set of tools allow digital 
 % terrain models (DTMs) to be created from models or imported. The 
@@ -48,18 +48,11 @@
 % Landf., 46, 626–641, https://doi.org/10.1002/esp.5050.
 
 %% Acknowledgements
-% The ChannelForm App makes use of several functions from the MatlabTM 
+% The ChannelForm App makes use of functions from the Matlab(TM) 
 % File Exchange Form, including:
 %%
 % * InterX - NS (2010). https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections 
-% * xy2sn and sn2xy - Juernjakob Dugge (2015). jdugge/xy2sn, https://github.com/jdugge/xy2sn 
-%%
-% which requires:
-%%
-% * arclength - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34871-arclength 
-% * distance2curve - John D'Errico, 2013,
-% http://www.mathworks.de/matlabcentral/fileexchange/34869-distance2curve
-% * interparc - John D'Errico, 2012, https://www.mathworks.com/matlabcentral/fileexchange/34874-interparc 
+% * xy2sn and sn2xy - Juernjakob Dugge (2015). jdugge/xy2sn, https://github.com/jdugge/xy2sn  
 
 %% Manual
 % The <matlab:open_manual manual> provides further details of setup and 

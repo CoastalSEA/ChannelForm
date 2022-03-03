@@ -243,9 +243,10 @@ classdef CF_TransModel < GDinterface
             trnobj = obj.RunParam.CF_TransData;
             [obj.dTrans.sedVol,obj.dTrans.waterVol] = sedimentFlux(obj);
             %get transgression distance for the combined form
-%             profile on
+            % profile on
             obj = getTransDist(obj);
-%             s = profile('info');
+            % s = profile('info');
+            % profile off
             %get the transgression distance for zero volume change
             delX = obj.dTrans.delX;
             vdiffx = obj.dTrans.vdiffx;
@@ -268,7 +269,7 @@ classdef CF_TransModel < GDinterface
             obj = cf_offset_wls(obj);              %translate wls if coast erodes
             obj.dTrans.FPA = floodPlainArea(obj);  %modified flood plain area
             %summary plot of change from initial form (used for checking)
-%             summaryGridPlots(obj);
+            % summaryGridPlots(obj);
         end 
 %%
         function obj = PostTimeStep(obj)
@@ -304,9 +305,9 @@ classdef CF_TransModel < GDinterface
             adist = Lt/abs(min(min(F.z,[],'omitnan')))*slr; %used as initial guess
             %reducing TolX to 1 reduces time by ~7% but increases vdiff@delX
             %using fminsearch is much slower
-%             vdiff = @(delx) getZdiff(obj,delx); 
-%             options = optimset('TolX',1e-3); 
-%             [delX,~] = fzero(vdiff,adist,options);
+            % vdiff = @(delx) getZdiff(obj,delx); 
+            % options = optimset('TolX',1e-3); 
+            % [delX,~] = fzero(vdiff,adist,options);
             delX = interp_delX(obj,adist);  %quick and dirty option (comment-out fzero)
             [~,zdiff] = getZdiff(obj,delX);
             delint = [0,delX/2,delX,delX+delX/2];

@@ -25,7 +25,7 @@ function [hrv,bh,mur] = get_river_profile(obj,tr,yi)
 %
     frmobj = obj.RunParam.CF_FormData;
     nc = frmobj.ChannelShapeParam;           %channel shape parameter (-)
-    [hav,Wrv,~] = get_river_regime(obj,tr);  %Cao & Knight, 1996
+    [hav,Wrv,~] = get_river_regime(obj,tr);  %Cao & Knight, 1996, uses Qr in RunParam.CF_HydroData
     if hav>0
         bh = Wrv/2;         %half-width at head when mean water level = HW
         hc = hav*(nc+1)/nc; %depth at centre-line of channel section

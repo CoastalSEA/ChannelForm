@@ -152,24 +152,20 @@ classdef CF_FormModel < GDinterface
             obj.RunParam.CF_ModsData = getClassObj(mobj,'Inputs','CF_ModsData');
             new_z = setMorphMods(obj.RunParam.CF_ModsData,grid);
             obj.Selection.incmods = true;
-            %overwrite exisitng form data set with new form             
-            obj.Data.Form.Z(1,:,:) = new_z;  
-            classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
-            updateCase(muicat,obj,classrec,true);
+
+            answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
             
-            % answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
-            % 
-            % if strcmp(answer,'Add')
-            %     %create new record
-            %     fdst = copy(obj.Data.Form);
-            %     fdst.Z(1,:,:) = new_z;
-            %     setGridObj(obj,muicat,fdst); %copies form property table to new instance
-            % else            
-            %     %overwrite exisitng form data set with new form             
-            %     obj.Data.Form.Z(1,:,:) = new_z;  
-            %     classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
-            %     updateCase(muicat,obj,classrec,true);
-            % end 
+            if strcmp(answer,'Add')
+                %create new record
+                fdst = copy(obj.Data.Form);
+                fdst.Z(1,:,:) = new_z;
+                setGridObj(obj,muicat,fdst); %copies form property table to new instance
+            else            
+                %overwrite exisitng form data set with new form             
+                obj.Data.Form.Z(1,:,:) = new_z;  
+                classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
+                updateCase(muicat,obj,classrec,true);
+            end 
         end 
     end        
 %%

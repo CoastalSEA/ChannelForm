@@ -27,8 +27,8 @@
 %%
 % <html>
 % <table border=1><tr><td><u>Note</u>: to export the data from a Case for use in another application 
-% (eg text file, Excel, etc), use the *Project>Cases>Edit Data Set* option 
-% to make a selection and then use the ‘Copy to Clipboard’ button to paste 
+% (eg text file, Excel, etc), use the <b>Project>Cases>Edit Data Set</b> option 
+% to make a selection and then use the <i>Copy to Clipboard</i> button to paste 
 % the selection to the clipboard.
 % </td></tr></table>
 % </html>
@@ -62,8 +62,8 @@
 % the, one or more, boxout forms that can be imposed on model forms. 
 
 %% Setup > Run Parameters
-% * *Grid Parameters*:
-% * *Run Time Parameters*: 
+% * *Grid Parameters*: define dimensions of default grid
+% * *Run Time Parameters*: settings for time step and duration of model run
 
 %% Setup > Import Grid
 % Load x,y,z data from a file. To create a new instance (e.g. for a

@@ -160,7 +160,7 @@ end
 %%
 function crossectionplot(ax,grid,wl)
     %plot a series of cross-sections along length of channel
-    ax.XDir = 'normal';
+    ax.XDir = 'reverse'; %to be consistent with the Q-Plot projection
     noxi=length(grid.x);
     ix0 = find(grid.x>=grid.xM-eps,1,'first'); 
     noxi = noxi-ix0;

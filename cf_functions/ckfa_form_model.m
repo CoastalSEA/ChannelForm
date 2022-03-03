@@ -91,7 +91,7 @@ function params = ckfa_parameters(obj)
     %parameters required by solver
     hydobj = obj.RunParam.CF_HydroData;
     am0 = (hydobj.zhw(1)-hydobj.zlw(1))/2;    
-    [hrv,Wrv,Arv] = get_river_regime(obj,2*am0);
+    [hrv,Wrv,Arv] = get_river_regime(obj,2*am0); %Cao & Knight, 1996, uses Qr in RunParam.CF_HydroData
     
     params = struct('am',am0,...                     %tidal amplitude at mouth (m)
                     'tp',hydobj.tidalperiod,...      %tidal period (s)
