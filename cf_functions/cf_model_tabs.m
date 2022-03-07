@@ -34,23 +34,19 @@ function cf_model_tabs(obj,src)
     end
 
     switch src.Tag
-        case 'Plot'
-            tabPlot(obj,src,irec,false,false);
+        case {'Plot','FigButton'}
+            tabPlot(obj,src,irec,false);
         case 'FormProps'
             tabProperties(obj,src,irec);
     end
 end
 %%
-function tabPlot(obj,src,irec,iswidth,isfig)
+function tabPlot(obj,src,irec,iswidth)
     %generate plot for display on Plot tab. To produce stand alone plots 
     %set the flags to true as required. Can also use button on tab
     if nargin<4
-        %to create stand alone figure set isfig=true   
-        isfig = false; 
         %to use the high and low water widths rather than interpolated values
         iswidth = false; 
-    elseif nargin<5
-        isfig = false; 
     end
 
     grid = getGrid(obj,irec);
@@ -69,19 +65,12 @@ function tabPlot(obj,src,irec,iswidth,isfig)
     zo = hydobj.zmt(1);
     zhw = hydobj.zhw(1);
     zlw = hydobj.zlw(1);
-
-    %surface plot of 3D form
-    ht = findobj(src,'Type','axes');
-    delete(ht);
-    %
-    if isfig
-        hf = figure;
-        ax = axes('Parent',hf,'Tag','PlotFig','NextPlot','add');
-    else
-        ax = axes('Parent',src,'Tag','QPlot','NextPlot', 'add');
-    end
-    %force ax to be the current axes (without it can plot on the wrong 
-    %figure if switching between FormProps and Q-Plot
+    %set button for rotate and standalone figure
+    tabcb = @(src,evdat)cf_model_tabs(obj,src);
+    ax = tabfigureplot(obj,src,tabcb,true);
+    %force ax to be the current axes (Otherwise if standalone figure 
+    %generated in one tab and user changes tab, it can plot on the wrong 
+    %figure if switching between FormProps and Q-Plot    
     axes(ax); 
     
     %plot form as a surface
@@ -118,16 +107,6 @@ function tabPlot(obj,src,irec,iswidth,isfig)
     %c.Limits = [-10,10]; %constrain the range of the colorbar
     cb.Label.String = 'Elevation (mAD)';
     ax.Color = [0.96,0.96,0.96];  %needs to be set after plot
-    
-    hb = findobj(src,'Style','pushbutton');
-    delete(hb) %delete button so that new axes is assigned to callback
-    uicontrol('Parent',src,...  %callback button
-        'Style','pushbutton',...
-        'String', 'Rotate off',...
-        'Units','normalized', ...
-        'Position', [0.02,0.92,0.1,0.05],...
-        'TooltipString','Turn OFF when finished, otherwise tabs do not work',...
-        'Callback',@(src,evtdat)rotatebutton(ax,src,evtdat));  
 end
 %%
 function tabProperties(obj,tabsrc,irec)
