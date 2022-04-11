@@ -83,6 +83,8 @@
 %%
 % * *get_sed_flux* - single element ASMITA model to compute amount of
 % sedimentation.
+% * *lambertw* - computes the Lambert W-Function. Author: Pascal Getreuer,
+% Matlab(TM) Exchange Forum.
 % * *river_regime* 
 % - function to compute the width and hydraulic depth of a river section given the
 %   discharge and energy slope.
