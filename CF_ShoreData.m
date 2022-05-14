@@ -72,7 +72,6 @@ classdef CF_ShoreData < muiPropertyUI
             nint = floor(obj.ShoreWidth/delx);
             xM = nint*delx;
             newx = 0:delx:xM-delx;
-            %grid.x = [newx';grid.x+xM];
             zBC = grid.z(1,1);
             z1km = [xM,-obj.ShoreDepth];
             [~,zp,~] = deanbeachprofile(newx,zBC,z1km,ubs,false);
@@ -85,7 +84,12 @@ classdef CF_ShoreData < muiPropertyUI
             shorez = min(shorez,estz);
             if isfull
                 %return original grid with coastal strip added
-                grid.x = [newx';grid.x+xM];
+                if grid.x(1)~=0   %grid co-ordinates are being used 
+                    newx = grid.x(1)-xM:delx:grid.x(1)-delx;
+                    grid.x = [newx';grid.x];
+                else       %model grid so move origin to include shoreface
+                    grid.x = [newx';grid.x+xM];
+                end
                 grid.z = [shorez;grid.z];                
             else
                 %return just the coastal strip

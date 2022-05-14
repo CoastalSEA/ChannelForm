@@ -89,18 +89,19 @@ classdef CF_ValleyModel < GDinterface
         function addForm2Valley(mobj)
             %merge a selected form with the selected valley form 
             muicat = mobj.Cases;
-            obj = getClassObj(mobj,'Cases','CF_ValleyModel');
-            if isempty(obj) 
-                warndlg('No valley model available');
+            vobj = getClassObj(mobj,'Cases','CF_ValleyModel');
+            gobj = getClassObj(mobj,'Cases','GD_ImportData');
+            if isempty(vobj) && isempty(gobj)
+                warndlg('No valley model or imported data available');
                 return; 
             end
             
             ftxt = 'Select Form Model to use:';
-            fobj = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
+            fobj = selectCaseObj(muicat,[],{'CF_FormModel','GD_ImportData'},ftxt);
             if isempty(fobj), return; end
             fgrid = getGrid(fobj,1);
             vtxt = 'Select Valley Model to use:';
-            vobj = selectCaseObj(muicat,[],{'CF_ValleyModel'},vtxt);
+            vobj = selectCaseObj(muicat,[],{'CF_ValleyModel','GD_ImportData'},vtxt);
             vgrid = getGrid(vobj,1);
             
             [X,Y] = ndgrid(fgrid.x,fgrid.y);
@@ -115,11 +116,15 @@ classdef CF_ValleyModel < GDinterface
                 %create new record
                 fdst = copy(fobj.Data.Form);
                 fdst.Z(1,:,:) = new_z;
+                %update data range to capture combined grid range
+                activatedynamicprops(fdst,{'Z'}); %calls updateVarNames which resets range
                 setGridObj(fobj,muicat,fdst); 
             else            
                 %overwrite exisitng form data set with new form             
                 fobj.Data.Form.Z(1,:,:) = new_z;  
                 fobj.MetaData.valleyID = vobj.CaseIndex;
+                %update data range to capture combined grid range
+                activatedynamicprops(fobj.Data.Form,{'Z'}); %calls updateVarNames which resets range
                 classrec = classRec(muicat,caseRec(muicat,fobj.CaseIndex));
                 updateCase(muicat,fobj,classrec,true);
             end            
