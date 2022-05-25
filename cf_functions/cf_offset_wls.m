@@ -26,7 +26,7 @@ function obj = cf_offset_wls(obj)
 %
     if isprop(obj,'Grid') && ~isempty(obj.Grid) && obj.Grid.xM>0
         %coast is not at x=0
-        delx = obj.Grid.x(2)-obj.Grid.x(1);
+        delx = abs(obj.Grid.x(2)-obj.Grid.x(1));
         ixM = floor(obj.Grid.xM/delx)+1;           %x-index of coast
         if ~isempty(ixM) && ixM>1
             zhw = obj.RunParam.CF_HydroData.zhw;   %high water

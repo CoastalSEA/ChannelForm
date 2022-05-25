@@ -64,45 +64,39 @@ function cf_property_plots(obj,irec,src)
         case 'Thalweg + Plan width'            
             yz = reshape(pprop.DataTable{1,:},length(grid.x),3);
             centrelineplot(ax,grid,yz);
-%             sT = h_data.StepData{idr};
-%             fprintf('Le0 = %.0f; Le = %.0f\n',sT.Length(1),sT.Length(end));
         case 'Form width'
             xj = sprop.Dimensions.X;  
-            L = zeros(length(xj),3); W = L;
+            W = zeros(length(xj),3); L = zeros(1,3); 
             for i=1:3
                 W(:,i) = sprop.DataTable{:,i}; %selects Widths 
                 L(i) = -getconvergencelength(xj,W(:,i));
             end
-            formwidthplot(ax,xj,W,L,grid.desc)
+            formwidthplot(ax,xj,W,L,grid)
         case 'Elevation-Area histogram'
             zcentre = hprop.Dimensions.Z;
             zhist = hprop.SAfreq; %SAfreq = histogram bin count x grid area
-            elevationareaplot(ax,zcentre,zhist,wl_0,grid.desc)
+            elevationareaplot(ax,zcentre,zhist,wl_0,grid)
         case 'Hydraulic depth'
             zcentre = hprop.Dimensions.Z;
             zsurf = hprop.SurfaceArea;
             zvol = hprop.Volume;          
-            hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl_0,grid.desc)
+            hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl_0,grid)
         case 'Area-Prism ratio'
             xj = sprop.Dimensions.X;
             AP = sprop.AoP;
-            prismareaplot(ax,xj,AP,grid.desc)
+            prismareaplot(ax,xj,AP,grid)
         case 'Cross-sectional area' 
             xj = sprop.Dimensions.X;   
-            L = zeros(length(xj),3);
-%              width = sprop.DataTable{:,2}; %selects Widths 
-%             Lw = -getconvergencelength(grid.x,width); %width convergence length
-%             x0 = [rand(1,1),1/Lw];
-%             
+            A = zeros(length(xj),3); L = zeros(1,3);  
             for i=1:3
-                A(:,i) = sprop.DataTable{:,3+i}; %#ok<AGROW> %selects CSAs 
+                A(:,i) = sprop.DataTable{:,3+i};
                 L(i) = -getconvergencelength(xj,A(:,i));
             end
-            csaplot(ax,xj,A,L,grid.desc)
+            csaplot(ax,xj,A,L,grid)
         case 'Prism'
             xj = sprop.Dimensions.X;  
             Pr = sprop.Prism;
-            prismplot(ax,xj,Pr,grid.desc)
+            prismplot(ax,xj,Pr,grid)
         case 'a/h and Vs/Vc'
             xj = sprop.Dimensions.X';  
             Ahw = sprop.CSAhw;
@@ -121,15 +115,15 @@ function cf_property_plots(obj,irec,src)
             ah(ah>1.2) = NaN; ah(ah<0) = NaN;
             VsVc = (Ahw-Alw-2*amp.*Wlw)./(Alw+amp.*Wlw);
             VsVc(VsVc>3) = NaN;
-            asymmratiosplot(ax,xj,ah,VsVc,grid.desc);             
+            asymmratiosplot(ax,xj,ah,VsVc,grid);             
         case 'Hydraulics'
             xi = zprop.Dimensions.X;
-            if ~isempty(hydobj.cstres)
+            if ~isempty(hydobj) && ~isempty(hydobj.cstres)
                 watobj = hydobj;
             else
                 watobj = wprop;
             end
-            hydraulicsplot(ax,watobj,xi,grid.desc); 
+            hydraulicsplot(ax,watobj,xi,grid); 
         case 'Transgression'
             if ~isa(obj,'CF_TransModel')
                 warndlg('Trangression model required for this plot');
@@ -161,16 +155,21 @@ end
 function crossectionplot(ax,grid,wl)
     %plot a series of cross-sections along length of channel
     ax.XDir = 'reverse'; %to be consistent with the Q-Plot projection
+    gd_dir = gd_ax_dir(grid);
+    if gd_dir==1 || gd_dir==4                 
+        %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+        zgrd = flipud(grid.z);
+        ix0 = find(grid.x>=grid.xM-eps,1,'first');
+    else
+        %NB this finds the sections from >0 so geogrids with negative
+        %coordinates may not display correctly
+        zgrd = grid.z;
+        ix0 = find(grid.x>=grid.xM-eps,1,'first'); 
+    end
     noxi=length(grid.x);
-    ix0 = find(grid.x>=grid.xM-eps,1,'first'); 
     noxi = noxi-ix0;
     nx1=ix0; nx2=ix0+ceil(0.1*noxi); nx3=ix0+ceil(0.2*noxi);
-    nx4=ix0+ceil(0.4*noxi); nx5=ix0+ceil(0.6*noxi); nx6=ix0+ceil(0.8*noxi);   
-    if grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
-        zgrd = flipud(grid.z);
-    else
-        zgrd = grid.z;
-    end
+    nx4=ix0+ceil(0.4*noxi); nx5=ix0+ceil(0.6*noxi); nx6=ix0+ceil(0.8*noxi);
     
     green = mcolor('green');
     orange = mcolor('orange');
@@ -200,15 +199,14 @@ end
 %%
 function centrelineplot(ax,grid,yz)
     %plot centrel-line depth and width variation along channel
-    ax.Position(3) = 0.8;   
-    ax.XDir = 'reverse';
-    zi = grid.z(:,ceil(size(grid.z,2)/2):end);
+    ax.Position(3) = 0.8;  
+    ax = set_ax_dir(ax,grid); %check orientation of x axis in grid    
+    zi = grid.z(:,ceil(size(grid.z,2)/2):end); 
     if grid.ishead  %orientation of x-axis, x=0 is nearest the mouth
         zi = flipud(zi);
     end
     yyaxis left
-    plot(ax,grid.x,zi(:,1),'Color','k');
-    xlabel('<= head       Distance along channel (m)       mouth =>');  
+    plot(ax,grid.x,zi(:,1),'Color','k'); 
     ylabel('Elevation (mAD)');
     yyaxis right
     plot(ax,grid.x,yz(:,1),'Color','g','LineStyle','--','LineWidth',0.6);
@@ -223,23 +221,22 @@ function centrelineplot(ax,grid,yz)
     title(grid.desc,'FontWeight','normal','FontSize',10);    
 end
 %%
-function formwidthplot(ax,xi,W,L,casedesc)
+function formwidthplot(ax,xi,W,L,grid)
     %plot centrel-line depth and width variation along channel
     %order of W and L is HW, MT, LW
     ax.Position(1) = 0.1;
-    ax.XDir = 'reverse';
+    ax = set_ax_dir(ax,grid); %check orientation of channel in grid 
     plot(ax,xi,W(:,1),xi,W(:,2),xi,W(:,3));
-    xlabel('<= head       Distance along channel (m)       mouth =>');
     ylabel('Width (m)');
     txt1 = sprintf('High water (L_W = %.0f)',L(1));
     txt2 = sprintf('Mean tide  (L_W = %.0f)',L(2));
     txt3 = sprintf('Low water  (L_W = %.0f)',L(3));
     hL=legend(txt1,txt2,txt3,'Location','North');                                                                                         
     set(hL, 'Color', 'none');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function elevationareaplot(ax,zcentre,zhist,wl,casedesc)
+function elevationareaplot(ax,zcentre,zhist,wl,grid)
     %histogram of amount of surface area at each elevation
     ax.XDir = 'normal';
     barh(ax,zcentre, zhist, 'histc'); 
@@ -251,10 +248,10 @@ function elevationareaplot(ax,zcentre,zhist,wl,casedesc)
     hold off
     xlabel('Surface area (m^2)');
     ylabel('Elevation (mAD)');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl,casedesc)
+function hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl,grid)
     %plot variation of hydraulic depth with elevation
     ax.XDir = 'normal';
     plot(ax,zvol./zsurf,zcentre);
@@ -266,46 +263,43 @@ function hydraulicdepthplot(ax,zcentre,zsurf,zvol,wl,casedesc)
     hold off
     xlabel('Hydraulic depth (m)'); 
     ylabel('Elevation (mAD)');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function prismareaplot(ax,xj,APratio,casedesc)
+function prismareaplot(ax,xj,APratio,grid)
     %plot area-prism ratio along channel
-    ax.XDir = 'reverse';
-    plot(ax,xj,APratio);
-    xlabel('<= head       Distance along channel (m)       mouth =>'); 
+    ax = set_ax_dir(ax,grid); %check orientation of x axis in grid 
+    plot(ax,xj,APratio); 
     ylabel('Area-Prism ratio');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function csaplot(ax,xj,A,L,casedesc)
+function csaplot(ax,xj,A,L,grid)
     %plot cross-sectional area along channel  
     %order of A and L is HW, MT, LW
-    ax.XDir = 'reverse';
+    ax = set_ax_dir(ax,grid); %check orientation of x axis in grid 
     plot(ax,xj,A(:,1),xj,A(:,2),xj,A(:,3));
-    xlabel('<= head       Distance along channel (m)       mouth =>');
     ylabel('CSA');
     txt1 = sprintf('High water (L_A = %.0f)',L(1));
     txt2 = sprintf('Mean tide  (L_A = %.0f)',L(2));
     txt3 = sprintf('Low water  (L_A = %.0f)',L(3));
     hL=legend(txt1,txt2,txt3,'Location','North');
     set(hL, 'Color', 'none');   
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function prismplot(ax,xj,Pr,casedesc)
+function prismplot(ax,xj,Pr,grid)
     %plot prism along channel
-    ax.XDir = 'reverse';
+    ax = set_ax_dir(ax,grid); %check orientation of x axis in grid 
     plot(ax,xj,Pr);
-    xlabel('<= head       Distance along channel (m)       mouth =>');
     ylabel('Prism');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function asymmratiosplot(ax,xj,ah,VsVc,casedesc)
+function asymmratiosplot(ax,xj,ah,VsVc,grid)
     %plot a/h and Vs/Vc along channel
     ax.Position = [0.08,0.11,0.84,0.58];
-    ax.XDir = 'reverse';
+    ax = set_ax_dir(ax,grid); %check orientation of x axis in grid 
     yyaxis left
     plot(ax,xj,ah(:,1),'Color','g','LineStyle','-');
     hold on
@@ -316,16 +310,15 @@ function asymmratiosplot(ax,xj,ah,VsVc,casedesc)
     yyaxis right
     plot(ax,xj,VsVc);
     ylabel('Vs/Vc');
-    xlabel('<= head       Distance along channel (m)       mouth =>');
     hL=legend('a/h High water', 'a/h Mean tide level','a/h Low water',...
                                                'Vs/Vc','Location','best');
     set(hL, 'Color', 'none');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
-function hydraulicsplot(ax,hydobj,x,casedesc)
+function hydraulicsplot(ax,hydobj,x,grid)
     %plot the results from the CST hydraulic model or linear decay
-    ax.XDir = 'reverse';
+    ax = set_ax_dir(ax,grid); %check orientation of x axis in grid 
     green = mcolor('green');
     orange = mcolor('orange');
 
@@ -373,8 +366,7 @@ function hydraulicsplot(ax,hydobj,x,casedesc)
     ax.XLimMode = 'manual';
     ax.XLim = [min(x),max(x)];
     ax.Position(3) = ax.Position(3)*0.95;
-    xlabel('<= head        Distance along channel (m)        mouth =>');
-    title(casedesc,'FontWeight','normal','FontSize',10);
+    title(grid.desc,'FontWeight','normal','FontSize',10);
 end
 %%
 function transgressionplot(ax,trans)
@@ -402,4 +394,16 @@ function transgressionplot(ax,trans)
         title(trans.Description)
     end
 end
-    
+%%
+function ax = set_ax_dir(ax,grid)
+    %check orientation of x-axis relative to head of channel to set ax.XDir
+    %this is needed because of the fixed annotation of Mouth/Head on x-axis  
+    ax = gd_ax_dir(ax,grid.x);  %check whether axis direction is reversed
+    %
+    gd_dir = gd_ax_dir(grid);   %find orientation of channel in grid
+    if gd_dir==1 || gd_dir==4                          
+        ax.XLabel.String = '<= head         Distance along channel (m)        mouth =>';                                 
+    else 
+        ax.XLabel.String = '<= mouth         Distance along channel (m)        head =>'; 
+    end
+end

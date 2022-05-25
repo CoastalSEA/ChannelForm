@@ -68,7 +68,7 @@ classdef CF_ShoreData < muiPropertyUI
             obs = 1/obj.OffshoreBS;
             ubs = 1/obj.UpperBeachBS;
             
-            delx = grid.x(2)-grid.x(1);
+            delx = abs(grid.x(2)-grid.x(1));
             nint = floor(obj.ShoreWidth/delx);
             xM = nint*delx;
             newx = 0:delx:xM-delx;
