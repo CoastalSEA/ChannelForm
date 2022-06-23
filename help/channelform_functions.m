@@ -19,8 +19,6 @@
 % and pad the water level vectors with values at the mouth.
 % * *cf_pow_model* - function to compute 3D form of a creek or tidal channel
 %   using power laws to define width and hydraulic depth variations.
-% * *cf_property_plots* - plots displayed on Proprety tab in ChannelForm
-% model.
 % * *cf_sectionplot* - plot a set of along-channel cross-sections and the channel centre-line
 % (thalweg) for the initial and final grid.
 % * *cf_set_hydroprops* - set water levels for form model using either the surface defined by the
@@ -60,6 +58,8 @@
 % - compute the gross properties of a gridded bathymetry.
 % * *gd_section_properties*
 % - compute the width, cross-sectional area and prism along channel.
+% * *gd_property_plots* - plots displayed on Proprety tab in ChannelForm
+% model and on a figure in ModelSkill.
 % * *gd_xy2sn*
 % - map grid from cartesian to curvilinear coordinates with option to return 
 % the elevations on the source cartesian grid, or as a curvilinear grid.

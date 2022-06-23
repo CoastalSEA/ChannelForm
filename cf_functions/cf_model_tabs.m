@@ -136,7 +136,7 @@ function tabProperties(obj,tabsrc,irec)
         popup = uicontrol('Parent',tabsrc,'Style','popup',...
            'String',plotlist,'Tag','PlotList',...
            'Units','Normalized','Position', [0.05 0.74 0.9 0.05],...
-           'Callback', @(src,evdat)cf_property_plots(obj,irec,src)); %#ok<NASGU>
+           'Callback', @(src,evdat)gd_property_plots(obj,irec,src)); %#ok<NASGU>
 
         %Create push button to copy data to clipboard
         uicontrol('Parent',tabsrc,'Style','pushbutton',...                    
@@ -150,15 +150,15 @@ function tabProperties(obj,tabsrc,irec)
             'String','>Figure','Tag','FigButton',...
             'TooltipString','Create plot as stand alone figure',...
             'Units','normalized','Position',[0.86 0.793 0.10 0.044],...                    
-            'Callback',@(src,evdat)cf_property_plots(obj,irec,src));  
+            'Callback',@(src,evdat)gd_property_plots(obj,irec,src));  
         
     else
         %update obj in Callbacks and table in UserData
-        popup.Callback = @(src,evdat)cf_property_plots(obj,irec,src);
+        popup.Callback = @(src,evdat)gd_property_plots(obj,irec,src);
         hb = findobj(tabsrc,'Tag','CopyButton');           
         hb.UserData = T;
         hf = findobj(tabsrc,'Tag','FigButton');
-        hf.Callback = @(src,evdat)cf_property_plots(obj,irec,src);
-        cf_property_plots(obj,irec,popup); %set plot to current popup selection
+        hf.Callback = @(src,evdat)gd_property_plots(obj,irec,src);
+        gd_property_plots(obj,irec,popup); %set plot to current popup selection
     end           
 end 
