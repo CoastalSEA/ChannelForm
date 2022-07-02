@@ -56,8 +56,19 @@
 % in the <matlab:doc('muitoolbox') muitoolbox>) if not available.
 % * *gd_gross_properties*
 % - compute the gross properties of a gridded bathymetry.
+% * *gd_plan_form* 
+% - compute planform variation along the x-axis at specified planar levels.
+% * *gd_plotdata*
+% - create pcolor plot of gridded surface
+%   yz = gd_plan_form(grid,wl);   %see below for explantion of input variables
 % * *gd_section_properties*
 % - compute the width, cross-sectional area and prism along channel.
+% * *gd_selectpoints*
+% - accept figure to interactively select one or more points on a grid
+% * *gd_startendpoints*
+% - accept figure to interactively select start and end points on a grid
+% * *gd_subdomain*
+% - accept figure to interactively select a subdomain of a grid
 % * *gd_property_plots* - plots displayed on Proprety tab in ChannelForm
 % model and on a figure in ModelSkill.
 % * *gd_xy2sn*
@@ -67,6 +78,9 @@
 % - map grid from curvilinear to cartesian coordinates.
 % * *getconvergencelength* -  least squares fit using fminsearch to
 % find the convergence length of a channel from a distance-width xy data set 
+% * *a_star* - implements the A* search algorithm to find the shortest path given
+% constraints (inaccessible cells) and a cost function (e.g. water depths).
+% Author: Alex Ranaldi, 2022, https://github.com/alexranaldi/A_STAR
 % * *InterX* - intersection of two curves. MATLAB Central File Exchange, 
 % Author: NS, 2010, https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections.
 % * *xy2sn* - Bart Vermeulen,2022, Cartesian to Curvilinear 

@@ -126,7 +126,7 @@ classdef ChannelForm < muiModelUI
             menu.Setup(5).List = {'Grid Parameters','Run Time Parameters'};           
             menu.Setup(5).Callback = repmat({@obj.setupMenuOptions},[1,2]);
             
-            menu.Setup(6).List = {'Load','Add','Delete','Edit Grid Position'};
+            menu.Setup(6).List = {'Load','Add','Delete','Edit Inlet Definition'};
             menu.Setup(6).Callback = [repmat({@obj.loadMenuOptions},[1,3]),...
                                                    {@obj.gridMenuOptions}];
             
