@@ -40,6 +40,7 @@ classdef CF_TransModel < GDinterface
         StepTime       %time to be saved (seconds during run and converted to years)
         Grid           %model grid at timestep, t, struct with
                        % x,y,z co-ordinates
+                       % t - timstep (years)
                        % Wz - array of column vectors for width at hw,mt,lw
                        % zdiff - difference over a timestep
                        % intidx - x-axis indices from mouth to tidal limit

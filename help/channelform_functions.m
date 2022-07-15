@@ -43,13 +43,15 @@
 % * *get_river_regime* - get river regime properties using regime
 % theoretical profile (Cao & Knight,1996).
 
-
-%% Grid functions
+%% Grid Functions
 % Functions used to manipulate cartesian grids can be found in the
-% _muiAppGridFcns_ folder and includes the following.
+% _muiAppGridFcns_ folder and include the following:
 %%
-% * *gd_channel_hypsometry*
+% * *gd_basin_hypsometry*
 % - compute area and volume hypsometry from gridded elevation data.
+% * *gd_basin_properties*
+% - use the basin hypsometry from gd_basin_hypsometry to compute several 
+% along-channel/x-axis morphological properties.
 % * *gd_colormap*
 % - check if Mapping toolbox is installed to use land/sea colormap, or call
 % _cmap_selection_ (see <matlab:doc('psfunctions') Plotting and statistical functions> 
@@ -58,7 +60,7 @@
 % - compute the gross properties of a gridded bathymetry.
 % * *gd_plan_form* 
 % - compute planform variation along the x-axis at specified planar levels.
-% * *gd_plotdata*
+% * *gd_plotgrid*
 % - create pcolor plot of gridded surface
 %   yz = gd_plan_form(grid,wl);   %see below for explantion of input variables
 % * *gd_section_properties*
@@ -78,6 +80,13 @@
 % - map grid from curvilinear to cartesian coordinates.
 % * *getconvergencelength* -  least squares fit using fminsearch to
 % find the convergence length of a channel from a distance-width xy data set 
+% * *getsubgrid*
+% - extract a subdomain from a grid and return the extracted
+% grid and the source grid indices of the bounding rectangle.
+% * *gd_ax_dir*
+% - check direction of grid axes and reverse if descending, OR
+% find grid orientation using ishead and direction of x-axis, OR
+% check a grid axis direction by prompting user.
 % * *a_star* - implements the A* search algorithm to find the shortest path given
 % constraints (inaccessible cells) and a cost function (e.g. water depths).
 % Author: Alex Ranaldi, 2022, https://github.com/alexranaldi/A_STAR
@@ -89,9 +98,8 @@
 % * *sn2xy* - as above.
 
 %%
-% Further details can be found in <matlab:doc('grid_class_fcns') Grid classes and functions>, 
-% or by using the >>help _function name_ command in the Command Window.
-
+% Further details can be found in <matlab:doc('grid_class_fcns') Grid classes and functions>
+% 
 %% Generic functions
 % Other functions used in ChannelForm, include:
 %%
