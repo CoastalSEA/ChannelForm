@@ -75,31 +75,72 @@
 % * *Delete*: delete a grid from an existing Case table (ie a row).
 
 %% Setup > Grid Tools
-% * *Translate Grid*: interactively translate grid x-y
-% coordinates.
-% * *Rotate Grid*: interactively flip or rotate grid.   
-% * *Re-Grid*: regrid a gridded dataset to match another grid or to user
-% specified dimensions.
-% * *Sub-Grid*: interactively define a subgrid and save grid as a new Case.               
-% * *Combine Grids*: superimpose one grid on another based on maximum
-% or minimum set of values.
-% * *Add Surface*: add horizontal surface to an existing grid.
-% * *To curvilinear*: map grid from cartesian to curvilinear coordinates. 
-% * *From curvilinear*: map grid from curvilinear to cartesian coordinates.
-% * *Difference Plot*: generate a plot of the difference between two grids.
-% * *Export xyz Grid*: select a Case and export grid as xyz tuples.
+% * *Grid Tools > Translate Grid*: interactively translate grid x-y
+% coordinates;
+% * *Grid Tools > Rotate Grid*: interactively flip or rotate grid;   
+% * *Grid Tools > Re-Grid*: regrid a gridded dataset to match another grid or to user
+% specified dimensions;
+% * *Grid Tools > Sub-Grid*: interactively define a subgrid and save grid as a new Case;               
+% * *Grid Tools > Combine Grids*: superimpose one grid on another based on maximum
+% or minimum set of values;
+% * *Grid Tools > Add Surface*: add horizontal surface to an extisting
+% grid;
+% * *Grid Tools > To curvilinear*: map grid from cartesian to curvilinear coordinates; 
+% * *Grid Tools > From curvilinear*: map grid from curvilinear to cartesian
+% coordinates;
+% * *Grid Tools > Display Dimensions*: display a table with the dimensions
+% of a selected grid;
+% * *Grid Tools > Difference Plot*: generate a plot of the difference
+% between two grids;
+% * *Grid Tools > Plot Sections*: interactively define sections and plot
+% them on a figure;
+% * *Grid Tools > Digitise Line*: interactively digitise a line (with
+% option to add z values) using selected grid as base map;
+% * *Grid Tools > Export xyz Grid*: select a Case and export grid as xyz
+% tuples;
 
 %% Setup (other)
 % * *Add Properties*: add form properties to a gridded data
 % set.
 % * *Delete Properties*: delete ALL property tables associated with a 
 % selected gridded data set.
+% * *Edit Inlet Definition*: provides access to the definition of the 
+% position of the head of the inlet, distance from the x-axis origin to 
+% the mouth and any definition of the channel centre-line (if used).
 % * *Model Constants*: various constants are defined for use in models, such as the acceleration due to gravity, viscosity and density of sea water, and density of sediment. 
 
 %% Utilities 
 % * *Hydraulic Model*: runs the CSTmodel (if CSTmodel App is installed).
 % * *Add Form to Valley*: combines channel and valley grids.
-% * *Add Modifications*: adds defined modifications to a grid.
+% * *Utilities>Add Meander*: adds a user defined meander to an idealised 
+% channel form model. After selecting a model, the user is prompted to 
+% load a text file containing the x-y co-ordinates of the channel 
+% centreline. These are used to map the straight channel into curvilinear 
+% co-ordinates that follow the centreline and then interpolate the results 
+% onto the cartesian model grid.
+% * *Utilities>Add Shoreline>Model Shore*: add a shoreline strip to a 
+% channel or valley model. This extends the grid seawards by the distance 
+% to the closure depth specified in Setup>Form Parameters>Shore Parameters. 
+% This comprises a beach profile using Dean’s equilibrium model on the open 
+% coast and the defined offshore bed slope across the mouth of the channel.
+% * *Utilities>Add Shoreline>Extrapolate Shore*: add a shoreline strip to a 
+% grid (imported or model). The user is prompted to define the width of the 
+% extension, the seaward or offshore depth and an exponent. An exponent 
+% of 1, gives linear extrapolation between the grid shore values and the 
+% defined offshore value, a value greater than one gives a shore that is 
+% concave down and a value greater than one gives a shore that is convex up.
+% * *Utilities>Add Modifications*: adds defined modifications to a grid.
+% * *Utilities>Add Thalweg to Valley*: uses an xyz definition of a channel 
+% thalweg, to create a valley base in an existing model or imported grid. 
+% This is used to modify an existing valley grid, to extend the valley 
+% form down to the pre-Holocene surface (i.e. below the existing channel 
+% bed) using the defined the thalweg data. User is prompted a thalweg file. 
+% This has a header of %f %f %f, followed by rows of x, y, z values that 
+% define the pre-Holocene valley bed. The upper and lower cut-offs must 
+% then be defined.  These are used to mask out the channel in the valley 
+% grid in order to introduce the new channel base (thalweg). Typically 
+% values just above high water and below the deepest depth in the valley
+% grid channel should suffice.
 % * *River Dimensions*: calculates the river dimensions based on the
 % current input parameters.
 % * *Valley Thalweg*: plots the valley centre-line along the x-axis.

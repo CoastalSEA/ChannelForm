@@ -43,6 +43,14 @@
 %
 % _UserData.xM_ - distance from x=0 to mouth of estuary/inlet (default is
 % 0).
+%
+% _UserData.cline_ – struct for x and y coordinates of meander centre-line.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %%% Hypsometry
 % Variation of surface area and volume as a function of
@@ -53,6 +61,12 @@
 % * SAfreq - Surface area frequency
 %%
 % _Dimensions_ of time (table rows), and Z.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %%% SectionProps
 % Variation of the width and cross-sectional area
@@ -64,10 +78,30 @@
 % * CSAhw - High Water Cross-sectional Area (m^2)
 % * CSAmt - Mean Tide Cross-sectional Area (m^2)
 % * CSAlw - Low Water Cross-sectional Area (m^2)
-% * Prism - Tidal Prism (m^3)
-% * AoP - Prism to CSA ratio (m)
+% * Dhw – High Water depth (m)
+% * Dmt –Mean Tide depth (m)
+% * Dlw - Low Water depth (m)
+% * PrA - Tidal Prism (using CSA) (m^3)
+% * Shw – High Water surface area (m^2)
+% * Smt – Mean Tide surface area (m^2)
+% * Slw – Low Watere surface area (m^2)
+% * Vhw – High Water volume (m^3)
+% * Vmt – Mean Tide volume (m^3)
+% * Vlw – Low Water volume (m^3)
+% * PrV - Tidal Prism (using hypsometry) (m^3)
+% * Gamma - Dronkers' Gamma (-)
+% * Vs - Storage Volume (m^3)
+% * Vc - Channel Volume (m^3) 
+% * amp - Tidal amplitude at mouth (m)
+% * hyd - Hydraulic depth of channel (m)
 %%
 % _Dimensions_ of time (table rows), and X.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %%% Plan
 % Widths along the x-axis, specified in the model, or based on an exponential 
@@ -78,6 +112,12 @@
 % * Wlw - Low Water Width (m)
 %%
 % _Dimensions_ of time (table rows), and X.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %%% GrossProps 
 % Various summary properties of the form related to length, area, volume,
@@ -87,21 +127,30 @@
 % * Slw - Low Water Surface Area (m^2)
 % * Vhw - High Water Volume (m^3)
 % * Vlw - Low Water Volume (m^3)
-% * Pr - Tidal Prism (m^3)
+% * PrA - Tidal Prism using cross-sectional areas (m^3)
+% * PrV - Tidal Prism using hypsometry volumes (m^3)
 % * Gamma - Dronkers' Gamma (-)
 % * Vs - Storage Volume (m^3)
-% * Vc - Channel Volume (m^3) 
-% * VsoVc - Storage to Channel Volume ratio (-)
+% * Vc - Channel Volume (m^3)
+% * Wm - Mean Tide Width  at mouth (m)
+% * Am - Mean Tide Cross-sectional Area at mouth (m^2)
+% * Dm – Depth at mouth to MTL (m)
 % * amp - Tidal amplitude at mouth (m)
 % * hyd - Hydraulic depth of channel (m)
 % * aoh - Amplitude to Depth ratio (-)
-% * Wm - Mean Tide Width  at mouth (m)
-% * Am - Mean Tide Cross-sectional Area at mouth (m^2)
-% * PoA - Prism to Cross-sectional Area ratio at mouth (m)
+% * VsoVc - Storage to Channel Volume ratio (-)
+% * PrvAm - Prism to Cross-sectional Area ratio at mouth (m)
+% * SflShw - Intertidal to Basin Area ratio
 % * Lw - Width convergence length
 % * La - Cross-sectional Area convergence length
 %%
 % _Dimensions_ of time (table rows).
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %%% WaterLevels
 % Variation in water levels at high water, mean tide and low water along
@@ -112,6 +161,12 @@
 % * zlw - Low Water level (mAD)
 %%
 % _Dimensions_ of time (table rows), and X.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %%% Transgresion
 % When the Transgression model is run as additional table is included
@@ -129,6 +184,12 @@
 % * vdiffx - Volume change for [0,delX/2,delX,3delX/2] (m^3)
 %%
 % _Dimensions_ of time (table rows)
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %% See Also
 % The <matlab:open_manual manual> provides further details of setup and 

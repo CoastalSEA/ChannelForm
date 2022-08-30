@@ -59,8 +59,9 @@ function crossectionPlot(obj,ax,slr)
     xi = grid1.x; 
     yi = grid1.y;
     zi = grid1.z;%final grid
-
-    if grid1.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+    xsgn = sign(grid.x(2)-grid.x(1));  %direction of axes (-ve descending)            
+    %if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+    if xsgn<0
         zi = flipud(zi);                          
         z0 = flipud(z0);  
     end
@@ -110,8 +111,9 @@ function thalwegPlot(obj,ax,slr)
     grid1 = getGrid(obj,height(dst));
     xi = grid1.x; 
     zi = grid1.z(:,ceil(size(grid1.z,2)/2));%final grid
-
-    if grid1.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+    xsgn = sign(grid.x(2)-grid.x(1));  %direction of axes (-ve descending)            
+    %if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+    if xsgn<0
         zi = flipud(zi);                          
         z0 = flipud(z0);  
     end

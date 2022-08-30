@@ -127,6 +127,10 @@ classdef CF_FormModel < GDinterface
             grid = getGrid(obj,1);
             %add shoreline strip based on equilibrium profile 
             obj.RunParam.CF_ShoreData = getClassObj(mobj,'Inputs','CF_ShoreData');
+            if isempty(obj.RunParam.CF_ShoreData)
+                warndlg('No shoreline data available')
+                return
+            end
             grid = setShoreline(obj.RunParam.CF_ShoreData,grid,true);
 
             %create new grid dstable and update  

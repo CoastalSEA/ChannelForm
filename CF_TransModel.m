@@ -519,7 +519,7 @@ classdef CF_TransModel < GDinterface
             if isoffset && ~isempty(obj.Grid) && obj.Grid.xM>0
                 %fgrid.x = fgrid.x+obj.Grid.xM; %moves grid by erosion distance
                 %subgrid scale movement makes control of property estimates
-                %complex. Only make coast when it has moved integer delx
+                %complex. Only move coast when it has moved integer delx
                 ixM = floor(grid.xM/(grid.x(2)-grid.x(1)))+1;
                 fgrid.x = fgrid.x+fgrid.x(ixM);            
             end
@@ -579,8 +579,8 @@ classdef CF_TransModel < GDinterface
 %%
         function obj = updateTidalLimit(obj)
             %find the new tidal limit and update integration distance indices
-    %NB: water levels corrected for shoreline offset in cf_set_hydroprops
-    %    and Lt is distance from x=0
+            %NB: water levels corrected for shoreline offset in cf_set_hydroprops
+            %and Lt is distance from x=0 (model origin)
             obj.dTrans.Lt = tidalLimit(obj);
             obj.RunParam.CF_HydroData.xTidalLimit = obj.dTrans.Lt; %used in models
             
@@ -766,10 +766,10 @@ classdef CF_TransModel < GDinterface
             edX = obj.dTrans.estdX-obj.dTrans.cstdX; 
             
             %update parameters used in call to newWaterLevels/CSTmodel
-            %should exist already for ckfa model but not for others  
-            hyps = gd_channel_hypsometry(grid,hydobj,grdobj.histint,0);
-            [w,csa,~] = gd_section_properties(grid,hydobj);
-            gp = gd_gross_properties(grid,hydobj,hyps,w{2},csa{2});
+            %should exist already for ckfa model but not for others
+            [~,hypdst] = gd_basin_hypsometry(grid,hydobj,grdobj.histint,0);
+            props = gd_section_properties(grid,wl,hypdst);
+            gp = gd_gross_properties(grid,wl,props);
             %write width and csa to command window
             time = obj.StepTime(end)/obj.cns.y2s;
             fprintf('T = %g yrs: Width: Wm %g m, CSA: Am %g m^2\n',time,gp.Wm,gp.Am)
@@ -1026,7 +1026,9 @@ classdef CF_TransModel < GDinterface
             initgrid = getGrid(obj.Channel);
             initgrid = updateValley(obj,initgrid,false);
             z0 = initgrid.z;
-            if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+            xsgn = sign(grid.x(2)-grid.x(1));  %direction of axes (-ve descending)            
+            %if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+            if xsgn<0
                 zi = flipud(zi);                          
                 z0 = flipud(z0);  
             end
@@ -1074,7 +1076,9 @@ classdef CF_TransModel < GDinterface
             initgrid = getGrid(obj.Channel);
             initgrid = updateValley(obj,initgrid,false);
             z0 = initgrid.z(:,ceil(size(initgrid.z,2)/2));
-            if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+            xsgn = sign(grid.x(2)-grid.x(1));  %direction of axes (-ve descending)
+            %if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+            if xsgn<0
                 zi = flipud(zi);                       
                 z0 = flipud(z0);  
             end

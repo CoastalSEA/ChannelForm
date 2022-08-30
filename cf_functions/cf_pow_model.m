@@ -75,9 +75,9 @@ function obj = pr_properties(obj)
     
     wl = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;
-    hyps = gd_channel_hypsometry(grid,wl,grdobj.histint,0);
-    [w,csa,~] = gd_section_properties(grid,wl);
-    gp = gd_gross_properties(grid,wl,hyps,w{2},csa{2});
+    [~,hypdst] = gd_basin_hypsometry(grid,wl,grdobj.histint,0);
+    props = gd_section_properties(grid,wl,hypdst);
+    gp = gd_gross_properties(grid,wl,props);
     %used in CSTmodel
     obj.CSTparams.Wm = gp.Wm;
     obj.CSTparams.Lw = gp.Lw;

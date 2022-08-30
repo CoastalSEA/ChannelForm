@@ -104,9 +104,19 @@ classdef CF_ValleyModel < GDinterface
             vobj = selectCaseObj(muicat,[],{'CF_ValleyModel','GD_ImportData'},vtxt);
             vgrid = getGrid(vobj,1);
             
+            %prompt user to define whether to use min or max values
+            answer = questdlg('Use maximum or minimum values at each point in grid?',...
+                              'Add grids','Max','Min','Max');
+            ismax = true;
+            if strcmp(answer,'Min'), ismax = false; end
+                
             [X,Y] = ndgrid(fgrid.x,fgrid.y);
             zv = griddata(vgrid.x,vgrid.y,vgrid.z',X,Y);    %valley elevations
-            new_z = max(fgrid.z,zv);
+            if ismax
+                new_z = max(fgrid.z,zv);
+            else
+                new_z = min(fgrid.z,zv);
+            end
             [m,n] = size(new_z);
             new_z = reshape(new_z,1,m,n);
 
