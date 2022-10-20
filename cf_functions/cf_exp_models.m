@@ -1,11 +1,11 @@
-function [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
+function [xi,yi,zgrd,Wz] = cf_exp_models(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
 %   cf_exp_models.m
 % PURPOSE
 %   construct idealised channel form using exponential functions in y to 
-%   determine width and CKFA cross-section to determine z at each x interval
+%   determine width and cross-section of various forms to determine z at each x interval
 % USAGE
 %   [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
 % INPUTS
@@ -19,10 +19,11 @@ function [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
 %   xi - x co-ordinate (m)
 %   yi - y co-ordinate (m)
 %   zgrd - bed elevation grid (m)
-%   yz - width at hw,mt,lw (m)
+%   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
 % NOTES
-%   CKFA cross-section comprises a channel using Cao&Knight section and an
-%   intertidal using the profile proposed by Friedrichs & Aubrey (tide only)
+%   Cross-section comprises a channel using Cao&Knight section, or a 
+%   rectangular prism and an intertidal using linear, stepped, uniform 
+%   shear or muddy shore profiles and with an exponential plan form.
 % SEE ALSO
 %   used in CF_FormModel as part of ChannelForm model
 %
@@ -30,7 +31,7 @@ function [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    xi = []; yi = []; zgrd = []; yz = [];
+    xi = []; yi = []; zgrd = []; Wz = [];
     if nargin<3
         isfull = true;
     end
@@ -45,13 +46,17 @@ function [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
     end
     %set the water level variations along the estuary
     [obj,ok] = cf_set_hydroprops(obj); 
-    if ok<1, return; end
+    if ok<1
+        fprintf('No water level surface found. Grid not defined\n')
+        return; 
+    end
 
-    [xi,yi,zi,yz] = channel_3D_form(obj);
+    [xi,yi,zi,Wz] = channel_3D_form(obj);
     if isempty(xi),return; end    
     
     %model x-axis is from head. Reverse data for use in ChannelForm
-    yz = num2cell(flipud(yz)',2);  %formatted to load into dstable
+    yzcell = num2cell(flipud(Wz)',2);  %formatted to load into table
+    Wz = table(yzcell{:},'VariableNames',{'Whw','Wmt','Wlw'});
     %x is defined from head with origin at "shoulder". 
     %Change to origin at mouth with grid ordered from x=0
     xi = fliplr(max(xi)-xi);
@@ -85,7 +90,7 @@ function obj = channel_properties(obj)
     obj.CSTparams.La = gp.La;  
 end
 %%
-function [xi,yi,zi,yz] = channel_3D_form(obj)
+function [xi,yi,zi,Wz] = channel_3D_form(obj)
     %generate the 3D form
     
     %get the required input parameter classes
@@ -105,8 +110,8 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     Lwu = expobj.HWwidthELength;     %width convergence length at high water (m)
     Lwl = expobj.LWwidthELength;     %width convergence length at low water (m)
     nu = expobj.HWwidthPower;        %width exponent at high water (-)
-    nl = expobj.LWwidthPower;         %width exponent at low water (-)   
-    zm = expobj.zMouthInvert;        %thalweg bed level at mouth to zero datum (m)
+    nl = expobj.LWwidthPower;        %width exponent at low water (-)   
+    zm = obj.zMouthInvert;           %thalweg bed level at mouth to zero datum (m)
     ki = expobj.FlatShapeParam;      %intertidal shape parameter[ki*100; range:0.01-0.5]
     Ll = hydobj.xTideRiver;          %distance from mouth to estuary/river switch
     
@@ -132,7 +137,7 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     fact = 2;
     switch obj.Selection.intertidalform
         case 'Uniform Shear'
-            fact = 2.57;  %based on L=L*(pi/2+1) where pi/2+1=2.57
+            fact = 2.57;             %based on L=L*(pi/2+1) where pi/2+1=2.57
     end
 
     %set-up co-ordinate system
@@ -141,47 +146,45 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
     yi = yi(yi>=0);  %half the grid
   
     zi = zeros(length(xi),length(yi));
-    yz = zeros(length(xi),3);
+    Wz = zeros(length(xi),3);
     %water level properties based on amplitude+mtl or CST model (mAD)
-    zHWxi = flipud(hydobj.zhw);        %high water level(mAD)
-    zLWxi = flipud(hydobj.zlw);        %low water level(mAD)    
-    amp0 = (hydobj.zhw(1)-hydobj.zlw(1))/2;    %tidal amplitude at mouth 
+    zHWxi = fliplr(hydobj.zhw);      %high water level(mAD)
+    zLWxi = fliplr(hydobj.zlw);      %low water level(mAD)    
+    amp0 = (hydobj.zhw(1)-hydobj.zlw(1))/2; %tidal amplitude at mouth 
     
     %river properties
     [hrv,bh,mcr] = get_river_profile(obj,2*amp0,yi);  
 
     %aspect ratio and slope coefficient (mc) at mouth    
-    dl = hydobj.zlw(1)-zm;    %depth of lower form at mouth to lw (m)
-    ar = 2*bl/dl;             %aspect ratio of low water channel at mouth
-    mct = 2*nc/ar;   %submerged static coefficient of Coulomb friction (estimated from geometry)
+    dl = hydobj.zlw(1)-zm;           %depth of lower form at mouth to lw (m)
+    ar = 2*bl/dl;                    %aspect ratio of low water channel at mouth
+    mct = 2*nc/ar;                   %submerged static coefficient of Coulomb 
+                                     %friction (estimated from geometry)
     
     %calculate the transformation of the x co-ordinate for given x and y values
     %and then use this to obtain a vaule of z    
     for ix=1:length(xi)
         zhw = zHWxi(ix); zlw = zLWxi(ix);
-        ax = (zhw-zlw)/2;          %tidal amplitude(m)
-        zo = zhw-ax;               %mean tide level(m)  
+        ax = (zhw-zlw)/2;            %tidal amplitude(m)
+        zo = zhw-ax;                 %mean tide level(m)  
         %------------------------------------------------------------------
         %Note - see how this relates to work of Uncles re along channel
         %slope variation. *************************************************
-        mc = mcr+(mct-mcr)*ax/amp0;%interpolate river and mouth slope 
-                                   %coefficients as function of tidal amplitude
-        mc = mct*amp0/ax;        %scale value at mouth based on tidal amplitude
-        if mc>mcr, mc = mcr; end %river is limiting value
-        mc = mct;
-        % previous code to get slope coefficient, mc                   
-        % dl = zo-zm;           %depth of lower form at mouth to mtl(m)
-        % ar = 2*bl/(dl-am);    %aspect ratio of low water channel at mouth
-        % mc = 2*nc/ar;         %submerged static coefficient of Coulomb friction (estimated from geometry)
+        % mc = mcr+(mct-mcr)*ax/amp0;%interpolate river and mouth slope 
+        %                            %coefficients as function of tidal amplitude
+        % mc = mct*amp0/ax;          %scale value at mouth based on tidal amplitude
+        % if mc>mcr, mc = mcr; end   %river is limiting value
+        %**************
+        mc = mct;                    %force constant value
         %------------------------------------------------------------------
         switch obj.Selection.planform
             case 'Exponential'
-                xexp = Ll-xi(ix);   %x defined from mouth for exponential          
+                xexp = Ll-xi(ix);    %x defined from mouth for exponential          
                 [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lwu,Lwl,fact);
             case 'Power'
                 [yu,yo,yl] = powPlan(xi(ix),Lt-Ll,Ll,bu,bl,bh,nu,nl,fact);
         end
-        ls = (yu-yl)/fact;     %lower intertial width from lw to mtl 
+        ls = (yu-yl)/fact;           %lower intertidal width from lw to mtl 
         
         %supra-tidal form relative to mtl        
         if yu==0
@@ -208,7 +211,7 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
                 %lower intertidal form
                 zdl = -ax/2.*(yi<=yo & yi>=yl);
             case 'Uniform Shear'
-                if ls==0                     %no intertidal present
+                if ls==0             %no intertidal present
                     zdu = yi*0;
                     zdl =yi*0;
                 else
@@ -228,9 +231,9 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
 
         %check for saltmarsh on upper intertidal form
         if dmax>0            
-            idm = yi<=yu & yi>yo;      %width in which marsh can exist
+            idm = yi<=yu & yi>yo;    %width in which marsh can exist
             ismarsh = logical(zdu>(ax-dmax).*idm); %valid marsh depths
-            zdu(ismarsh) = (ax-dm);    %assign mean marsh depth
+            zdu(ismarsh) = (ax-dm);  %assign mean marsh depth
         end
         
         %define low water channel form
@@ -267,30 +270,30 @@ function [xi,yi,zi,yz] = channel_3D_form(obj)
         zix = zds+zdu+zdl+zdc;
         %adjust mtl datum to zero datum  
         zi(ix,:)  = zix + zo; 
-        yz(ix,:) = [yu, yo, yl]*2;   %full width       
+        Wz(ix,:) = [yu, yo, yl]*2;   %full width       
     end
 end
 %%
 function [yu,yo,yl] = expPlan(xexp,bu,bl,bh,nu,nl,fact)
     %compute controlling dimensions (y) for an exponential plan form
-    no = (nu+nl)/2;                 %width shape factor as average of upper and lower values
-    Ls = (bu-bl)/fact;              %Lstar in F&A, lower intertial width (lw to mtl)(m) 
-    bo = bl+Ls;                     %half-width at mtl(m)
-    yu = (bu-bh)*exp(-xexp/nu)+bh;  %distance from centre line to hw
-    yo = (bo-bh)*exp(-xexp/no)+bh;  %distance from centre line to mtl
-    yl = (bl-bh)*exp(-xexp/nl)+bh;  %distance from centre line to lw       
+    no = (nu+nl)/2;                  %width shape factor as average of upper and lower values
+    Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
+    bo = bl+Ls;                      %half-width at mtl(m)
+    yu = (bu-bh)*exp(-xexp/nu)+bh;   %distance from centre line to hw
+    yo = (bo-bh)*exp(-xexp/no)+bh;   %distance from centre line to mtl
+    yl = (bl-bh)*exp(-xexp/nl)+bh;   %distance from centre line to lw       
 end
 %%
 function [yu,yo,yl] = powPlan(xxi,Lu,Ll,bu,bl,bh,mu,ml,fact)
     %compute controlling dimensions (y) for a power plan form
     mo = (mu+ml)/2; %width shape factor as average of upper and lower values
-    Lt = Ll+Lu;                            %total length of estuary (m)
-    Lo = Ll+Lu/fact;                       %length of channel at mtl(m)
-    Ls = (bu-bl)/fact;                     %Lstar in F&A, lower intertial width (lw to mtl)(m) 
-    bo = bl+Ls;                            %half-width at mtl(m)
-    xu = xxi+Lu;                           %adjust to origin of high water plan form
+    Lt = Ll+Lu;                      %total length of estuary (m)
+    Lo = Ll+Lu/fact;                 %length of channel at mtl(m)
+    Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
+    bo = bl+Ls;                      %half-width at mtl(m)
+    xu = xxi+Lu;                     %adjust to origin of high water plan form
     yu = ((bu-bh)*(xu/Lt)^mu)+bh;    %distance from centre line to hw
-    xo = xxi+Lu/fact;                      %adjust to origin of mtl plan form
+    xo = xxi+Lu/fact;                %adjust to origin of mtl plan form
     yo = (((bo-bh)*(xo/Lo)^mo))*(xo>0+bh);   %distance from centre line to mtl
     yl = (((bl-bh)*(xxi/Ll)^ml))*(xxi>0+bh); %distance from centre line to lw
 end

@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = ckfa_form_model(obj,isfull)
+function [xi,yi,zgrd,Wz] = ckfa_form_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -18,7 +18,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,isfull)
 %   xi - x co-ordinate (m) origin at head/river
 %   yi - y co-ordinate (m) origin on centre-line
 %   zgrd - bed elevation grid (m)
-%   yz - width at hw,mt,lw (m)
+%   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
 % NOTES
 %   CKFA cross-section comprises a channel using Cao&Knight section and an
 %   intertidal using the profile proposed by Friedrichs & Aubrey (tide only)
@@ -29,7 +29,7 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,isfull)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    xi = []; yi = []; zgrd = []; yz = [];
+    xi = []; yi = []; zgrd = []; Wz = [];
     if nargin<3
         isfull = true;
     end
@@ -48,8 +48,9 @@ function [xi,yi,zgrd,yz] = ckfa_form_model(obj,isfull)
     
     %model x-axis is from mouth. no need to reverse data for use in ChannelForm
     [yu,yo,yl] = expPlan(params,xi);
-    yz = [yu,yo,yl]*2;      %full width  
-    yz = num2cell(yz',2)';  %formatted to load into dstable
+    Wz = [yu,yo,yl]*2;      %full width  
+    yzcell = num2cell(Wz',2)';  %formatted to load into table
+    Wz = table(yzcell{:},'VariableNames',{'Whw','Wmt','Wlw'});
     %generate complete 3D channel form by mirroring half section
     if isfull                              %return full grid
         zgrd = cat(2,fliplr(zi(:,2:end)),zi);
@@ -84,6 +85,8 @@ function params = ckfa_parameters(obj)
     d50 = sedobj.SedimentSize;    %sediment grain size, D50 (m)
     rhoc = sedobj.EqDensity;      %suspended sediment concentration (kg/m3)
     taucr = sedobj.CritBedShear;  %critical bed shear stress (Pa)
+    d50riv = sedobj.d50river;%sediment grain size in river (m)
+    tauriv = sedobj.tauriver;%critical bed shear stress (Pa)
     
     % calc fall velocity.  Mud Manual, eqn 5.7 including floculation
     ws = settling_velocity(d50,cn.g,cn.rhow,cn.rhos,cn.visc,rhoc);    
@@ -100,7 +103,8 @@ function params = ckfa_parameters(obj)
                     'Qr',hydobj.Qr,...               %river discharge (m3/s)
                     'hrv',hrv,'Wrv',Wrv,'Arv',Arv,...%from river_regime
                     'g',cn.g,'rhow',cn.rhow,'rhos',cn.rhos,'rhoc',rhoc,...
-                    'taucr',taucr,'d50',d50,'ws',ws,...%see above               
+                    'taucr',taucr,'d50',d50,'ws',ws,...%see above  
+                    'tauriv',tauriv,'d50riv',d50riv,...%see above
                     'me',sedobj.ErosionRate,...      %erosion rate (kg/N/s)
                     'Dsm',sedobj.AvMarshDepth,'Dmx',sedobj.MaxMarshDepth);        
 end
@@ -184,6 +188,8 @@ function output = ckfa_waveprops(params)
     rhoc = params.input.rhoc;    %suspended sediment concentration (kg/m3)
     Dsm = params.input.Dsm;      %average depth over saltmarsh (m)
     Dmx = params.input.Dmx;      %maximum depth of salt marsh (m)
+    d50riv = params.input.d50riv;%sediment grain size in river (m)
+    tauriv = params.input.tauriv;%critical bed shear stress (Pa)
     
     % Constant properties
     g = params.input.g;          %acceleration due to gravity (m/s2)

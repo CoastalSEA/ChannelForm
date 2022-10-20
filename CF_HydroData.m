@@ -38,6 +38,7 @@ classdef CF_HydroData < muiPropertyUI
         WindSpeed = 0         %wind speed at 10m (m/s)
         xTideRiver            %distance from mouth to estuary/river switch (m)
         xTidalLimit           %distance from mouth to tidal limit (m)
+                              %ONLY used if linear convergent water levels used
         Manning               %Manning friction coefficient [estuary river]
         StorageRatio          %intertidal storage ratio [estuary river]
         DistInt = 5000        %distance increment along estuary (m) 
@@ -244,7 +245,10 @@ classdef CF_HydroData < muiPropertyUI
         function obj = setTransHydroProps(obj,mobj)
             %initialise the transient properties used in the models
             wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
-            [obj.zhw,obj.zmt,obj.zlw] = newWaterLevels(wlvobj,0,0);
+            rnpobj = getClassObj(mobj,'Inputs','RunProperties');
+            startyr = rnpobj.StartYear*mobj.Constants.y2s;  %startyear in seconds form Julian 0
+            %initialWL(wlvobj,startyr);
+            [obj.zhw,obj.zmt,obj.zlw] = newWaterLevels(wlvobj,0,startyr);           
             obj.Qr = obj.RiverDischarge;  %initialise transient river discharge
             obj.tidalperiod = wlvobj.TidalPeriod*3600; %tidal period in seconds
         end 
@@ -370,9 +374,9 @@ classdef CF_HydroData < muiPropertyUI
             inp = getHydroFormProps(obj,inp);
 
             %get time dependent water level properties (due to slr and ntc)          
-            amp = (obj.zhw(1)-obj.zlw(1))/2;     %tidal amplitude at mouth
+            amp = (obj.zhw(1)-obj.zlw(1))/2;     %tidal amplitude at x=0
             %inp parameters requires the following water level parameters
-            inp.MTLatMouth = obj.zmt(1);         %mean tide level at mouth (mOD)
+            inp.MTLatMouth = obj.zmt(1);         %mean tide level at x=0 (mOD)
             inp.TidalAmplitude = amp;            %tidal amplitude (m)
             inp.TidalPeriod = obj.tidalperiod/3600 ;%tidal period (hr)
             

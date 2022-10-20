@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz] = cf_pow_model(obj,isfull)
+function [xi,yi,zgrd,Wz] = cf_pow_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -19,7 +19,7 @@ function [xi,yi,zgrd,yz] = cf_pow_model(obj,isfull)
 %   xi - x co-ordinate (m)
 %   yi - y co-ordinate (m)
 %   zgrd - bed elevation grid (m)
-%   yz - width at hw,mt,lw (m)
+%   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
 % NOTES
 %   Power law form is an adaptation to 3D of the form explored by Prandle &
 %   Rahman, 1980, JPO.
@@ -30,7 +30,7 @@ function [xi,yi,zgrd,yz] = cf_pow_model(obj,isfull)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    xi = []; yi = []; zgrd = []; yz = [];
+    xi = []; yi = []; zgrd = []; Wz = [];
     if nargin<3
         isfull = true;
     end
@@ -47,11 +47,12 @@ function [xi,yi,zgrd,yz] = cf_pow_model(obj,isfull)
     [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
     
-    [xi,yi,zi,yz] = pr_3D_form(obj);
+    [xi,yi,zi,Wz] = pr_3D_form(obj);
     if isempty(xi),return; end
     
     %model x-axis is from head. Reverse data for use in ChannelForm
-    yz = num2cell(flipud(yz)',2);  %formatted to load into dstable
+    yzcell = num2cell(flipud(Wz)',2);  %formatted to load into dstable
+    Wz = table(yzcell{:},'VariableNames',{'Whw','Wmt','Wlw'});
     %x is defined from head with origin at "shoulder". 
     %Change to origin at mouth
     xi = fliplr(max(xi)-xi);
@@ -85,7 +86,7 @@ function obj = pr_properties(obj)
     obj.CSTparams.La = gp.La;  
 end
 %%
-function [xi,yi,zi,yz] = pr_3D_form(obj)    
+function [xi,yi,zi,Wz] = pr_3D_form(obj)    
     %generate the 3D form
 
     %get the required input parameter classes
@@ -105,7 +106,7 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     nl = pwrobj.LWwidthExponent;   %width exponent at low water (-)
     mu = pwrobj.HWdepthExponent;   %depth exponent at high water (-)
     ml = pwrobj.LWdepthExponent;   %depth exponent at low water (-)
-    zm = pwrobj.zMouthInvert;      %thalweg bed level at mouth to zero datum (m)    
+    zm = obj.zMouthInvert;         %thalweg bed level at mouth to zero datum (m)    
     
     %sediment properties (if saltmarsh defined)
     dmax = 0;
@@ -125,10 +126,10 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
     nyi = length(yi);
     
     zi = zeros(length(xi),length(yi));
-    yz = zeros(length(xi),3);
+    Wz = zeros(length(xi),3);
     %water level properties based on amplitude+mtl or CST model (mAD)
-    zHWxi = flipud(hydobj.zhw);             %high water level(mAD)
-    zLWxi = flipud(hydobj.zlw);             %low water level(mAD)
+    zHWxi = fliplr(hydobj.zhw);             %high water level(mAD)
+    zLWxi = fliplr(hydobj.zlw);             %low water level(mAD)
     amp0 = (hydobj.zhw(1)-hydobj.zlw(1))/2; %tidal amplitude at mouth
     zso = hydobj.zmt(1);  %mean tide level at mouth used to define the level of the 'shoulder' in the power form (constant)
     du = hydobj.zhw(end)-zso;               %depth of upper form at head relative to zso (constant)
@@ -188,11 +189,11 @@ function [xi,yi,zi,yz] = pr_3D_form(obj)
             zdcr = (zhw-hrv).*isriver;
             zi(ix,:) = zi(ix,:).*(~isriver)+zdcr;
         end
-        yz(ix,:) = [yu, yo, yl]*2;   %full width  
+        Wz(ix,:) = [yu, yo, yl]*2;   %full width
     end
     
     %add mask to define surrounding land surface
-    zhw = repmat(zHWxi,1,nyi);
+    zhw = repmat(zHWxi',1,nyi);
     msk = (zhw+offset).*(zi>zhw);      %construct high water mask
     zi  = zi.*(zi<=zhw)+ msk;
 end

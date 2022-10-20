@@ -32,7 +32,7 @@ classdef CF_PowerData < muiPropertyUI
                           'Width exponent at low water (-)',...  
                           'Depth exponent at high water (-)',...
                           'Depth exponent at low water (-)',...
-                          'Thalweg bed level at mouth (mOD)'};
+                          'Depth at mouth to MTL (m)'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
         ChannelShapeParam = 2 %used to define river profile
@@ -45,8 +45,11 @@ classdef CF_PowerData < muiPropertyUI
         LWwidthExponent     %nl - width exponent at low water (-)
         HWdepthExponent     %mu - depth exponent at high water (-)
         LWdepthExponent     %ml - depth exponent at low water (-)
-        zMouthInvert        %zm - thalweg bed level at mouth to zero datum (m)]
+        MTmouthDepth        %dm - depth at mouth to MTL (m)
     end    
+    
+    %Note zMouthInvert - thalweg bed level at mouth to zero datum (m) is
+    %now a Dependent property in CF_FormModel
 
 %%   
     methods (Access=protected)

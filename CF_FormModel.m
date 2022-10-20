@@ -23,12 +23,17 @@ classdef CF_FormModel < GDinterface
         %inherits Data, RunParam, MetaData and CaseIndex from muiDataSet
         %Additional properties:   
         Selection %struct for plan, channel and intertidal form selection
+                  %and type of along-channel water level model        
     end
  
     properties (Transient)
         CSTparams %struct for model summary parameters used when calling 
                   %cst model in CF_HydroData, or get_sed_flux in
                   %CF_TransModel
+    end    
+    
+    properties (Dependent, SetAccess=private)
+        zMouthInvert        %zm - thalweg bed level at mouth to zero datum (m)
     end    
     
     methods
@@ -62,7 +67,7 @@ classdef CF_FormModel < GDinterface
             setTransHydroProps(hydobj,mobj); %initialise transient properties
             
             %assign the run parameters to the model instance           
-            setRunParam(obj,mobj); 
+            setRunParam(obj,mobj); %assigns a copy of Input classes to obj
             %add water level definition to the run parameters
             [obj.Selection.wlflag,wlstxt] = setWaterLevels(obj);
             
@@ -103,7 +108,7 @@ classdef CF_FormModel < GDinterface
             obj = setGrid(obj,{griddata},dims,meta);
             obj = setPlanProps(obj,yz,meta);  %half width data
             hydobj = obj.RunParam.CF_HydroData;
-            zwl = {hydobj.zhw',hydobj.zmt',hydobj.zlw'};            
+            zwl = {hydobj.zhw,hydobj.zmt,hydobj.zlw};            
             obj = setWLProps(obj,zwl,meta); 
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
@@ -177,6 +182,20 @@ classdef CF_FormModel < GDinterface
         function tabPlot(obj,src) %abstract class method for muiDataSet
             %generate plot for display on Q-Plot tab
             cf_model_tabs(obj,src);
+        end
+%%
+        function zmouth = get.zMouthInvert(obj)
+            %zm - thalweg bed level at mouth to zero datum (m)
+            %dependent property needs mean sea level and depth at mouth
+            frmobj = obj.RunParam.CF_FormData;
+            hydobj = obj.RunParam.CF_HydroData;
+            if isempty(obj.Data)   %new grid not yet defined
+                ixM = 1;
+            else                   %grid may include an offset
+                grid = getGrid(obj,1);            %irow=1 assumed
+                [~,ixM] = gd_basin_indices(grid); %account for offset to mouth
+            end
+            zmouth = hydobj.zmt(ixM)-frmobj.MTmouthDepth;
         end
     end 
 %%    

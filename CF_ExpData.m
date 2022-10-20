@@ -35,7 +35,7 @@ classdef CF_ExpData < muiPropertyUI
                           'Width convergence length at low water (m)',... 
                           'Width exponent at high water (-)',...
                           'Width exponent at low water (-)',...
-                          'Thalweg bed level at mouth (mOD)',...
+                          'Depth at mouth to MTL (m)',...
                           'Intertidal shape parameter (range:0.01-0.5)'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
@@ -49,10 +49,12 @@ classdef CF_ExpData < muiPropertyUI
         LWwidthELength      %Lwl- width convergence length at low water (m)
         HWwidthPower        %nu - width exponent at high water (-)
         LWwidthPower        %nl - width exponent at low water (-)
-        zMouthInvert        %zm - thalweg bed level at mouth to zero datum (m)
+        MTmouthDepth        %dm - depth at mouth to MTL (m)
         FlatShapeParam      %ki - intertidal shape parameter[ki*100; range:0.01-0.5]
     end    
-
+    
+    %Note zMouthInvert - thalweg bed level at mouth to zero datum (m) is
+    %now a Dependent property in CF_FormModel
 %%   
     methods (Access=protected)
         function obj = CF_ExpData(mobj)       
@@ -87,7 +89,7 @@ classdef CF_ExpData < muiPropertyUI
             end
             setClassObj(mobj,'Inputs',classname,obj);
         end     
-    end
-%%        
+    end      
+%%
         %add other functions to operate on properties as required   
 end

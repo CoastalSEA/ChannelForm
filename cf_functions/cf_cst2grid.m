@@ -29,7 +29,7 @@ function hydobj = cf_cst2grid(obj,resX,cstx,isflip)
     grdobj = obj.RunParam.GD_GridProps;
      
     %set-up co-ordinate system
-    xi = getGridDimensions(grdobj);   %x co-ordinates         
+    xi = getGridDimensions(grdobj)';   %x co-ordinates         
     
     if isflip
         resX = cellfun(@fliplr,resX,'UniformOutput',false);

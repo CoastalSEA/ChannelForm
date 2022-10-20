@@ -220,22 +220,41 @@ classdef CF_ValleyModel < GDinterface
         function checkFloodPlainArea(mobj)
             %display the area of the flood plain in a user selected combined form
             promptxt = 'Select a Combined Form'; 
-            obj = selectCaseObj(mobj.Cases,[],{'CF_FormModel'},promptxt);
+            obj = selectCaseObj(mobj.Cases,[],{'CF_FormModel','GD_ImportData'},promptxt);
             if isempty(obj), return; end
             grid = getGrid(obj,1);
 
             %offset from high water to flood plain surface
             fp_offset = 2*mobj.Inputs.GD_GridProps.histint;
+            promptxt = 'Level of upper bound of flood plain';
+            answer = inputdlg(promptxt,'FloodPlain',1,{num2str(fp_offset)});
+            if ~isempty(answer)
+                fp_offset = str2double(answer{1});
+            end
+            
             %model water level surfaces
-            hydobj = obj.RunParam.CF_HydroData;
+            if isfield(obj.RunParam,'CF_HydroData')
+                hydobj = obj.RunParam.CF_HydroData;
+            elseif isfield(mobj.Inputs,'WaterLevels')
+                wlvobj = mobj.Inputs.WaterLevels;
+                zhw = wlvobj.MSL0+wlvobj.TidalAmp;
+                hydobj.zhw = repmat(zhw,length(grid.x),1);
+            else
+                warndlg('No water level data available')
+                return;
+            end
             zfp = hydobj.zhw+fp_offset;
-            Zfp = repmat(zfp,1,length(grid.y));
+            %grids to account for along channel changes in water levels 
+            %with a small offset to ensure range is captured
+            Zfp = repmat(zfp,1,length(grid.y))+0.05;
+            Zhw = repmat(hydobj.zhw,1,length(grid.y))+0.05;
 
             zf = grid.z;
-            zf(zf<Zfp-0.05 | zf>Zfp+0.05) = NaN;
-            ndx = sum(sum(~isnan(zf)));
-            [~,~,delx,dely] = getGridDimensions(obj.RunParam.GD_GridProps);
-            planarea = delx*dely*ndx;
+            zf(zf<Zhw | zf>Zfp) = NaN; %exclude area outside flood plain
+            ndx = sum(sum(~isnan(zf)));%number of cells in flood plain
+
+            gd = gd_dimensions(grid);
+            planarea = gd.delx*gd.dely*ndx;
             
             msgbox(sprintf('Area of flood plain = %.3e',planarea),'Valley area');
         end
@@ -244,7 +263,7 @@ classdef CF_ValleyModel < GDinterface
             %generate a plot of the channel, valley and combined form            
             muicat = mobj.Cases;
             ftxt = 'Select Form Model to use:';
-            [fobj,~] = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
+            [fobj,~] = selectCaseObj(muicat,[],{'CF_FormModel','GD_ImportData'},ftxt);
             if isempty(fobj), return; end
             fgrid = getGrid(fobj,1);
             xf = fgrid.x/1000;  %change x-y axes to km
@@ -252,7 +271,7 @@ classdef CF_ValleyModel < GDinterface
             zf = fgrid.z;
 
             vtxt = 'Select Valley Model to use:';
-            [vobj,~] = selectCaseObj(muicat,[],{'CF_ValleyModel'},vtxt);
+            [vobj,~] = selectCaseObj(muicat,[],{'CF_ValleyModel','GD_ImportData'},vtxt);
             vgrid = getGrid(vobj,1);
             xv = vgrid.x/1000;  %change x-y axes to km
             yv = vgrid.y/1000;

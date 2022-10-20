@@ -27,14 +27,16 @@ function [obj,ok] = cf_set_hydroprops(obj)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
+    ok = 0; 
     hydobj = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;
     xi = getGridDimensions(grdobj);
+    nx = length(xi);
     
     if obj.Selection.wlflag==0
         %use cst_model to set-up water levels for model           
         [resX,xyz,~,~] = runHydroModel(hydobj,obj);
-        if isempty(resX), ok = 0; return; end        
+        if isempty(resX), return; end
         %interpolate CSTmodel results onto model grid + reverse for xmin @ head
         obj.RunParam.CF_HydroData = cf_cst2grid(obj,resX,xyz{:},false);
     else
@@ -42,13 +44,13 @@ function [obj,ok] = cf_set_hydroprops(obj)
         Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit 
         zhw = hydobj.zhw(1); 
         zlw = hydobj.zlw(1);
-        zHWxi = ones(size(xi))*zhw;            %assume constant HW surface
-        amp0 = (zhw-zlw)/2;                    %tidal amplitude at mouth
+        zHWxi = ones(1,nx)*zhw;      %assume constant HW surface
+        amp0 = (zhw-zlw)/2;          %tidal amplitude at mouth
         if obj.Selection.wlflag==1            
-            ampx = amp0*(1-xi/Lt);  %linear reducing low water
+            ampx = amp0*(1-xi'/Lt);  %linear reducing low water
             ampx(xi>Lt) = 0;
         else
-            ampx = amp0;          %use constant high and low water level 
+            ampx = amp0;             %use constant high and low water level 
         end
         obj.RunParam.CF_HydroData.zhw = zHWxi;        %high water
         obj.RunParam.CF_HydroData.zmt = zHWxi-ampx;   %mean tide level

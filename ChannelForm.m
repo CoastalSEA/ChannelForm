@@ -15,8 +15,8 @@ classdef ChannelForm < muiModelUI
 % 
     properties  (Access = protected)
         %implement properties defined as Abstract in muiModelUI
-        vNumber = '2.1'
-        vDate   = 'June 2022'
+        vNumber = '3.1'
+        vDate   = 'Oct 2022'
         modelName = 'ChannelForm'                    
         %Properties defined in muiModelUI that need to be defined in setGui
         % ModelInputs  %classes required by model: used in isValidModel check 
@@ -136,10 +136,10 @@ classdef ChannelForm < muiModelUI
                                   'To curvilinear','From curvilinear',... 
                                   'Display Dimensions','Difference Plot',...
                                   'Plot Sections','Digitise Line',...
-                                  'Export xyz Grid'};                                                                          
-            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,13]);
+                                  'Export xyz Grid','User Function'};                                                                          
+            menu.Setup(7).Callback = repmat({@obj.gridMenuOptions},[1,14]);
             menu.Setup(7).Separator = [repmat({'off'},[1,6]),...
-                                  {'on','off','on','off','off','on','on'}];%separator preceeds item
+                             {'on','off','on','off','off','on','on','on'}];%separator preceeds item
             %% Utilities menu ---------------------------------------------------
             menu.Utilities(1).List = {'Hydraulic Model',...
                                       'Add Form to Valley',...
