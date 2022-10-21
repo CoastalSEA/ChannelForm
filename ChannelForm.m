@@ -108,7 +108,7 @@ classdef ChannelForm < muiModelUI
                                   'Delete Properties','Edit Inlet Definition',...
                                   'Model Constants'}; 
             menu.Setup(1).Callback = [repmat({'gcbo;'},[1,5]),...
-                                      repmat({@obj.gridMenuOptions},[1,3]),...
+                                      repmat({@obj.formMenuOptions},[1,3]),...
                                       {@obj.loadMenuOptions}];                  
             %add separators to menu list (optional - default is off)
             menu.Setup(1).Separator = [repmat({'off'},[1,3]),{'on'},...
@@ -369,11 +369,11 @@ classdef ChannelForm < muiModelUI
                     CF_FormModel.addShoreline(obj);
                     DrawMap(obj);
                 case 'Extrapolate Shore'
-                    gridMenuOptions(obj,src,[])
+                    formMenuOptions(obj,src,[])
                 case 'Add Modifications'
                     CF_FormModel.addMorphMods(obj);   
                 case 'Add Thalweg to Valley'
-                    gridMenuOptions(obj,src,[]);
+                    formMenuOptions(obj,src,[]);
                 case 'River Dimensions'
                     CF_HydroData.displayRiverDims(obj);
                 case 'Valley Thalweg'
@@ -394,10 +394,18 @@ classdef ChannelForm < muiModelUI
             gridclasses = {'CF_FormModel','CF_ValleyModel',...
                                           'CF_TransModel','GD_ImportData'};
             %CF_FromModel inherits GDinterface, which includes the grid tools
-            CF_FormModel.gridMenuOptions(obj,src,gridclasses);
+            GDinterface.gridMenuOptions(obj,src,gridclasses);
             DrawMap(obj);
         end
-
+        %%
+        function formMenuOptions(obj,src,~)
+            %callback functions for grid tools options
+            gridclasses = {'CF_FormModel','CF_ValleyModel',...
+                                          'CF_TransModel','GD_ImportData'};
+            %CF_FromModel inherits GDinterface, which includes the grid tools
+            FGDinterface.formMenuOptions(obj,src,gridclasses);
+            DrawMap(obj);
+        end
         %% Run menu -------------------------------------------------------
         function runMenuOptions(obj,src,~)
             %callback functions to run model

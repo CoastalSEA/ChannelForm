@@ -1,4 +1,4 @@
-classdef CF_ValleyModel < GDinterface  
+classdef CF_ValleyModel < FGDinterface  
 %
 %-------class help---------------------------------------------------------
 % NAME
@@ -9,6 +9,8 @@ classdef CF_ValleyModel < GDinterface
 %   Co-ordinate convention is that the x-axis is landward from the mouth to
 %   the tidal limit. The y-axis is the cross-channel axis, mirrored about the
 %   centre-line.
+%   Inherits FGDInterface which is a subclass of GDinterface and muiDataSet 
+%   and is part of the grid tools used by mui Apps.
 % SEE ALSO
 %   muiDataSet and GDinterface
 %
@@ -62,25 +64,24 @@ classdef CF_ValleyModel < GDinterface
             if size(yz,2)~=3, yz = yz'; end
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false,'xM',0);
+            dims = struct('x',xi,'y',yi,'t',gridyear,'xM',0,...
+                                            'Lt',max(xi),'ishead',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = metaclass(obj).Name;
             obj = setGrid(obj,{griddata},dims,meta);
-            obj = setPlanProps(obj,yz,meta);  %half width data
-            hydobj = obj.RunParam.CF_HydroData;
-            zwl = {hydobj.zhw',hydobj.zmt',hydobj.zlw'};            
-            obj = setWLProps(obj,zwl,meta); 
 %--------------------------------------------------------------------------
-% Add property dstables in function GDinterface.setFormProperties
+% Add property dstables in function FGDinterface.setProperties
 %--------------------------------------------------------------------------  
-            obj = setFormProps(obj,meta,0); %0=use grid to determin hypsometry limits           
+            %zwl and Wz are empty and resolved in setProperties
+            %limits=0 to use grid to determin hypsometry limits        
+            histint = obj.RunParam.GD_GridProps.histint;
+            obj = setProperties(obj,[],[],0,histint); 
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             
-%             setDataSetRecord(obj,mobj.Cases,obj,'form_model');
             setCase(mobj.Cases,obj,'form_model');
             getdialog('Run complete');
             DrawMap(mobj);
@@ -124,17 +125,17 @@ classdef CF_ValleyModel < GDinterface
             
             if strcmp(answer,'Add')
                 %create new record
-                fdst = copy(fobj.Data.Form);
+                fdst = copy(fobj.Data.Grid);
                 fdst.Z(1,:,:) = new_z;
                 %update data range to capture combined grid range
                 activatedynamicprops(fdst,{'Z'}); %calls updateVarNames which resets range
                 setGridObj(fobj,muicat,fdst); 
             else            
                 %overwrite exisitng form data set with new form             
-                fobj.Data.Form.Z(1,:,:) = new_z;  
+                fobj.Data.Grid.Z(1,:,:) = new_z;  
                 fobj.MetaData.valleyID = vobj.CaseIndex;
                 %update data range to capture combined grid range
-                activatedynamicprops(fobj.Data.Form,{'Z'}); %calls updateVarNames which resets range
+                activatedynamicprops(fobj.Data.Grid,{'Z'}); %calls updateVarNames which resets range
                 classrec = classRec(muicat,caseRec(muicat,fobj.CaseIndex));
                 updateCase(muicat,fobj,classrec,true);
             end            
@@ -308,8 +309,8 @@ classdef CF_ValleyModel < GDinterface
             zlim(zlimits)
             s3.Position = [0.65,0.1,0.25,0.8];
             
-            channel = fobj.Data.Form.Description;
-            valley = vobj.Data.Form.Description;
+            channel = fobj.Data.Grid.Description;
+            valley = vobj.Data.Grid.Description;
             ht = sgtitle(sprintf('Form using %s and %s',channel,valley));
             ht.FontSize = 12;        
         end   
@@ -347,9 +348,10 @@ classdef CF_ValleyModel < GDinterface
             grdobj = obj.RunParam.GD_GridProps;
             hydobj = obj.RunParam.CF_HydroData;
             xi = getGridDimensions(grdobj);
-            obj.RunParam.CF_HydroData.zhw = ones(size(xi))*hydobj.zhw; %high water
-            obj.RunParam.CF_HydroData.zmt = ones(size(xi))*hydobj.zmt; %mean tide level
-            obj.RunParam.CF_HydroData.zlw = ones(size(xi))*hydobj.zlw; %low water
+            nx = length(xi);
+            obj.RunParam.CF_HydroData.zhw = ones(1,nx)*hydobj.zhw; %high water
+            obj.RunParam.CF_HydroData.zmt = ones(1,nx)*hydobj.zmt; %mean tide level
+            obj.RunParam.CF_HydroData.zlw = ones(1,nx)*hydobj.zlw; %low water
             obj.RunParam.CF_HydroData.cstres = [];
         end
     end

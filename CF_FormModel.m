@@ -1,10 +1,11 @@
-classdef CF_FormModel < GDinterface  
+classdef CF_FormModel < FGDinterface  
 %
 %-------class help---------------------------------------------------------
 % NAME
 %   CF_FormModel.m
 % PURPOSE
-%   Class for exponential and power plan form model used in ChannelForm App
+%   Class for exponential, power plan and ckfa form model used in the 
+%   ChannelForm App
 % NOTES
 %   Co-ordinate convention is that the x-axis is landward from the mouth to
 %   the tidal limit. The y-axis is the cross-channel axis, mirrored about the
@@ -12,8 +13,11 @@ classdef CF_FormModel < GDinterface
 %   If a hydraulic surface can be based on the CSTmodel, a tidal amplitude
 %   that decays linearly to the tidal limit, or constant high and low water 
 %   levels. The surrounding surface is at high water level + a small offset
+%
+%   Inherits FGDInterface which is a subclass of GDinterface and muiDataSet 
+%   and is part of the grid tools used by mui Apps.
 % SEE ALSO
-%   muiDataSet and GDinterface
+%   muiDataSet and FGDinterface
 %
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2022
@@ -99,21 +103,24 @@ classdef CF_FormModel < GDinterface
             if size(yz,2)~=3, yz = yz'; end
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
-            dims = struct('x',xi,'y',yi,'t',gridyear,'ishead',false,'xM',0);
+            
+            %could use function to find tidal limit???? Lt ******
+            
+            dims = struct('x',xi,'y',yi,'t',gridyear,'xM',0,...
+                                          'Lt',max(xi),'ishead',false);
 %--------------------------------------------------------------------------
-% Assign model output to dstable using the defined dsproperties meta-data
+% Assign model output to dstable using GDinterface.setGrid
 %--------------------------------------------------------------------------                   
             %assign metadata about model and save grid
             meta.source = sprintf('%s(%s)',metaclass(obj).Name,option);
             obj = setGrid(obj,{griddata},dims,meta);
-            obj = setPlanProps(obj,yz,meta);  %half width data
-            hydobj = obj.RunParam.CF_HydroData;
-            zwl = {hydobj.zhw,hydobj.zmt,hydobj.zlw};            
-            obj = setWLProps(obj,zwl,meta); 
 %--------------------------------------------------------------------------
-% Add property dstables in function GDinterface.setFormProperties
-%--------------------------------------------------------------------------  
-            obj = setFormProps(obj,meta,0); %0=use grid to determine hypsometry limits         
+% Add property dstables in function FGDinterface.setProperties
+%--------------------------------------------------------------------------              
+            %zwl and Wz are empty and resolved in setProperties
+            %limits=0 to use grid to determine hypsometry limits        
+            histint = obj.RunParam.GD_GridProps.histint;
+            obj = setProperties(obj,[],[],0,histint);  
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             
@@ -139,7 +146,7 @@ classdef CF_FormModel < GDinterface
             grid = setShoreline(obj.RunParam.CF_ShoreData,grid,true);
 
             %create new grid dstable and update  
-            formdst = copy(obj.Data.Form);
+            formdst = copy(obj.Data.Grid);
             formdst.Dimensions.X = grid.x;
             sz = num2cell(size(grid.z));
             formdst.DataTable.Z = reshape(grid.z,1,sz{:}); 
@@ -166,12 +173,12 @@ classdef CF_FormModel < GDinterface
             
             if strcmp(answer,'Add')
                 %create new record
-                fdst = copy(obj.Data.Form);
+                fdst = copy(obj.Data.Grid);
                 fdst.Z(1,:,:) = new_z;
                 setGridObj(obj,muicat,fdst); %copies form property table to new instance
             else            
                 %overwrite exisitng form data set with new form             
-                obj.Data.Form.Z(1,:,:) = new_z;  
+                obj.Data.Grid.Z(1,:,:) = new_z;  
                 classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
                 updateCase(muicat,obj,classrec,true);
             end 

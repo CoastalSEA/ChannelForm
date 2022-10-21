@@ -75,9 +75,11 @@ function obj = channel_properties(obj)
     grid.x = fliplr(max(xi)-xi);
     grid.y  = [-flipud(yi(2:end)); yi];
     grid.z = flipud(cat(2,fliplr(zi(:,2:end)),zi));
+    grid.t = years(0);
     grid.ishead = false; 
     grid.xM = 0;
-    
+    grid.Lt = max(xi);
+
     wl = obj.RunParam.CF_HydroData; 
     grdobj = obj.RunParam.GD_GridProps;
     [~,hypdst] = gd_basin_hypsometry(grid,wl,grdobj.histint,0);

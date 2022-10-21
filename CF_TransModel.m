@@ -1,4 +1,4 @@
-classdef CF_TransModel < GDinterface  
+classdef CF_TransModel < FGDinterface  
 %
 %-------class help---------------------------------------------------------
 % NAME
@@ -142,7 +142,8 @@ classdef CF_TransModel < GDinterface
             %now assign results to object properties  
             mtime = years(obj.StepTime/obj.cns.y2s);
             dims = struct('x',obj.Grid.x,'y',obj.Grid.y,'t',mtime,...
-                          'ishead',false,'xM',obj.Trans.cstdX,'cline',obj.CLatT);
+                          'ishead',false,'xM',obj.Trans.cstdX,...
+                          'Lt',obj.Trans.Lt,'cline',obj.CLatT);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -150,12 +151,13 @@ classdef CF_TransModel < GDinterface
             meta.source = obj.MetaData;
             meta.data = obj.Channel.MetaData;
             obj = setGrid(obj,{obj.zGrid},dims,meta);
-            obj = setPlanProps(obj,obj.tPlan,meta);  %half width data           
-            obj = setWLProps(obj,obj.zWL,meta); 
 %--------------------------------------------------------------------------
 % Add property dstables in function GDinterface.setFormProperties
 %--------------------------------------------------------------------------  
-            obj = setHyps_SP_GP(obj,meta);
+            %zwl and Wz are empty and resolved in setProperties
+            %limits=0 to use grid to determine hypsometry limits        
+            %histint = obj.RunParam.GD_GridProps.histint;
+            obj = setModelFormProps(obj);  
             obj = setTransModel(obj,meta);
 %--------------------------------------------------------------------------
 % Save results
@@ -433,8 +435,8 @@ classdef CF_TransModel < GDinterface
 %%
         function delX = interp_delX(obj,adist)
             %interpolate end values to find delX
-            % zf = squeeze(obj.Channel.Data.Form.Z);
-            % zv = squeeze(obj.Valley.Data.Form.Z);
+            % zf = squeeze(obj.Channel.Data.Grid.Z);
+            % zv = squeeze(obj.Valley.Data.Grid.Z);
             % figure; 
             % subplot(2,1,1)
             % contourf(zf')
@@ -516,7 +518,7 @@ classdef CF_TransModel < GDinterface
                     grid.z(idx)=z0(idx);  %remove any erosion over constrained bed
                 end
             end            
-            grid.metadata = obj.Channel.Data.Form.MetaData;
+            grid.metadata = obj.Channel.Data.Grid.MetaData;
             %adjust flood plain in channel model for any constraints
             grid = updateFloodPlain(obj,grid);            
         end
@@ -590,7 +592,7 @@ classdef CF_TransModel < GDinterface
         end
 %%
         function grid = updateValley(obj,fgrid,isoffset)
-            %combine channel form (fgrid) with valley form (obj.Valley.Data.Form)
+            %combine channel form (fgrid) with valley form (obj.Valley.Data.Grid)
             % fgrid - new channel grid to be added to valley grid
             % isoffset - flag to include offset if xM>0, model uses true,
             %            summary plots use false to generate initial form
@@ -629,7 +631,7 @@ classdef CF_TransModel < GDinterface
                 % hydobj = obj.RunParam.CF_HydroData;
                 % trnobj = obj.RunParam.CF_TransData;
                 % zmx = hydobj.zhw(1)+trnobj.FPoffset;
-                % zmn = min(obj.Valley.Data.Form.Z,[],'all');
+                % zmn = min(obj.Valley.Data.Grid.Z,[],'all');
                 % zM = grid.z(ixM,:); %elevation at mouth
                 % %add slope that varies from 1:20 at +zhw to 1:200 at the
                 % %invert of the valley at x=0 ie zmn
@@ -853,17 +855,17 @@ classdef CF_TransModel < GDinterface
             %update parameters used in call to newWaterLevels/CSTmodel
             %should exist already for ckfa model but not for others
             [~,hypdst] = gd_basin_hypsometry(grid,hydobj,grdobj.histint,0,true);
-            props = gd_section_properties(grid,hydobj,hypdst);
-            gp = gd_gross_properties(grid,hydobj,props,hydobj.xTidalLimit);
+            spdst = gd_section_properties(grid,hydobj,hypdst);
+            gpdst = gd_gross_properties(grid,hydobj,spdst);
             
-            obj.CSTparams.Wm = gp.Wm;   %mean tide width at mouth (m)
-            obj.CSTparams.Lw = gp.Lw;   %width convergence length at MT (m)
-            obj.CSTparams.Am = gp.Am;   %mean tide csa at mouth (m^2)
-            obj.CSTparams.La = gp.La;   %csa convergence length at MT (m)  
+            obj.CSTparams.Wm = gpdst.Wm;   %mean tide width at mouth (m)
+            obj.CSTparams.Lw = gpdst.Lw;   %width convergence length at MT (m)
+            obj.CSTparams.Am = gpdst.Am;   %mean tide csa at mouth (m^2)
+            obj.CSTparams.La = gpdst.La;   %csa convergence length at MT (m)  
             %update parameters used in call to get_sed_flux
-            obj.CSTparams.Vhw = gp.Vhw; %element volume (m^3)
-            obj.CSTparams.Shw = gp.Shw; %element surface area (m^2)
-            obj.CSTparams.Pr = gp.PrA;  %tidal prism of channel (m^3) 
+            obj.CSTparams.Vhw = gpdst.Vhw; %element volume (m^3)
+            obj.CSTparams.Shw = gpdst.Shw; %element surface area (m^2)
+            obj.CSTparams.Pr = gpdst.PrA;  %tidal prism of channel (m^3) 
 
             option = obj.Channel.Selection.modeltype;
             if strcmp(option,'Exponential') || strcmp(option,'Power')
@@ -939,7 +941,7 @@ classdef CF_TransModel < GDinterface
 %%
         function obj = setTransModel(obj,meta)
             %add the transgression results table to the model output
-            tstep = obj.Data.Form.RowNames;
+            tstep = obj.Data.Grid.RowNames;
             tdsp = modelDSproperties(obj);
             tdst = dstable(obj.Trans,'RowNames',tstep,'DSproperties',tdsp); 
             tdst.Source = meta.source;
@@ -962,7 +964,7 @@ classdef CF_TransModel < GDinterface
             
             %Metadata of selection
             obj.MetaData = sprintf('Transgression model using "%s" for channel and "%s" for valley',...
-                           obj.Channel.Data.Form.Description,obj.Valley.Data.Form.Description);
+                           obj.Channel.Data.Grid.Description,obj.Valley.Data.Grid.Description);
             
             %assign Channel RunParam to the new model
             fnames = fieldnames(obj.Channel.RunParam);

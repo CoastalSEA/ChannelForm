@@ -35,27 +35,27 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     sedobj = obj.RunParam.CF_SediData;
     
     %model run parameters
-    Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
+    Lt = diff(grdobj.XaxisLimits); %length of model domain (m)
 
     %set-up co-ordinate system
     [xi,yi,delx] = getGridDimensions(grdobj);
     yi = yi(yi>=0);  %half the grid
     yix = repmat(yi',length(xi),1); 
     
-    zMx = valobj.ValleyEle;          %Maximum elelvation (mOD)
-    bv = valobj.ValleyWidth(1)/2;    %half-width of valley at mouth
+    zMx = valobj.ValleyEle;        %Maximum elelvation (mOD)
+    bv = valobj.ValleyWidth(1)/2;  %half-width of valley at mouth
 
     %sediment properties
-    d50riv = sedobj.d50river;        %sediment grain size, D50 (m)
-    tauriv = sedobj.tauriver;        %critical bed shear stress (Pa)
+    d50riv = sedobj.d50river;      %sediment grain size, D50 (m)
+    tauriv = sedobj.tauriver;      %critical bed shear stress (Pa)
 
     %model constants
     cns = muiConstants.Evoke;
-    rhow = cns.WaterDensity;      %density of water (default = 1025 kg/m^3)
-    rhos = cns.SedimentDensity;   %density of sediment (default = 2650 kg/m^3) 
+    rhow = cns.WaterDensity;       %density of water (default = 1025 kg/m^3)
+    rhos = cns.SedimentDensity;    %density of sediment (default = 2650 kg/m^3) 
     
     %hydraulic parameters
-    zhw = hydobj.zhw(1);          %high water level at mouth
+    zhw = hydobj.zhw(1);           %high water level at mouth
     %top of river valley
     coastlevel = 1;
     zmx = (zMx-(zhw+1))/Lt*xi'+zhw+coastlevel;
@@ -69,7 +69,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     zH = valobj.zValleyHead;       %elevation at valley head (mAD)
 
     %river properties
-    Qr = hydobj.Qr;                  %river discharge (m^3/s)
+    Qr = hydobj.Qr;                %river discharge (m^3/s)
     %examined using river slope (too wide and shallow)
     [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,ztl-1,xH,zH,z0);
     zv = zm0*(exp(xi'/Lv)-1)+z0;
@@ -79,7 +79,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
 
     % River depth
     [hrv,Wrv,~] = river_regime(Qr,Sr,d50riv,tauriv,rhos,rhow);
-    zr = ztl-hrv;                 %elevation of river bed at TL (mAD)
+    zr = ztl-hrv;                  %elevation of river bed at TL (mAD)
 
     %get convergence length for river valley longitudinal elevation
     [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,zr,xH,zH,z0);
@@ -121,8 +121,8 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     %plot half-sections along channel
     plotValley(xi,yi,zi)
     
-    grid = struct('x',xi,'y',yi,'z',zi,'ishead',false);
-    zwl = {hydobj.zhw(end),hydobj.zmt(end),hydobj.zlw(end)};
+    grid = struct('x',xi,'y',yi,'z',zi,'xM',0,'Lt',max(xi),'ishead',false);
+    zwl = struct('zhw',hydobj.zhw(end),'zmt',hydobj.zmt(end),'zlw',hydobj.zlw(end));
     yz = gd_plan_form(grid,zwl);
 %     yz = num2cell(flipud(yz)',2);      %formatted to load into dstable
     %generate complete 3D channel form by mirroring half section

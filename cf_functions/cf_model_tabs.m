@@ -20,7 +20,7 @@ function cf_model_tabs(obj,src)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    dst = obj.Data.Form;
+    dst = obj.Data.Grid;
     
     if height(dst)>1
         %propmpt user to select timestep

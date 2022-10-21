@@ -120,10 +120,13 @@ classdef CF_SediData < muiPropertyUI
             %hence negative is infilling and import of sediment
             %delV is the water volume change (S x slr)
             [dvol,delV] = get_sed_flux(sedinp,slr);
+            %report sedvol as +ve volume for sediment import       
+            dvol = -sign(n)*dvol; 
             msg1 = sprintf('SEM morphological timescale = %0.3f years',tau);
-            msg2 = sprintf('Volume change due to SLR (m^3/yr) = %0.3e',delV);
-            msg3 = sprintf('Volume imported/exported (m^3/yr) = %0.3e',-dvol);
-            msgtxt = sprintf('%s\n%s\n%s',msg1,msg2,msg3);
+            msg2 = sprintf('Water volume change due to SLR (m^3/yr) = %0.3e',delV);
+            msg3 = sprintf('Sediment volume imported/exported (m^3/yr) = %0.3e',dvol);
+            msg4 = 'Positive sediment volume implies sediment import';
+            msgtxt = sprintf('%s\n%s\n%s\n%s',msg1,msg2,msg3,msg4);
             msgbox(msgtxt,'Morphological Time');
         end
     end
@@ -161,7 +164,7 @@ classdef CF_SediData < muiPropertyUI
                 sed = formobj.RunParam.CF_SediData;                
             end
 
-            cn = getConstantStruct(mobj.Constants); %model constants 
+            cn = getConstantStruct(mobj.Constants);   %model constants 
             sedinp.y2s = cn.y2s;
             ws = settling_velocity(sed.SedimentSize,cn.g,cn.rhow,...
                                           cn.rhos,cn.visc,sed.EqDensity);                                             
@@ -171,30 +174,34 @@ classdef CF_SediData < muiPropertyUI
             sedinp.RiverConc = sed.RiverConcentration;%river load imported by advection (-)
 
             gprop = formobj.Data.GrossProps(1,:);
-            sedinp.Volume = gprop.Vhw;              %element volume at start of run (m^3)
-            sedinp.SurfaceArea = gprop.Shw;         %element surface area (m^2)
-            sedinp.Prism = gprop.Pr;                %tidal prism of channel (m^3)
+            sedinp.Volume = gprop.Vhw;                %element volume at start of run (m^3)
+            sedinp.SurfaceArea = gprop.Shw;           %element surface area (m^2)
+            sedinp.Prism = gprop.PrA;                 %tidal prism of channel (m^3)
             
             hydobj = formobj.RunParam.CF_HydroData;
             sedinp.RiverDischarge = hydobj.RiverDischarge;  %river discharge (m^3/s)
 
             if ~isempty(hydobj.cstres)  %hydraulic results from CST model
-                u = hydobj.cstres.U(1);             %velocity at mouth
-                H = mean(hydobj.cstres.d);               %average hydraulic depth
+                u = hydobj.cstres.U(1);               %velocity at mouth
+                grid = getGrid(formobj);
+                L = min(3*formobj.RunParam.CF_HydroData.FormModel.CSTparams.La,...
+                       grid.Lt);
+                ich = gd_basin_indices(grid,[],L);    %indices from mouth to tidal limit
+                H = mean(hydobj.cstres.d(ich));       %average hydraulic depth
             else                        %no hydraulic data
-                u = 1;                              %assumed velocity at mouth
-                H = gprop.Vhw/gprop.Shw;            %estimated hydraulic depth
+                u = 1;                                %assumed velocity at mouth
+                H = gprop.Vhw/gprop.Shw;              %estimated hydraulic depth
             end
-            A = gprop.Am;                    %CSA at mouth
+            A = gprop.Am;                             %CSA at mouth
             D = u^2*H/ws;
             wlvobj = mobj.Inputs.WaterLevels;
-            %delx = cfm.Le/2;                       %half estuary length
-            delx = u*wlvobj.TidalPeriod/4*3600;     %tidal excursion length
-            sedinp.HorizontalExchange = D*A/delx;   %horizontal exchange (m/s)
+            %delx = cfm.Le/2;                         %half estuary length
+            delx = u*wlvobj.TidalPeriod/4*3600;       %tidal excursion length
+            sedinp.HorizontalExchange = D*A/delx;     %horizontal exchange (m/s)
             sedinp.TransportCoeff = sed.TransportCoeff;%transport coefficient n (3-5)
             %equilibrium volume definition
             if sed.EqScaleCoeff==0
-                sedinp.EqScaleCoeff = gprop.Vhw/gprop.Pr; 
+                sedinp.EqScaleCoeff = gprop.Vhw/gprop.PrA; 
                 sedinp.EqShapeCoeff = 1;
             else
                 sedinp.EqScaleCoeff = sed.EqScaleCoeff;
