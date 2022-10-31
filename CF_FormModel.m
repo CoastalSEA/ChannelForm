@@ -83,31 +83,30 @@ classdef CF_FormModel < FGDinterface
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
                     hf = setFormSelection(obj); 
                     waitfor(hf);
-                    [xi,yi,zi,yz] = cf_exp_models(obj);
+                    [xi,yi,zi,Wz,Rv] = cf_exp_models(obj);
                     sel = obj.Selection;
                     meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
                                         sel.planform,sel.intertidalform,...
                                         sel.channelform,wlstxt);
                 case 'Power'
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
-                    [xi,yi,zi,yz] = cf_pow_model(obj);
+                    [xi,yi,zi,Wz,Rv] = cf_pow_model(obj);
                     meta.data = sprintf('PR power form, %s',wlstxt);
                 case 'CKFA'
-                    [xi,yi,zi,yz] = ckfa_form_model(obj);
+                    [xi,yi,zi,Wz,Rv] = ckfa_form_model(obj);
                     meta.data = sprintf('CKFA exogenous form, %s',wlstxt);
             end
             if isempty(xi), return; end
             
             griddata = reshape(zi,1,length(xi),length(yi));  
-            %check that x and y are 1xn and yz is 1xnx3
-            if size(yz,2)~=3, yz = yz'; end
-            %now assign results to object properties  
+            %initialise additional inputs to save results
+            if size(Wz,2)~=3, Wz = Wz'; end  %widths used in model 
+
             gridyear = years(0);  %durataion data for rows 
-            
-            %could use function to find tidal limit???? Lt ******
-            
+            Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit
+
             dims = struct('x',xi,'y',yi,'t',gridyear,'xM',0,...
-                                          'Lt',max(xi),'ishead',false);
+                                          'Lt',Lt,'Rv',Rv,'ishead',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using GDinterface.setGrid
 %--------------------------------------------------------------------------                   
@@ -119,8 +118,8 @@ classdef CF_FormModel < FGDinterface
 %--------------------------------------------------------------------------              
             %zwl and Wz are empty and resolved in setProperties
             %limits=0 to use grid to determine hypsometry limits        
-            histint = obj.RunParam.GD_GridProps.histint;
-            obj = setProperties(obj,[],[],0,histint);  
+            histint = obj.RunParam.GD_GridProps.histint;            
+            obj = setProperties(obj,[],Wz,0,histint);  
 %--------------------------------------------------------------------------
 % Save results
 %--------------------------------------------------------------------------             

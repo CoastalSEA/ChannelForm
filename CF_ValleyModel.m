@@ -55,7 +55,7 @@ classdef CF_ValleyModel < FGDinterface
             setWaterLevels(obj); %valley model specific function below
 
             %call valley model
-            [xi,yi,zi,yz,Lv,Ls] = cf_valley_model(obj);
+            [xi,yi,zi,yz,Lv,Ls,Rv] = cf_valley_model(obj);
             meta.data = sprintf('Valley with Lv=%d and Ls=%d',Lv,Ls);
             if isempty(xi), return; end
             
@@ -65,7 +65,7 @@ classdef CF_ValleyModel < FGDinterface
             %now assign results to object properties  
             gridyear = years(0);  %durataion data for rows 
             dims = struct('x',xi,'y',yi,'t',gridyear,'xM',0,...
-                                            'Lt',max(xi),'ishead',false);
+                                 'Lt',max(xi),'Rv',Rv,'ishead',false);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -181,7 +181,7 @@ classdef CF_ValleyModel < FGDinterface
             cobj = getClassObj(mobj,'Inputs','CF_ValleyData',msgtxt);
             if isempty(cobj), return; end
             
-            z0 = cobj.ValleyDepth;    %depth of valley at mouth (mAD)
+            z0 = cobj.zValleyMouth;   %depth of valley at mouth (mAD)
             xr = cobj.xTidalLimit;    %distance to tidal limit (m)
             ztl = cobj.zTidalLimit;   %water surface elevation at TL (mAD)
             xH = cobj.xValleyHead;    %distance to valley head (m)

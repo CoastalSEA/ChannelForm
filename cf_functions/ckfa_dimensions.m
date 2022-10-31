@@ -43,10 +43,11 @@ function ckfa_dimensions(mobj)
     tauriv = sedobj.tauriver;        %critical bed shear stress (Pa)
 
     %hydraulic properties
-    am = wlvobj.TidalAmp;       %tidal amplitude (m)
-
+    am = wlvobj.TidalAmp;            %tidal amplitude (m)
+    tp = wlvobj.TidalPeriod*3600;    %tidal period (s)
+    
     %river properties
-    Qr = hydobj.RiverDischarge;       %river discharge (m^3/s)
+    Qr = hydobj.RiverDischarge;      %river discharge (m^3/s)
     Sr  = 2*am/Le;   %energy slope at tidal limit (-); **estimate**
 
     % calc fall velocity.  Mud Manual, eqn 5.7 including floculation
@@ -62,7 +63,7 @@ function ckfa_dimensions(mobj)
     % Channel properties
     Arv = hrv*Wrv;
     params = struct('am',am,...                  %tidal amplitude at mouth (m)
-                'tp',hydobj.tidalperiod,...      %tidal period (s)
+                'tp',tp,...                      %tidal period (s)
                 'Le',hydobj.xTidalLimit,...      %channel length (m)
                 'Uw',hydobj.WindSpeed,...        %wind speed at 10m (m/s)
                 'Qr',hydobj.Qr,...               %river discharge (m3/s)

@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
+function [xi,yi,zgrd,yz,Lv,Ls0,Rv] = cf_valley_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -16,6 +16,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
 %   zgrd - bed elevation grid (m)
 %   Lv - river valley convergence length for longitudinal elevation (m)
 %   Ls0 - cross-valley convergene length between mtl and max elevation (m)
+%   Rv - struct of river regime properties Hr, Wr, Ar
 % NOTES
 %   
 % SEE ALSO
@@ -42,7 +43,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     yi = yi(yi>=0);  %half the grid
     yix = repmat(yi',length(xi),1); 
     
-    zMx = valobj.ValleyEle;        %Maximum elelvation (mOD)
+    zMx = valobj.zValleyCutoff;    %Maximum elelvation (mOD)
     bv = valobj.ValleyWidth(1)/2;  %half-width of valley at mouth
 
     %sediment properties
@@ -62,7 +63,7 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     zmx = repmat(zmx',1,length(yi));
 
     %valley properties
-    z0 = valobj.ValleyDepth;       %depth of valley at mouth (mAD)
+    z0 = valobj.zValleyMouth;      %depth of valley at mouth (mAD)
     xr = valobj.xTidalLimit;       %distance to tidal limit (m)
     ztl = valobj.zTidalLimit;      %water surface elevation at TL (mAD)
     xH = valobj.xValleyHead;       %distance to valley head (m)
@@ -78,8 +79,8 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     % Sr  = 2*am/xr;   %energy slope at tidal limit (-); **estimate**
 
     % River depth
-    [hrv,Wrv,~] = river_regime(Qr,Sr,d50riv,tauriv,rhos,rhow);
-    zr = ztl-hrv;                  %elevation of river bed at TL (mAD)
+    [Rv.Hr,Rv.Wr,Rv.Ar] = river_regime(Qr,Sr,d50riv,tauriv,rhos,rhow);
+    zr = ztl-Rv.Hr;                  %elevation of river bed at TL (mAD)
 
     %get convergence length for river valley longitudinal elevation
     [zm0,Lv] = CF_ValleyModel.findconvergencelength(xr,zr,xH,zH,z0);
@@ -108,14 +109,14 @@ function [xi,yi,zgrd,yz,Lv,Ls0] = cf_valley_model(obj,isfull)
     % zi(idy) = zbot(idy);                 %flatten bottom of channel
 
     %add river in bed
-    Lc = Wrv/2;
+    Lc = Rv.Wr/2;
     idy = yix<=Lc;
     zc = reshape(zi(idy),length(xi),[]); %strip width of river
     zbot = max(zc,[],2);                 %elevation on edge of strip
     zbot = repmat(zbot,1,length(yi));
     zi(idy) = zbot(idy);                 %flatten bottom of channel
 
-    mu = 6*hrv/Lc;
+    mu = 6*Rv.Hr/Lc;
     zi(idy) = zi(idy)-(mu*Lc/2*(1-(yix(idy)/Lc).^2)); %add river channel
 
     %plot half-sections along channel

@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,Wz] = ckfa_form_model(obj,isfull)
+function [xi,yi,zgrd,Wz,Rv] = ckfa_form_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -19,6 +19,7 @@ function [xi,yi,zgrd,Wz] = ckfa_form_model(obj,isfull)
 %   yi - y co-ordinate (m) origin on centre-line
 %   zgrd - bed elevation grid (m)
 %   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
+%   Rv - struct of river regime properties Hr, Wr, Ar
 % NOTES
 %   CKFA cross-section comprises a channel using Cao&Knight section and an
 %   intertidal using the profile proposed by Friedrichs & Aubrey (tide only)
@@ -41,7 +42,10 @@ function [xi,yi,zgrd,Wz] = ckfa_form_model(obj,isfull)
     obj.CSTparams = params.form;
     [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
-
+    
+    Rv.Hr = params.input.hav; 
+    Rv.Wr = params.input.Wrv;
+    Rv.Ar = params.input.WArv;
     %generate 3D surface of CKFA model
     [xi,yi,zi] = ckfa_3D_form(obj,params);
     if isempty(xi),return; end

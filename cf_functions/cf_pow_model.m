@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,Wz] = cf_pow_model(obj,isfull)
+function [xi,yi,zgrd,Wz,Rv] = cf_pow_model(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -20,6 +20,7 @@ function [xi,yi,zgrd,Wz] = cf_pow_model(obj,isfull)
 %   yi - y co-ordinate (m)
 %   zgrd - bed elevation grid (m)
 %   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
+%   Rv - struct of river regime properties Hr, Wr, Ar
 % NOTES
 %   Power law form is an adaptation to 3D of the form explored by Prandle &
 %   Rahman, 1980, JPO.
@@ -47,7 +48,7 @@ function [xi,yi,zgrd,Wz] = cf_pow_model(obj,isfull)
     [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
     
-    [xi,yi,zi,Wz] = pr_3D_form(obj);
+    [xi,yi,zi,Wz,Rv] = pr_3D_form(obj);
     if isempty(xi),return; end
     
     %model x-axis is from head. Reverse data for use in ChannelForm
@@ -88,7 +89,7 @@ function obj = pr_properties(obj)
     obj.CSTparams.La = gp.La;  
 end
 %%
-function [xi,yi,zi,Wz] = pr_3D_form(obj)    
+function [xi,yi,zi,Wz,Rv] = pr_3D_form(obj)    
     %generate the 3D form
 
     %get the required input parameter classes
@@ -138,6 +139,7 @@ function [xi,yi,zi,Wz] = pr_3D_form(obj)
     dl = zm-zso;          %depth of lower form at mouth relative to zso (constant)
 
     %river properties
+    [Rv.Hr,Rv.Wr,Rv.Ar] = get_river_regime(obj,2*amp0);
     [hrv,bh,~] = get_river_profile(obj,2*amp0,yi'); 
     
     %calculate the transformation of the x co-ordinate for given x and y values

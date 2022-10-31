@@ -369,7 +369,7 @@ classdef CF_HydroData < muiPropertyUI
             %and inp.xTidalLimit is not used
             xlength = obj.FormModel.RunParam.GD_GridProps.XaxisLimits(2);
             inp.EstuaryLength = xlength;%total length of channel (m)
-            
+            %inp.EstuaryLength = obj.xTidalLimit;
             %width, CSA and convergence length are form model dependent
             inp = getHydroFormProps(obj,inp);
 

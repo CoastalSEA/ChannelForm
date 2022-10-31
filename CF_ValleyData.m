@@ -17,7 +17,7 @@ classdef CF_ValleyData < muiPropertyUI
     properties (Hidden)
         %abstract properties in muiPropertyUI to define input parameters
         PropertyLabels = {'Valley width at mouth (m)',...
-                          'Valley depth at mouth (mAD)',...
+                          'Elevation of thalweg at mouth (mAD)',...
                           'Distance to tidal limit (m)',...
                           'Elevation of tidal limit (mAD)',...
                           'Distance to head of valley (m)',...
@@ -29,12 +29,12 @@ classdef CF_ValleyData < muiPropertyUI
     
     properties        
         ValleyWidth     %valley mouth at mouth (m) 
-        ValleyDepth     %valley depth at mouth (mAD)
+        zValleyMouth    %elevation of thalweg at mouth (mAD)
         xTidalLimit     %distance to tidal limit(m)
         zTidalLimit     %elevation of tidal limit (mAD)
         xValleyHead     %distance to head of valley (m)
         zValleyHead     %elevation of head of valley  (mAD)
-        ValleyEle       %cut-off valley elevation (mAD)
+        zValleyCutoff   %cut-off valley elevation (mAD)
     end    
 
 %%   

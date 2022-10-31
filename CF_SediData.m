@@ -116,9 +116,10 @@ classdef CF_SediData < muiPropertyUI
             answer = inputdlg('Rate of slr (m/yr)','SLR rate',1,{'0.002'});
             slr = str2double(answer);
 
-            %get_sed_flux_returns change in morphological volume/yr, dvol 
-            %hence negative is infilling and import of sediment
-            %delV is the water volume change (S x slr)
+            %get_sed_flux_returns change in morphological volume/yr, dvol. 
+            %if the transport coefficient is positive, this is 
+            %a change in water volumw, hence negative is infilling and 
+            %import of sediment. delV is the water volume change (S x slr)
             [dvol,delV] = get_sed_flux(sedinp,slr);
             %report sedvol as +ve volume for sediment import       
             dvol = -sign(n)*dvol; 

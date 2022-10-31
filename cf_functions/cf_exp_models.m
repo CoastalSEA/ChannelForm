@@ -1,4 +1,4 @@
-function [xi,yi,zgrd,Wz] = cf_exp_models(obj,isfull)
+function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -20,6 +20,7 @@ function [xi,yi,zgrd,Wz] = cf_exp_models(obj,isfull)
 %   yi - y co-ordinate (m)
 %   zgrd - bed elevation grid (m)
 %   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
+%   Rv - struct of river regime properties Hr, Wr, Ar
 % NOTES
 %   Cross-section comprises a channel using Cao&Knight section, or a 
 %   rectangular prism and an intertidal using linear, stepped, uniform 
@@ -37,13 +38,14 @@ function [xi,yi,zgrd,Wz] = cf_exp_models(obj,isfull)
     end
     
     %channel properties
-    if obj.Selection.wlflag==0
+    if obj.Selection.wlflag==0 && isempty(obj.CSTparams)
         %provides initial guess of gross properties if cst_model called
         obj.Selection.wlflag = 1;
         obj= cf_set_hydroprops(obj);     %fixed water level surface 
         obj.Selection.wlflag = 0;
         obj = channel_properties(obj); 
     end
+    
     %set the water level variations along the estuary
     [obj,ok] = cf_set_hydroprops(obj); 
     if ok<1
@@ -51,9 +53,16 @@ function [xi,yi,zgrd,Wz] = cf_exp_models(obj,isfull)
         return; 
     end
 
-    [xi,yi,zi,Wz] = channel_3D_form(obj);
+    [xi,yi,zi,Wz,Rv] = channel_3D_form(obj);
     if isempty(xi),return; end    
     
+%     if obj.Selection.wlflag==0
+%         [obj,ok] = cf_set_hydroprops(obj); 
+%         if ok<1, return; end
+%         [xi,yi,zi,Wz] = channel_3D_form(obj);
+%         if isempty(xi),return; end   
+%     end
+
     %model x-axis is from head. Reverse data for use in ChannelForm
     yzcell = num2cell(flipud(Wz)',2);  %formatted to load into table
     Wz = table(yzcell{:},'VariableNames',{'Whw','Wmt','Wlw'});
@@ -71,28 +80,64 @@ end
 %%
 function obj = channel_properties(obj)
     %compute the summary gross properties for the channel form
-    [xi,yi,zi] = channel_3D_form(obj); 
-    grid.x = fliplr(max(xi)-xi);
-    grid.y  = [-flipud(yi(2:end)); yi];
-    grid.z = flipud(cat(2,fliplr(zi(:,2:end)),zi));
-    grid.t = years(0);
-    grid.ishead = false; 
-    grid.xM = 0;
-    grid.Lt = max(xi);
-
-    wl = obj.RunParam.CF_HydroData; 
-    grdobj = obj.RunParam.GD_GridProps;
-    [~,hypdst] = gd_basin_hypsometry(grid,wl,grdobj.histint,0);
-    props = gd_section_properties(grid,wl,hypdst);
-    gp = gd_gross_properties(grid,wl,props);
-    %used in CSTmodel
-    obj.CSTparams.Wm = gp.Wm;
-    obj.CSTparams.Lw = gp.Lw;
-    obj.CSTparams.Am = gp.Am;
-    obj.CSTparams.La = gp.La;  
+    expobj = obj.RunParam.CF_FormData;
+    hydobj = obj.RunParam.CF_HydroData;
+    
+    Whw = expobj.HWmouthWidth;      %width of mouth at high water(m)
+    Wlw = expobj.LWmouthWidth;      %width of mouth at low water level(m)
+    nc = expobj.ChannelShapeParam;  %channel shape parameter (-)
+    Lwu = expobj.HWwidthELength;    %width convergence length at high water (m)
+    Lwl = expobj.LWwidthELength;    %width convergence length at low water (m)
+    zm = obj.zMouthInvert;          %thalweg bed level at mouth to zero datum (m)
+    Lt = hydobj.xTidalLimit;        %distance from mouth to tidal limit
+    
+    %aspect ratio and slope coefficient (mc) at mouth    
+    dl = hydobj.zlw(1)-zm;          %depth of lower form at mouth to lw (m)
+    ar = Wlw/dl;                    %aspect ratio of low water channel at mouth
+    mc = 2*nc/ar;                   %submerged static coefficient of Coulomb 
+                                    %friction (estimated from geometry)   
+    %derive width, csa and convergence length at mean tide                                
+    Wm = (Whw+Wlw)/2;               %estimate of mean tide width
+    Lw = (Lwu+Lwl)/2;               %estimate of mean convergence length
+    tr = (hydobj.zhw(1)-hydobj.zlw(1)); %tidal range at mouth 
+    Am = Wm*tr+mc*Wlw^2/6;          %csa at the mouth (m^2)
+    [~,~,Arv] = get_river_regime(obj,tr);    
+    La = -Lt/log(Arv/Am);           %assume mouth converges to river
+    %assign values
+    obj.CSTparams.Wm = Wm;
+    obj.CSTparams.Lw = Lw;
+    obj.CSTparams.Am = Am;
+    obj.CSTparams.La = La;
+    
+    
+%     [xi,yi,zi] = channel_3D_form(obj); 
+%     grid.x = fliplr(max(xi)-xi);
+%     grid.y  = [-flipud(yi(2:end)); yi];
+%     grid.z = flipud(cat(2,fliplr(zi(:,2:end)),zi));
+%     grid.t = years(0);
+%     grid.ishead = false; 
+%     grid.xM = 0;
+%     if ~isempty(obj.RunParam.CF_HydroData.xTidalLimit)
+%         %use user defined estimate of tidal length
+%         grid.Lt = obj.RunParam.CF_HydroData.xTidalLimit;
+%     else
+%         %use length of grid
+%         grid.Lt = max(xi)-min(xi);
+%     end
+% 
+%     wl = obj.RunParam.CF_HydroData; 
+%     grdobj = obj.RunParam.GD_GridProps;
+%     [~,hypdst] = gd_basin_hypsometry(grid,wl,grdobj.histint,0);
+%     props = gd_section_properties(grid,wl,hypdst);
+%     gp = gd_gross_properties(grid,wl,props);
+%     %used in CSTmodel
+%     obj.CSTparams.Wm = gp.Wm;
+%     obj.CSTparams.Lw = gp.Lw;
+%     obj.CSTparams.Am = gp.Am;
+%     obj.CSTparams.La = gp.La;  
 end
 %%
-function [xi,yi,zi,Wz] = channel_3D_form(obj)
+function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     %generate the 3D form
     
     %get the required input parameter classes
@@ -102,7 +147,7 @@ function [xi,yi,zi,Wz] = channel_3D_form(obj)
     sedobj = obj.RunParam.CF_SediData;
     
     %model run parameters
-    Lt = diff(grdobj.XaxisLimits);   %length of model domain (m)
+    Lm = diff(grdobj.XaxisLimits);   %length of model domain (m)
     offset = 2*grdobj.histint;       %offset from hw to supra-tidal form
     
     %channel form parameters    
@@ -116,6 +161,7 @@ function [xi,yi,zi,Wz] = channel_3D_form(obj)
     zm = obj.zMouthInvert;           %thalweg bed level at mouth to zero datum (m)
     ki = expobj.FlatShapeParam;      %intertidal shape parameter[ki*100; range:0.01-0.5]
     Ll = hydobj.xTideRiver;          %distance from mouth to estuary/river switch
+    Lt = hydobj.xTidalLimit;         %distance from mouth to tidal limit
     
     if strcmp(obj.Selection.planform,'Power')
         if nu<=0 
@@ -144,7 +190,7 @@ function [xi,yi,zi,Wz] = channel_3D_form(obj)
 
     %set-up co-ordinate system
     [~,yi,delx] = getGridDimensions(grdobj);
-    xi = -(Lt-Ll):delx:Ll;  %from head (-ve) to mouth (+ve)
+    xi = -(Lm-Ll):delx:Ll;  %from head (-ve) to mouth (+ve)
     yi = yi(yi>=0);  %half the grid
   
     zi = zeros(length(xi),length(yi));
@@ -155,6 +201,7 @@ function [xi,yi,zi,Wz] = channel_3D_form(obj)
     amp0 = (hydobj.zhw(1)-hydobj.zlw(1))/2; %tidal amplitude at mouth 
     
     %river properties
+    [Rv.Hr,Rv.Wr,Rv.Ar] = get_river_regime(obj,2*amp0);
     [hrv,bh,mcr] = get_river_profile(obj,2*amp0,yi);  
 
     %aspect ratio and slope coefficient (mc) at mouth    
@@ -182,9 +229,9 @@ function [xi,yi,zi,Wz] = channel_3D_form(obj)
         switch obj.Selection.planform
             case 'Exponential'
                 xexp = Ll-xi(ix);    %x defined from mouth for exponential          
-                [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lwu,Lwl,fact);
+                [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lt,Lwu,Lwl,fact);
             case 'Power'
-                [yu,yo,yl] = powPlan(xi(ix),Lt-Ll,Ll,bu,bl,bh,nu,nl,fact);
+                [yu,yo,yl] = powPlan(xi(ix),Lm-Ll,Ll,bu,bl,bh,nu,nl,fact);
         end
         ls = (yu-yl)/fact;           %lower intertidal width from lw to mtl 
         
@@ -276,14 +323,19 @@ function [xi,yi,zi,Wz] = channel_3D_form(obj)
     end
 end
 %%
-function [yu,yo,yl] = expPlan(xexp,bu,bl,bh,nu,nl,fact)
+function [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lt,Lhw,Llw,fact)
     %compute controlling dimensions (y) for an exponential plan form
-    no = (nu+nl)/2;                  %width shape factor as average of upper and lower values
+    Lmt = (Lhw+Llw)/2;               %width shape factor as average of upper and lower values
     Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
     bo = bl+Ls;                      %half-width at mtl(m)
-    yu = (bu-bh)*exp(-xexp/nu)+bh;   %distance from centre line to hw
-    yo = (bo-bh)*exp(-xexp/no)+bh;   %distance from centre line to mtl
-    yl = (bl-bh)*exp(-xexp/nl)+bh;   %distance from centre line to lw       
+    yu = (bu-bh)*exp(-xexp/Lhw)+bh;  %distance from centre line to hw
+    yo = (bo-bh)*exp(-xexp/Lmt)+bh;  %distance from centre line to mtl
+    yl = (bl-bh)*exp(-xexp/Llw)+bh;  %distance from centre line to lw 
+    if xexp>Lt        
+        if yu<bh, yu = bh; end        
+        if yo<bh, yo = bh; end 
+        if yl<bh, yl = bh; end 
+    end
 end
 %%
 function [yu,yo,yl] = powPlan(xxi,Lu,Ll,bu,bl,bh,mu,ml,fact)
@@ -298,4 +350,9 @@ function [yu,yo,yl] = powPlan(xxi,Lu,Ll,bu,bl,bh,mu,ml,fact)
     xo = xxi+Lu/fact;                %adjust to origin of mtl plan form
     yo = (((bo-bh)*(xo/Lo)^mo))*(xo>0+bh);   %distance from centre line to mtl
     yl = (((bl-bh)*(xxi/Ll)^ml))*(xxi>0+bh); %distance from centre line to lw
+end
+%%
+function [Am,La] = csa_properties()
+    %cross-ectional area at the mouth
+    
 end

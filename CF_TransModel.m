@@ -49,9 +49,8 @@ classdef CF_TransModel < FGDinterface
         TranProp       %additional grid properties at timestep, t, struct with
                        % Wz - table of column vectors for width at hw,mt,lw
                        % zdiff - difference over a timestep
-                       % intidx - x-axis indices from mouth to tidal limit
-                       % hrv - hydraulic depthof river (m)
-                       % Wrv - width of river (m)                       
+                       % intidx - x-axis indices from mouth to tidal limit  
+                       % Rv - struct of river regime properties Hr, Wr, Ar
         CLatT          %struct array for x and y coordinates of meander centreline at each time step
         zGrid          %z grids at each sampled time step  
         zWL            %alongchannel water levels at each sampled time step
@@ -105,26 +104,19 @@ classdef CF_TransModel < FGDinterface
 % Model code
 %--------------------------------------------------------------------------
             %iniatialise model setup 
-            obj = InitialiseModel(obj,mobj); %uses inputs assigned to RunParam
-            if isempty(obj), return; end
-
-            msg = sprintf('ChannelForm processing, please wait');
-            hw = waitbar(0,msg);
+            msg = 'Solution not found - run terminated';
+            ok = InitialiseModel(obj,mobj); %uses inputs assigned to RunParam
+            if ok<1, warndlg(msg); return; end
+            
             %run model
-            for jt = 1:obj.RunSteps
-                InitTimeStep(obj,mobj,jt)
-                RunTimeStep(obj)
-                PostTimeStep(obj);
-                %if waitbar has been deleted then program has failed to
-                %find a solution (propable in CSTmodel)
-                if ~isvalid(hw), return; end
-                %to report time step during run use the following
-                msg = sprintf('ChannelForm processing, step %d of %d',...
-                                                         jt,obj.RunSteps);
-                waitbar(jt/obj.RunSteps,hw,msg);                
+            if isnan(obj.RunParam.CF_TransData.SedFlux)
+                ok = kinematic_model(obj,mobj);
+            else
+                ok = dynamic_model(obj,mobj);
             end
-            close(hw);
-            timestepInput(obj); %write end of run 'input parameters' to command window
+            if ok<1, warndlg(msg); return; end
+            %write end of run 'input parameters' to command window
+            timestepInput(obj); 
             
             %cumulative values for first 4 variables in Trans output table
             %order is: 'delX','estdX','cstdX','dSLR','Lt','FPA','sedVol','vdiffx'                                                
@@ -143,7 +135,8 @@ classdef CF_TransModel < FGDinterface
             mtime = years(obj.StepTime/obj.cns.y2s);
             dims = struct('x',obj.Grid.x,'y',obj.Grid.y,'t',mtime,...
                           'ishead',false,'xM',obj.Trans.cstdX,...
-                          'Lt',obj.Trans.Lt,'cline',obj.CLatT);
+                          'Lt',obj.Trans.Lt,'Rv',obj.TranProp.Rv,...
+                          'cline',obj.CLatT);
 %--------------------------------------------------------------------------
 % Assign model output to dstable using the defined dsproperties meta-data
 %--------------------------------------------------------------------------                   
@@ -189,10 +182,10 @@ classdef CF_TransModel < FGDinterface
         end
     end      
 %% ------------------------------------------------------------------------
-% Methods called by timestep loop
+% Methods to initialise models and run kinematic model
 %--------------------------------------------------------------------------
     methods (Access=private)
-        function obj = InitialiseModel(obj,mobj)
+        function ok = InitialiseModel(obj,mobj)
             %initialise ChannelForm properties and run parameters
             rnpobj = obj.RunParam.RunProperties;
             %initialise time step paramters
@@ -234,14 +227,27 @@ classdef CF_TransModel < FGDinterface
             %option 2 - use the values from the input Channel model     
             setChannelWaterLevels(obj);            
             %use selected channel and valley forms to create initial grid
-            obj.TranProp = struct('Wz',[],'zdiff',[],'intidx',[],'hrv',[],'Wrv',[]);
+            obj.TranProp = struct('Wz',[],'zdiff',[],'intidx',[],'Rv',[]);
+            %initialise the dimensions of the river for the initial river discharge
+            %assumed constant as the channel migrates
+            obj.TranProp.Rv = obj.Grid.Rv;
+            
             %model selection options(wlflag,modeltype,etc)                 
             obj.Selection = obj.Channel.Selection;
+            
+            
+            %set parameters used in CSTmodel
+            gp = obj.Channel.Data.GrossProps;
+            obj.CSTparams.Wm = gp.Wm;
+            obj.CSTparams.Lw = gp.Lw;
+            obj.CSTparams.Am = gp.Am;
+            obj.CSTparams.La = gp.La;  
+
             %to ensure water levels are correctly assigned recreate the
             %form based on the selected model. Ensures consistency and
             %initialises transient properties in obj.RunParam.CF_HydroData 
-            updateModelGrid(obj);
-              
+            ok = updateModelGrid(obj);
+            if ok<1, return; end
               %original initialisation code (modified for TranProp)
 %             %use selected channel and valley forms to create initial grid
 %             fgrid = getGrid(obj.Channel,1);
@@ -264,7 +270,7 @@ classdef CF_TransModel < FGDinterface
 
             %initialise the dimensions of the river for the initial river discharge
             %assumed constant as the channel migrates
-            [obj.TranProp.hrv,obj.TranProp.Wrv] = riverDimensions(obj);
+%             [obj.TranProp.hrv,obj.TranProp.Wrv] = obj.Grid.Rv;
 
 %             %obj.CSTparams is used for an input check, CST model, sedFlux 
 %             %and sedExchange and updateInputParameters
@@ -275,6 +281,57 @@ classdef CF_TransModel < FGDinterface
             updateInputParams(obj);
             %write data for initial time step (t=0)
             PostTimeStep(obj); 
+        end
+%%
+        function ok = kinematic_model(obj,mobj)
+            %compute transgression without time stepping
+            obj.Time = obj.RunSteps*obj.delta; %time period in seconds
+            obj.DateTime = obj.DateTime+obj.Time;
+            obj.Grid.t = obj.DateTime/obj.cns.y2s;
+            %update water levels at boundary
+            newWaterLevels(obj.RunParam.CF_HydroData,mobj,obj);
+            %set slr increment for timestep
+            dt = obj.Time/obj.cns.y2s;
+            obj.dTrans.dSLR = obj.RunParam.CF_HydroData.dslr*dt;
+            
+            %get transgression distance for the combined form
+            hd = setdialog('Processing transgression');
+            pause(0.5)
+            obj = getTransDist(obj);
+            obj.dTrans.estdX = obj.dTrans.delX;
+            %coastal transgression 
+            trnobj = obj.RunParam.CF_TransData;
+            obj.dTrans.cstdX = trnobj.BruunRatio*obj.dTrans.dSLR;
+            obj.Grid.xM = sum(obj.Trans.cstdX)+obj.dTrans.cstdX;
+            %update grid based on transgression
+            ok = updateModelGrid(obj);
+            close(hd);
+            if ok<1, return; end
+            %save results
+            PostTimeStep(obj);
+        end
+%% ------------------------------------------------------------------------
+% Methods for dynamic model with a time stepping loop
+%--------------------------------------------------------------------------
+        function ok = dynamic_model(obj,mobj)
+            %run time stepping for the quasi-dynamic transgression model
+            ok = 1;
+            msg = sprintf('ChannelForm processing, please wait');
+            hw = waitbar(0,msg);
+            for jt = 1:obj.RunSteps
+                InitTimeStep(obj,mobj,jt)
+                ok = RunTimeStep(obj);
+                if ok <1  || ~isvalid(hw)
+                    close(hw);
+                    return; 
+                end
+                PostTimeStep(obj);
+                %to report time step during run use the following
+                msg = sprintf('ChannelForm processing, step %d of %d',...
+                                                         jt,obj.RunSteps);
+                waitbar(jt/obj.RunSteps,hw,msg);                
+            end
+            close(hw);  
         end
 %%
         function InitTimeStep(obj,mobj,jt)
@@ -297,7 +354,7 @@ classdef CF_TransModel < FGDinterface
             timestepInput(obj)
         end
 %%
-        function RunTimeStep(obj)
+        function ok = RunTimeStep(obj)
             %run model for the time step jt
             trnobj = obj.RunParam.CF_TransData;
             [obj.dTrans.sedVol,obj.dTrans.waterVol] = sedimentFlux(obj);
@@ -320,7 +377,7 @@ classdef CF_TransModel < FGDinterface
             obj.Grid.xM = sum(obj.Trans.cstdX)+obj.dTrans.cstdX;
                     
             %update grid based on transgression
-            updateModelGrid(obj)
+            ok = updateModelGrid(obj);
 
             %update form input parameters
             updateInputParams(obj);
@@ -455,10 +512,10 @@ classdef CF_TransModel < FGDinterface
             delX = dVpos/((dVpos-dVneg)/newdel);
         end
 %%
-        function updateModelGrid(obj)
+        function ok = updateModelGrid(obj)
             %update grid based on transgression
             chgrid = getNewChannel(obj);             %new channel form and updates
-            if isempty(chgrid.x), return; end        %water levels in obj.RunParam.CF_HydroData
+            if isempty(chgrid.x), ok = 0; return; end%water levels in obj.RunParam.CF_HydroData
             chgrid = updateMeander(obj,chgrid);            
             newgrid = updateValley(obj,chgrid,true); %new combined channel+valley form            
             obj.Grid = updateShoreline(obj,newgrid); %shoreline adjusted 
@@ -468,6 +525,7 @@ classdef CF_TransModel < FGDinterface
             updateTidalLimit(obj); 
 %             %update form input parameters
 %             updateInputParams(obj);
+            ok = 1;
         end
 %%
         function grid = getNewChannel(obj)
@@ -486,7 +544,8 @@ classdef CF_TransModel < FGDinterface
                     [grid.x,grid.y,grid.z,Wz] = cf_pow_model(obj);
                 case 'CKFA'
                     [grid.x,grid.y,grid.z,Wz] = ckfa_form_model(obj);
-            end    
+            end   
+            
             if isempty(grid.x)
                 return;
             elseif isrow(grid.x)
@@ -712,23 +771,23 @@ classdef CF_TransModel < FGDinterface
                Lt = [];   %no solution found
            end
         end
-%%
-        function [hrv,Wrv] = riverDimensions(obj)
-            %get the dimensions of the river
-            hydobj = obj.RunParam.CF_HydroData;
-            sedobj = obj.RunParam.CF_SediData;
-            [~,ixM] = gd_basin_indices(obj.Grid);
-            amp = (hydobj.zhw(ixM)-hydobj.zlw(ixM))/2;
-            d50riv = sedobj.d50river;
-            tauriv = sedobj.tauriver;
-            rhos = obj.cns.rhos;
-            rhow = obj.cns.rhow;
-            Qr = hydobj.RiverDischarge;
-            Le = hydobj.xTidalLimit;   %distance to tidal limit 
-            Sr  = 2*amp/Le;
-
-            [hrv,Wrv,~] = river_regime(Qr,Sr,d50riv,tauriv,rhos,rhow);
-        end
+%% superceded now in grid.Rv
+%         function [hrv,Wrv] = riverDimensions(obj)
+%             %get the dimensions of the river
+%             hydobj = obj.RunParam.CF_HydroData;
+%             sedobj = obj.RunParam.CF_SediData;
+%             [~,ixM] = gd_basin_indices(obj.Grid);
+%             amp = (hydobj.zhw(ixM)-hydobj.zlw(ixM))/2;
+%             d50riv = sedobj.d50river;
+%             tauriv = sedobj.tauriver;
+%             rhos = obj.cns.rhos;
+%             rhow = obj.cns.rhow;
+%             Qr = hydobj.RiverDischarge;
+%             Le = hydobj.xTidalLimit;   %distance to tidal limit 
+%             Sr  = 2*amp/Le;
+% 
+%             [hrv,Wrv,~] = river_regime(Qr,Sr,d50riv,tauriv,rhos,rhow);
+%         end
 %%
         function fparea = floodPlainArea(obj)
             %get the flood plain area based on elevations at HW+offset           
@@ -808,16 +867,21 @@ classdef CF_TransModel < FGDinterface
 
             %horizontal exchange
             if obj.Selection.wlflag==0 && ~isempty(hydobj.cstres)  
-                %hydraulic results from CST model
+                %hydraulic results from CST model (cstres are results from
+                %mouth interpolated onto the static form grid)
                 u = hydobj.cstres.U(1);                %velocity at mouth
-                L = min(3*obj.CSTparams.La,obj.dTrans.Lt);
-                ich = gd_basin_indices(obj.Grid,L);    %indices from mouth to tidal limit
-                H = mean(hydobj.cstres.d(ich));        %average hydraulic depth
+%                 L = min(3*obj.CSTparams.La,obj.dTrans.Lt);
+%                 ich = gd_basin_indices(obj.Grid,L);    %indices from mouth to tidal limit
+%                 H = mean(hydobj.cstres.d(ich));        %average hydraulic depth
+                %H = mean(hydobj.cstres.d);
+                
+                H = hydobj.cstres.d(1);
             else
                 %no hydraulic data
                 u = 1;                                 %assumed velocity at mouth
                 H = obj.CSTparams.Vhw/obj.CSTparams.Shw;%estimated hydraulic depth
             end
+            %H = obj.CSTparams.Vhw/obj.CSTparams.Shw;%estimated hydraulic depth
             A = obj.CSTparams.Am;                      %CSA at mouth
             D = u^2*H/ws;
 
@@ -886,20 +950,25 @@ classdef CF_TransModel < FGDinterface
                 Wl = obj.RunParam.(classname).LWmouthWidth;                
                 
                 %option 1 - update the convergence lengths and mouth widths
-%                 Lwu = -getconvergencelength(grid.x(ich),tp.Wz.Whw(ich));
-%                 Lwl = -getconvergencelength(grid.x(ich),tp.Wz.Wlw(ich));
-%                 %increase in mouth width due to landward transgression
-%                 %new widths based on increment, edX, from previous time step
-%                 Wu = (Wu-tp.Wrv)*exp(edX/Lwu)+tp.Wrv; 
-%                 Wl = (Wl-tp.Wrv)*exp(edX/Lwl)+tp.Wrv;
-%                 if strcmp(option,'Exponential')
-%                     %update the convergence lengths
-%                     obj.RunParam.(classname).HWwidthELength = Lwu;
-%                     obj.RunParam.(classname).LWwidthELength = Lwl;                        
-%                 elseif strcmp(option,'Power')    
-%                     warndlg('Not yet coded in CF_TransModel.updateInputParams')
-%                     %means that Wu and Wl do not change
-%                 end                
+                %convergence length from mouth accounting for any offset
+                % ewidth = tp.Wz.Whw-tp.Rv.Wr; ewidth(ewidth<0) = 0;
+                % Lwu = -getconvergencelength(grid.x(ich),ewidth(ich)); %width convergence length at mean tide level
+                % ewidth = tp.Wz.Wlw-tp.Rv.Wr; ewidth(ewidth<0) = 0;
+                % Lwl = -getconvergencelength(grid.x(ich),ewidth(ich)); %csa convergence length at mean tide level
+                % % Lwu = -getconvergencelength(grid.x(ich),tp.Wz.Whw(ich));
+                % % Lwl = -getconvergencelength(grid.x(ich),tp.Wz.Wlw(ich));
+                % %increase in mouth width due to landward transgression
+                % %new widths based on increment, edX, from previous time step
+                % Wu = (Wu-tp.Rv.Wr)*exp(edX/Lwu)+tp.Rv.Wr; 
+                % Wl = (Wl-tp.Rv.Wr)*exp(edX/Lwl)+tp.Rv.Wr;
+                % if strcmp(option,'Exponential')
+                %     %update the convergence lengths
+                %     obj.RunParam.(classname).HWwidthELength = Lwu;
+                %     obj.RunParam.(classname).LWwidthELength = Lwl;                        
+                % elseif strcmp(option,'Power')    
+                %     warndlg('Not yet coded in CF_TransModel.updateInputParams')
+                %     %means that Wu and Wl do not change
+                % end                
                 
                 %option 2 - update mouth widths only
                 if strcmp(option,'Exponential')
@@ -907,8 +976,8 @@ classdef CF_TransModel < FGDinterface
                     Lwl = obj.RunParam.(classname).LWwidthELength;
                     %increase in mouth width due to landward transgression
                     %new widths based on increment, edX, from previous time step
-                    Wu = (Wu-tp.Wrv)*exp(edX/Lwu)+tp.Wrv; 
-                    Wl = (Wl-tp.Wrv)*exp(edX/Lwl)+tp.Wrv;    
+                    Wu = (Wu-tp.Rv.Wr)*exp(edX/Lwu)+tp.Rv.Wr; 
+                    Wl = (Wl-tp.Rv.Wr)*exp(edX/Lwl)+tp.Rv.Wr;    
                 elseif strcmp(option,'Power')    
                     warndlg('Not yet coded in CF_TransModel.updateInputParams')
                     %means that Wu and Wl do not change
@@ -923,9 +992,6 @@ classdef CF_TransModel < FGDinterface
             else
                 warndlg('Unkonwn model type in CF_TransModel.updateInputParameters')
             end    
-
-            %write selected parameters to command window
-            % fprintf('Wu=%g, Wl=%g, Lwu=%g, Lwl=%g\n',Wu,Wl,Lwu,Lwl)
         end
 %%
         function setChannelWaterLevels(obj)
@@ -992,14 +1058,16 @@ classdef CF_TransModel < FGDinterface
                         'Sediment load in river (kg/m^3)',...
                         'Transport coefficient (+/-n)',...                         
                         'Equilibrium scale coefficient (0=scale to initial)',...                          
-                        'Equilibrium shape coefficient (-)'};
+                        'Equilibrium shape coefficient (-)',...
+                        'Constant sediment flux (m^3/yr): 0,NaN,or value'};
             defaults = {num2str(obj.RunParam.WaterLevels.SLRrate),...
                         num2str(obj.RunParam.WaterLevels.CycleAmp),...
                         num2str(obj.RunParam.CF_SediData.EqDensity),...
                         num2str(obj.RunParam.CF_SediData.RiverDensity),...
                         num2str(obj.RunParam.CF_SediData.TransportCoeff),...
                         num2str(obj.RunParam.CF_SediData.EqScaleCoeff),...
-                        num2str(obj.RunParam.CF_SediData.EqShapeCoeff)};
+                        num2str(obj.RunParam.CF_SediData.EqShapeCoeff),...
+                        num2str(obj.RunParam.CF_TransData.SedFlux)};
             answer = inputdlg(promptxt,titletxt,1,defaults);
             if ~isempty(answer)
                 isok = true;
@@ -1010,6 +1078,7 @@ classdef CF_TransModel < FGDinterface
                 obj.RunParam.CF_SediData.TransportCoeff = str2double(answer{5});
                 obj.RunParam.CF_SediData.EqScaleCoeff = str2double(answer{6});
                 obj.RunParam.CF_SediData.EqShapeCoeff = str2double(answer{7});
+                obj.RunParam.CF_TransData.SedFlux = str2double(answer{8});
             else
                 isok = false;
             end                       
