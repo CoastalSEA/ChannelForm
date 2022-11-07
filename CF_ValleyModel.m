@@ -141,28 +141,29 @@ classdef CF_ValleyModel < FGDinterface
             end            
         end 
 %%
-        function new_z = updateValley(F,F0,zhw,trp,trg,incFP)
+        function updateValley(~)
             %add the valley form to the channel form 
-            [X,Y] = ndgrid(F.xi,F.yi);
-            zv = griddata(F.xv,F.yv,F.zv',X,Y);    %valley elevations
-            
-            new_z = max(F.zi,zv);
-
-            if ~trg.isConstrained && ~incFP
-                fact = 4; %needs to be consistent with value in TransgressionModel.applyConstraints
-                idz = Y<(F.Yhw+fact*trp.dy) & Y>(F.Yhw);
-                Zhw = repmat(zhw,1,length(F.yi));
-                new_z(idz) = Zhw(idz)+trp.offset;  %add offset from high water to flood plain surface
-                %reset area outside to original levels
-                idz = Y>(F.Yhw+fact*trp.dy);
-                new_z(idz) = F0.zi(idz);
-            elseif trg.isConstrained
-                idz = Y<(F.Yhw+trp.dy) & Y>(F.Yhw);
-                new_z(idz) = trp.wcrest;
-                %reset area outside to original levels
-                idz = Y>(F.Yhw+trp.dy);
-                new_z(idz) = F0.zi(idz);
-            end       
+            %MOVED to CF_TransModel
+%             [X,Y] = ndgrid(F.xi,F.yi);
+%             zv = griddata(F.xv,F.yv,F.zv',X,Y);    %valley elevations
+%             
+%             new_z = max(F.zi,zv);
+% 
+%             if ~trg.isConstrained && ~incFP
+%                 fact = 4; %needs to be consistent with value in TransgressionModel.applyConstraints
+%                 idz = Y<(F.Yhw+fact*trp.dy) & Y>(F.Yhw);
+%                 Zhw = repmat(zhw,1,length(F.yi));
+%                 new_z(idz) = Zhw(idz)+trp.offset;  %add offset from high water to flood plain surface
+%                 %reset area outside to original levels
+%                 idz = Y>(F.Yhw+fact*trp.dy);
+%                 new_z(idz) = F0.zi(idz);
+%             elseif trg.isConstrained
+%                 idz = Y<(F.Yhw+trp.dy) & Y>(F.Yhw);
+%                 new_z(idz) = trp.wcrest;
+%                 %reset area outside to original levels
+%                 idz = Y>(F.Yhw+trp.dy);
+%                 new_z(idz) = F0.zi(idz);
+%             end       
         end
 %%
         function restoreForm(~)

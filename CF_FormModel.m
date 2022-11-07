@@ -156,7 +156,7 @@ classdef CF_FormModel < FGDinterface
         end
 %%
         function addMorphMods(mobj)
-            %add a prismatic dredge channel to a channel form
+            %add user defined modifications to a channel form
             muicat = mobj.Cases;
             ftxt = 'Select Form Model to use:';
             obj = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);

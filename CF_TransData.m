@@ -25,7 +25,8 @@ classdef CF_TransData < muiPropertyUI
                           'Flood plain offset above high water (m)',...
                           'Open coast transgression ratio (L/h)',...
                           'Include migrating meander (NaN, 1, or 0)',...
-                          'Constant sediment flux (m^3/yr): 0,NaN,or value'};
+                          'Constant sediment flux (m^3/yr): 0,NaN,or value',...
+                          'Current (0) or Source-model (1) water levels'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
     end
@@ -41,6 +42,7 @@ classdef CF_TransData < muiPropertyUI
         BruunRatio = 0           %open coast erosion ratio, L/h (Bruun scaling of dx = slr.L/h)  
         isMeander = NaN          %include meander - NaN=exclude,1=migrate,0=fixed
         SedFlux = 0              %user specified value of sediment exchange
+        isModelWL = true         %flag to select water levels to use - true uses model values
     end                            
 
 %%   

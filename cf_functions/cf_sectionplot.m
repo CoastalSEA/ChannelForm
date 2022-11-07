@@ -50,7 +50,7 @@ end
 function crossectionPlot(obj,ax,slr)
     %plot cross-sections along length of channel at start and end of run
     % NB uses transient properties so only works in current session
-    dst = obj.Data.Form;
+    dst = obj.Data.Grid;
     
     grid0 = getGrid(obj,1);
     z0 = grid0.z; %intial grid
@@ -59,18 +59,17 @@ function crossectionPlot(obj,ax,slr)
     xi = grid1.x; 
     yi = grid1.y;
     zi = grid1.z;%final grid
-    xsgn = sign(grid.x(2)-grid.x(1));  %direction of axes (-ve descending)            
-    %if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
-    if xsgn<0
-        zi = flipud(zi);                          
-        z0 = flipud(z0);  
-    end
+
+    gd_dir = gd_ax_dir(grid1);
+    if gd_dir.x==1 || gd_dir.x==4                 
+        %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+        zi = flipud(zi);
+        z0 = flipud(z0);
+    end  
 
     wl0 = obj.Data.WaterLevels.zmt(1);
     wli = obj.Data.WaterLevels.zmt(end);
-
-%     figure('Name','XS Plot','Units','normalized','Tag','PlotFig');                                                    
-%     ax = axes('Tag','PropertyPlot');
+    
     noxi=length(xi);
     ix0 = find(xi>=grid1.xM-eps,1,'first'); 
     noxi = noxi-ix0;
@@ -92,6 +91,9 @@ function crossectionPlot(obj,ax,slr)
     plot(xlim, wli*[1 1],'--','Color',[0.7,0.7,0.7]);
 
     hold off
+    %reverse x-axis - sections are oriented looking from mouth up-estuary
+    ax.XDir = 'reverse';
+    %add meta-data
     xlabel('Width (m)'); 
     ylabel('Change in level (m)');
     hL=legend('0pre','0post','0.1pre','0.1post','0.2pre','0.2post','Location','SouthEast');
@@ -103,7 +105,7 @@ end
 function thalwegPlot(obj,ax,slr)
     %plot the thalweg at the start and end of run
     % NB uses transient properties so only works in current session
-    dst = obj.Data.Form;
+    dst = obj.Data.Grid;
     
     grid0 = getGrid(obj,1);
     z0 = grid0.z(:,ceil(size(grid0.z,2)/2)); %intial grid
@@ -111,13 +113,14 @@ function thalwegPlot(obj,ax,slr)
     grid1 = getGrid(obj,height(dst));
     xi = grid1.x; 
     zi = grid1.z(:,ceil(size(grid1.z,2)/2));%final grid
-    xsgn = sign(grid.x(2)-grid.x(1));  %direction of axes (-ve descending)            
-    %if obj.Grid.ishead  %orientation of x-axis, x=0 is nearest the mouth if ishead=false
-    if xsgn<0
-        zi = flipud(zi);                          
-        z0 = flipud(z0);  
-    end
 
+    gd_dir = gd_ax_dir(grid1);
+    if gd_dir.x==1 || gd_dir.x==4                 
+        %orientation of x-axis, x=0 is nearest the mouth if ishead=false
+        zi = flipud(zi);
+        z0 = flipud(z0);
+    end
+            
     wl0 = obj.Data.WaterLevels.zmt(1);
     wli = obj.Data.WaterLevels.zmt(end);
 

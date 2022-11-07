@@ -104,7 +104,7 @@ function rateofchangePlot(obj,ax)
     dV = dst.vdiffx(end,:);      %volume change for dx
     trnobj = obj.RunParam.CF_TransData;
     sedvol = dst.sedVol(end);
-    estdX = dst.estdX(end);
+    edX = dst.estdX(end);
     
     plot(ax,dx,dV,'-k','LineWidth',1)
     ax.YGrid = 'on';
@@ -114,8 +114,8 @@ function rateofchangePlot(obj,ax)
     mxX = ax.XLim(2); mxY = ax.YLim(2);
     hold on
     plot([0,mxX],[0,0],'-.r');  %'Color',[0.96,0.96,0.96]
-    plot([0,estdX],[sedvol,sedvol],'--b'); %transgression point
-    plot([estdX,estdX],[0,sedvol],'--b'); %transgression point
+    plot([0,edX],[sedvol,sedvol],'--b'); %transgression point
+    plot([edX,edX],[0,sedvol],'--b'); %transgression point
     hold off
     txt1 = 'Channel only';
     if trnobj.inclFloodPlain
