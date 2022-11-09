@@ -7,7 +7,7 @@ function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
 %   construct idealised channel form using exponential functions in y to 
 %   determine width and cross-section of various forms to determine z at each x interval
 % USAGE
-%   [xi,yi,zgrd,yz] = cf_exp_models(obj,isfull)
+%   [xi,yi,zgrd,yz,Rv] = cf_exp_models(obj,isfull)
 % INPUTS
 %   obj - CF_FormModel class instance
 %         obj.Selection.wlflag - indicates type of water surface to use
@@ -40,9 +40,9 @@ function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
     %channel properties
     if obj.Selection.wlflag==0 && isempty(obj.CSTparams)
         %provides initial guess of gross properties if cst_model called
-        obj.Selection.wlflag = 1;
-        obj= cf_set_hydroprops(obj);     %fixed water level surface 
-        obj.Selection.wlflag = 0;
+        obj.Selection.wlflag = 1;       %fixed water level surface 
+        obj= cf_set_hydroprops(obj);     
+        obj.Selection.wlflag = 0;       %reset to cst surface
         obj = channel_properties(obj); 
     end
     
@@ -55,13 +55,6 @@ function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
 
     [xi,yi,zi,Wz,Rv] = channel_3D_form(obj);
     if isempty(xi),return; end    
-    
-%     if obj.Selection.wlflag==0
-%         [obj,ok] = cf_set_hydroprops(obj); 
-%         if ok<1, return; end
-%         [xi,yi,zi,Wz] = channel_3D_form(obj);
-%         if isempty(xi),return; end   
-%     end
 
     %model x-axis is from head. Reverse data for use in ChannelForm
     yzcell = num2cell(flipud(Wz)',2);  %formatted to load into table
@@ -102,39 +95,12 @@ function obj = channel_properties(obj)
     tr = (hydobj.zhw(1)-hydobj.zlw(1)); %tidal range at mouth 
     Am = Wm*tr+mc*Wlw^2/6;          %csa at the mouth (m^2)
     [~,~,Arv] = get_river_regime(obj,tr);    
-    La = -Lt/log(Arv/Am);           %assume mouth converges to river
+    La = -Lt/log((Arv+1)/Am);       %assume mouth converges to river & min csa = 1
     %assign values
     obj.CSTparams.Wm = Wm;
     obj.CSTparams.Lw = Lw;
     obj.CSTparams.Am = Am;
-    obj.CSTparams.La = La;
-    
-    
-%     [xi,yi,zi] = channel_3D_form(obj); 
-%     grid.x = fliplr(max(xi)-xi);
-%     grid.y  = [-flipud(yi(2:end)); yi];
-%     grid.z = flipud(cat(2,fliplr(zi(:,2:end)),zi));
-%     grid.t = years(0);
-%     grid.ishead = false; 
-%     grid.xM = 0;
-%     if ~isempty(obj.RunParam.CF_HydroData.xTidalLimit)
-%         %use user defined estimate of tidal length
-%         grid.Lt = obj.RunParam.CF_HydroData.xTidalLimit;
-%     else
-%         %use length of grid
-%         grid.Lt = max(xi)-min(xi);
-%     end
-% 
-%     wl = obj.RunParam.CF_HydroData; 
-%     grdobj = obj.RunParam.GD_GridProps;
-%     [~,hypdst] = gd_basin_hypsometry(grid,wl,grdobj.histint,0);
-%     props = gd_section_properties(grid,wl,hypdst);
-%     gp = gd_gross_properties(grid,wl,props);
-%     %used in CSTmodel
-%     obj.CSTparams.Wm = gp.Wm;
-%     obj.CSTparams.Lw = gp.Lw;
-%     obj.CSTparams.Am = gp.Am;
-%     obj.CSTparams.La = gp.La;  
+    obj.CSTparams.La = La;  
 end
 %%
 function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)

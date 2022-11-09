@@ -111,9 +111,9 @@ classdef CF_TransModel < FGDinterface
             
             %run model
             if isnan(obj.RunParam.CF_TransData.SedFlux)
-                ok = kinematic_model(obj,mobj);
+                ok = kinematic_model(obj);
             else
-                ok = dynamic_model(obj,mobj);
+                ok = dynamic_model(obj);
             end
             if ok<1, warndlg(msg); return; end
             %write end of run 'input parameters' to command window
@@ -127,10 +127,10 @@ classdef CF_TransModel < FGDinterface
             obj.Trans.vdiffx = cumsum(obj.Trans.vdiffx,1);
             %plots of run
             slr = obj.Trans.dSLR(end);
-            summaryGridPlots(obj,slr);
-            crossectionPlot(obj,slr);
+            %summaryGridPlots(obj,slr);
+            %crossectionPlot(obj,slr);
             changePlot(obj,slr);         
-            thalwegPlot(obj,slr);
+            %thalwegPlot(obj,slr);
 
             %now assign results to object properties  
             mtime = years(obj.StepTime/obj.cns.y2s);
@@ -189,15 +189,14 @@ classdef CF_TransModel < FGDinterface
         function ok = InitialiseModel(obj,mobj)
             %initialise ChannelForm properties and run parameters
             rnpobj = obj.RunParam.RunProperties;
-            %initialise time step paramters
-            tstep = rnpobj.TimeStep; 
-            y2s   = mobj.Constants.y2s;     %year to seconds conversion factor
-            obj.delta = tstep*y2s;          %time step in seconds
-            obj.DateTime = rnpobj.StartYear*y2s;%time elapsed from Year 0 in seconds
-            obj.RunSteps = rnpobj.NumSteps; %not needed unless stability check added
             %model constants
             obj.cns = getConstantStruct(mobj.Constants);
-            
+            %initialise time step paramters
+            tstep = rnpobj.TimeStep; 
+            obj.delta = tstep*obj.cns.y2s;              %time step in seconds
+            obj.DateTime = rnpobj.StartYear*obj.cns.y2s;%time elapsed from Year 0 in seconds
+            obj.RunSteps = rnpobj.NumSteps; %not needed unless stability check added
+
             %transgression ouput table for 
             % delX - unadjusted transgression distance
             % estdX - adjusted transgression distance (inc sediment flux)
@@ -220,12 +219,7 @@ classdef CF_TransModel < FGDinterface
             
             %use current settings in WaterLevels and RunProperties to
             %initialise hydraulic parameters (single values). 
-            setTransHydroProps(obj.RunParam.CF_HydroData,mobj); 
-            if obj.RunParam.CF_TransData.isModelWL
-                %overwrite along-channel water levels using values saved for
-                %selected form model
-                setChannelWaterLevels(obj);   
-            end
+            setTransHydroProps(obj.RunParam.CF_HydroData,obj); 
             
             %use selected channel and valley forms to create initial grid
             obj.TranProp = struct('Wz',[],'zdiff',[],'intidx',[],'Rv',[]);
@@ -246,7 +240,7 @@ classdef CF_TransModel < FGDinterface
             PostTimeStep(obj); 
         end
 %%
-        function ok = kinematic_model(obj,mobj)
+        function ok = kinematic_model(obj)
             %compute transgression without time stepping
             %write initial conditions to command window
             timestepInput(obj)
@@ -255,7 +249,7 @@ classdef CF_TransModel < FGDinterface
             obj.DateTime = obj.DateTime+obj.Time;
             obj.Grid.t = obj.DateTime/obj.cns.y2s;
             %update water levels at boundary
-            newWaterLevels(obj.RunParam.CF_HydroData,mobj,obj);
+            newWaterLevels(obj.RunParam.CF_HydroData,obj);
             %set slr increment for timestep
             dt = obj.Time/obj.cns.y2s;
             obj.dTrans.dSLR = obj.RunParam.CF_HydroData.dslr*dt;
@@ -285,13 +279,13 @@ classdef CF_TransModel < FGDinterface
 %% ------------------------------------------------------------------------
 % Methods for dynamic model with a time stepping loop
 %--------------------------------------------------------------------------
-        function ok = dynamic_model(obj,mobj)
+        function ok = dynamic_model(obj)
             %run time stepping for the quasi-dynamic transgression model
             ok = 1;
             msg = sprintf('ChannelForm processing, please wait');
             hw = waitbar(0,msg);
             for jt = 1:obj.RunSteps
-                InitTimeStep(obj,mobj,jt)
+                InitTimeStep(obj,jt)
                 ok = RunTimeStep(obj);
                 if ok <1  || ~isvalid(hw)
                     close(hw);
@@ -306,7 +300,7 @@ classdef CF_TransModel < FGDinterface
             close(hw);  
         end
 %%
-        function InitTimeStep(obj,mobj,jt)
+        function InitTimeStep(obj,jt)
             %initialise model parameters for next time step
             obj.iStep = jt;
             obj.Time = jt*obj.delta;
@@ -321,7 +315,7 @@ classdef CF_TransModel < FGDinterface
             
             %update water levels at boundary (mouth) - NB: this method
             %is in CF_HydroData and NOT WaterLevels
-            newWaterLevels(obj.RunParam.CF_HydroData,mobj,obj);
+            newWaterLevels(obj.RunParam.CF_HydroData,obj);
             %set slr increment for timestep
             dt = obj.delta/obj.cns.y2s;
             obj.dTrans.dSLR = obj.RunParam.CF_HydroData.dslr*dt;
@@ -1014,35 +1008,35 @@ classdef CF_TransModel < FGDinterface
             %coefficients used in the sediment flux calculations
             titletxt = 'Update Parameters';
             promptxt = {'Rate of sea level rise (m/year)', ...
+                        'Tidal ampltude (m)',...
                         'Amplitude of Cycles (m)',...
                         'Equilibrium sediment density (kg/m^3)', ...
                         'Sediment load in river (kg/m^3)',...
                         'Transport coefficient (+/-n)',...                         
                         'Equilibrium scale coefficient (0=scale to initial)',...                          
                         'Equilibrium shape coefficient (-)',...
-                        'Constant sediment flux (m^3/yr): 0,NaN,or value',...
-                        'Current (0) or Source-model (1) water levels'};
+                        'Constant sediment flux (m^3/yr): 0,NaN,or value'};
             defaults = {num2str(obj.RunParam.WaterLevels.SLRrate),...
+                        num2str(obj.RunParam.WaterLevels.TidalAmp),...
                         num2str(obj.RunParam.WaterLevels.CycleAmp),...
                         num2str(obj.RunParam.CF_SediData.EqDensity),...
                         num2str(obj.RunParam.CF_SediData.RiverDensity),...
                         num2str(obj.RunParam.CF_SediData.TransportCoeff),...
                         num2str(obj.RunParam.CF_SediData.EqScaleCoeff),...
                         num2str(obj.RunParam.CF_SediData.EqShapeCoeff),...
-                        num2str(obj.RunParam.CF_TransData.SedFlux),...
-                        num2str(obj.RunParam.CF_TransData.isModelWL)};
+                        num2str(obj.RunParam.CF_TransData.SedFlux)};
             answer = inputdlg(promptxt,titletxt,1,defaults);
             if ~isempty(answer)
                 isok = true;
                 obj.RunParam.WaterLevels.SLRrate = str2num(answer{1}); %#ok<ST2NM>
-                obj.RunParam.WaterLevels.CycleAmp = str2num(answer{2}); %#ok<ST2NM>
-                obj.RunParam.CF_SediData.EqDensity = str2double(answer{3});
-                obj.RunParam.CF_SediData.RiverDensity = str2double(answer{4});
-                obj.RunParam.CF_SediData.TransportCoeff = str2double(answer{5});
-                obj.RunParam.CF_SediData.EqScaleCoeff = str2double(answer{6});
-                obj.RunParam.CF_SediData.EqShapeCoeff = str2double(answer{7});
-                obj.RunParam.CF_TransData.SedFlux = str2double(answer{8});
-                obj.RunParam.CF_TransData.isModelWL = logical(str2double(answer{9}));
+                obj.RunParam.WaterLevels.TidalAmp = str2double(answer{2}); 
+                obj.RunParam.WaterLevels.CycleAmp = str2num(answer{3}); %#ok<ST2NM>
+                obj.RunParam.CF_SediData.EqDensity = str2double(answer{4});
+                obj.RunParam.CF_SediData.RiverDensity = str2double(answer{5});
+                obj.RunParam.CF_SediData.TransportCoeff = str2double(answer{6});
+                obj.RunParam.CF_SediData.EqScaleCoeff = str2double(answer{7});
+                obj.RunParam.CF_SediData.EqShapeCoeff = str2double(answer{8});
+                obj.RunParam.CF_TransData.SedFlux = str2double(answer{9});
             else
                 isok = false;
             end                       

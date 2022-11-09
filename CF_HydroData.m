@@ -128,7 +128,7 @@ classdef CF_HydroData < muiPropertyUI
         function runModel(obj,mobj)
             %compile input data and run model. Uses definitions based on
             %CF_CKFAdata properties when run from Utilities>Hydraulic Model.
-            %Whereas runModelatT (see below) which uses the form model currently 
+            %Whereas runHydroModel (see below) uses the form model currently 
             %being manipulated (water surface added to morphological form)            
             ok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
             if ok<1, return; end
@@ -242,26 +242,42 @@ classdef CF_HydroData < muiPropertyUI
             cstPlot(obj,ax,Q(1))
         end
 %%
-        function obj = setTransHydroProps(obj,mobj)
+        function obj = setTransHydroProps(obj,anobj)
             %initialise the transient properties used in the models
-            wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
-            rnpobj = getClassObj(mobj,'Inputs','RunProperties');
-            startyr = rnpobj.StartYear*mobj.Constants.y2s;  %startyear in seconds form Julian 0
+            % obj - CF_HydroData class instance
+            % anobj - model class instance (eg CF_TransModel), or
+            %         UI class instance (mobj). Models using RunParam as
+            %         input need to have Constants assigned to anobj
+            if isa(anobj,'CF_TransModel') %models with repeat calls
+                rnpobj = anobj.RunParam.RunProperties;
+                wlvobj = anobj.RunParam.WaterLevels;
+                y2s = anobj.cns.y2s;
+            else
+                wlvobj = getClassObj(anobj,'Inputs','WaterLevels');
+                rnpobj = getClassObj(anobj,'Inputs','RunProperties');
+                y2s = anobj.Constants.y2s;
+            end
+            startyr = rnpobj.StartYear*y2s;  %startyear in seconds form Julian 0
             %initialWL(wlvobj,startyr);
             [obj.zhw,obj.zmt,obj.zlw] = newWaterLevels(wlvobj,0,startyr);           
             obj.Qr = obj.RiverDischarge;  %initialise transient river discharge
             obj.tidalperiod = wlvobj.TidalPeriod*3600; %tidal period in seconds
         end 
 %%
-        function newWaterLevels(obj,mobj,robj)
+        function newWaterLevels(obj,anobj)
             %update water levels when running transgression model
             % robj is the run time object that defines the time step
-            % ie CF_Transgression in the ChannelForm model
+            % ie CF_TransModel in the ChannelForm model
             % WaterLevels provides water levels at the mouth. To get 
             % alongchannel values call cf_set_hydroprops after calling
             % newWaterLevels.
-            WaterLevels.setWaterLevels(mobj,robj);
-            wlvobj = getClassObj(mobj,'Inputs','WaterLevels');
+            % obj - CF_HydroData class instance
+            % anobj - model class instance (eg CF_TransModel)
+            wlvobj = anobj.RunParam.WaterLevels;
+
+            mtime = anobj.Time;  %model time in seconds from model t=0
+            startyr = anobj.DateTime;
+            wlvobj = newWaterLevel(wlvobj,mtime,startyr);
             obj.zhw = wlvobj.HWaterLevel;
             obj.zmt = wlvobj.MeanSeaLevel;
             obj.zlw = wlvobj.LWaterLevel;

@@ -62,16 +62,16 @@ classdef CF_FormModel < FGDinterface
             if ~isValidModel(mobj, metaclass(obj).Name)  
                 warndlg('Use Setup to define model input parameters');
                 return;
-            end
-            
+            end           
 %--------------------------------------------------------------------------
 % Model code
 %--------------------------------------------------------------------------
-            hydobj = getClassObj(mobj,'Inputs','CF_HydroData');
-            setTransHydroProps(hydobj,mobj); %initialise transient properties
-            
             %assign the run parameters to the model instance           
             setRunParam(obj,mobj); %assigns a copy of Input classes to obj
+            
+            %use current WaterLevels settings to initialise transient properties
+            hydobj = obj.RunParam.CF_HydroData;
+            setTransHydroProps(hydobj,mobj); 
             %add water level definition to the run parameters
             [obj.Selection.wlflag,wlstxt] = setWaterLevels(obj);
             
