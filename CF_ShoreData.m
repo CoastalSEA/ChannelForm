@@ -65,6 +65,8 @@ classdef CF_ShoreData < muiPropertyUI
             %create shoreline strip based on equilibrium profile 
             % isfull - flag return coastal strip added to input grid if
             % true, otherwise just returns coastal strip
+            %function intended for model grids where xM=0 in the source grid
+            %and this is modified by the width of the shore (xM=Shorewidth)
             obs = 1/obj.OffshoreBS;
             ubs = 1/obj.UpperBeachBS;
             

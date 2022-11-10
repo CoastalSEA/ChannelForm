@@ -43,9 +43,9 @@ function [xi,yi,zgrd,Wz,Rv] = ckfa_form_model(obj,isfull)
     [obj,ok] = cf_set_hydroprops(obj);
     if ok<1, return; end
     
-    Rv.Hr = params.input.hav; 
+    Rv.Hr = params.input.hrv; 
     Rv.Wr = params.input.Wrv;
-    Rv.Ar = params.input.WArv;
+    Rv.Ar = params.input.Arv;
     %generate 3D surface of CKFA model
     [xi,yi,zi] = ckfa_3D_form(obj,params);
     if isempty(xi),return; end

@@ -150,9 +150,24 @@ classdef CF_FormModel < FGDinterface
             sz = num2cell(size(grid.z));
             formdst.DataTable.Z = reshape(grid.z,1,sz{:}); 
             formdst.UserData.xM = grid.xM;
-
-            %save as a new case
-            setGridObj(obj,muicat,formdst); 
+            
+            %need to update seaward water levels in obj.Data.WaterLevels
+            %hence cannot use addORupdate function
+            answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
+            if strcmp(answer,'Add')
+                %create new record
+                caseid = setGridObj(obj,muicat,formdst); %copies form property table to new instance
+                cobj = getCase(muicat,caseRec(muicat,caseid));
+                cf_offset_wls(cobj,false);  %translate wls, false maintains vector length
+                classrec = classRec(muicat,caseRec(muicat,caseid)); 
+                updateCase(muicat,cobj,classrec,false); %false=no message
+            else            
+                %overwrite exisitng form data set with new form             
+                obj.Data.Grid = formdst;  
+                obj = cf_offset_wls(obj,true);  %translate wls, true extends vector
+                classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex)); 
+                updateCase(muicat,obj,classrec,true);
+            end 
         end
 %%
         function addMorphMods(mobj)
@@ -167,20 +182,10 @@ classdef CF_FormModel < FGDinterface
             obj.RunParam.CF_ModsData = getClassObj(mobj,'Inputs','CF_ModsData');
             new_z = setMorphMods(obj.RunParam.CF_ModsData,grid);
             obj.Selection.incmods = true;
-
-            answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
-            
-            if strcmp(answer,'Add')
-                %create new record
-                fdst = copy(obj.Data.Grid);
-                fdst.Z(1,:,:) = new_z;
-                setGridObj(obj,muicat,fdst); %copies form property table to new instance
-            else            
-                %overwrite exisitng form data set with new form             
-                obj.Data.Grid.Z(1,:,:) = new_z;  
-                classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex));
-                updateCase(muicat,obj,classrec,true);
-            end 
+            fdst = copy(obj.Data.Grid);
+            fdst.Z(1,:,:) = new_z;           
+            %save as a new case or update existing case
+            addORupdate(obj,muicat,fdst);  
         end 
     end        
 %%
