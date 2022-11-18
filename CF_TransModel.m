@@ -134,8 +134,9 @@ classdef CF_TransModel < FGDinterface
 
             %now assign results to object properties  
             mtime = years(obj.StepTime/obj.cns.y2s);
+            xM0 = obj.Valley.Data.Grid.UserData.xM;
             dims = struct('x',obj.Grid.x,'y',obj.Grid.y,'t',mtime,...
-                          'ishead',false,'xM',obj.Trans.cstdX,...
+                          'ishead',false,'xM',xM0+obj.Trans.cstdX,...
                           'Lt',obj.Trans.Lt,'Rv',obj.TranProp.Rv,...
                           'cline',obj.CLatT);
 %--------------------------------------------------------------------------
@@ -197,7 +198,7 @@ classdef CF_TransModel < FGDinterface
             obj.DateTime = rnpobj.StartYear*obj.cns.y2s;%time elapsed from Year 0 in seconds
             obj.RunSteps = rnpobj.NumSteps; %not needed unless stability check added
 
-            %transgression ouput table for 
+            %transgression time step table for 
             % delX - unadjusted transgression distance
             % estdX - adjusted transgression distance (inc sediment flux)
             % cstdX - open coast transgression distance
@@ -211,9 +212,16 @@ classdef CF_TransModel < FGDinterface
                                            'waterVol','sedVol','vdiffx'};                                                        
             vars = {0,0,0,0,0,0,0,0,[0,0,0,0]};                    
             obj.dTrans = table(vars{:},'VariableNames',varnames);
+            
+            %transgression summary ouput table - same variables as dTrans
+            obj.Trans = array2table(zeros(0,9));
+            obj.Trans.Properties.VariableNames = varnames; 
 
             %initialise model grid at timestep, t=0
             obj.Grid = getGrid(obj.Channel,1);
+            %in case shoreline present reset xM=0 (shore is reassigned in
+            %updateModelGrid).
+            obj.Grid.xM = 0;
             %model selection options(wlflag,modeltype,etc)                 
             obj.Selection = obj.Channel.Selection;
             
@@ -263,8 +271,7 @@ classdef CF_TransModel < FGDinterface
             obj.dTrans.estdX = obj.dTrans.delX;
             %coastal transgression 
             trnobj = obj.RunParam.CF_TransData;
-            obj.dTrans.cstdX = trnobj.BruunRatio*obj.dTrans.dSLR;
-            obj.Grid.xM = sum(obj.Trans.cstdX)+obj.dTrans.cstdX;
+            obj.dTrans.cstdX = trnobj.BruunRatio*obj.dTrans.dSLR;;
             
             %update form input parameters
             updateFormParams(obj);
@@ -306,12 +313,9 @@ classdef CF_TransModel < FGDinterface
             obj.Time = jt*obj.delta;
             obj.DateTime = obj.DateTime+obj.delta;
             obj.Grid.t = obj.DateTime/obj.cns.y2s;
-            
-            %update flux model parameters
+
+            %update flux model parameters (call be fore updating waterlevels)
             updateFluxParams(obj);
-            %sediment flux for new time step, jt, based on form at jt-1
-            [obj.dTrans.sedVol,obj.dTrans.waterVol] = sedimentFlux(obj); 
-            
             
             %update water levels at boundary (mouth) - NB: this method
             %is in CF_HydroData and NOT WaterLevels
@@ -322,7 +326,11 @@ classdef CF_TransModel < FGDinterface
             %could also update river discharge if required
             % Qr = source of river discharge time series;
             % obj.RunParam.CF_HydroData.RiverDischarge = Qr;
-                
+
+            %sediment flux for new time step, jt, based on form at jt-1
+            %needs slr for current time step, hence after waterlevel update
+            [obj.dTrans.sedVol,obj.dTrans.waterVol] = sedimentFlux(obj); 
+
             %write selected parameters to command window
             timestepInput(obj)
         end
@@ -346,7 +354,6 @@ classdef CF_TransModel < FGDinterface
             hydobj = obj.RunParam.CF_HydroData;
             incslr = hydobj.dslr*obj.delta/obj.cns.y2s; %slr in time step
             obj.dTrans.cstdX = trnobj.BruunRatio*incslr;%coastal transgression 
-            obj.Grid.xM = sum(obj.Trans.cstdX)+obj.dTrans.cstdX;
 
             %update form input parameters
             updateFormParams(obj);
@@ -407,7 +414,12 @@ classdef CF_TransModel < FGDinterface
             %compute the difference between the surfaces for given distance 
             %of translation, delX. Uses current grid+dhw to define new grid             
             F = obj.Grid;
-            dxdy = abs(F.x(2)-F.x(1))*abs(F.y(2)-F.y(1));
+            [~,ixM] = gd_basin_indices(obj.Grid); %nearest grid point
+            %remove shore whilst gridding differneces
+            F.z = F.z(ixM:end,:);
+            F.x = F.x(ixM:end);
+            dx = abs(F.x(2)-F.x(1));
+            dy = abs(F.y(2)-F.y(1));
             %add change in high water over a time step
             z2 = F.z+obj.RunParam.CF_HydroData.dhw;
             x2 = F.x+delX;    
@@ -416,19 +428,22 @@ classdef CF_TransModel < FGDinterface
             z2 = griddata(x2,F.y,z2',X,Y);    
             zdiff = (z2-z1);
             
+            %restore shore with NaN values
+            zdiff = [NaN(ixM-1,length(F.y));zdiff];
             %apply limits to domain and any vertical constraints
             zdiff = applyConstraints(obj,zdiff);
             
             %subsample grid to integration length and find volume change
             subx = obj.TranProp.intidx;  %indices from mouth to tidal limit
-            if rem(obj.Grid.xM,(F.x(2)-F.x(1)))>0
-                %if coast erosion occupies part of a grid interval in x
-                %only include complete grid cells in integration
+            %as coast erodes ixM=subx(1) is rounded to the nearest grid
+            %point. When xM<dx/2 increment the index to avoid grid cells 
+            %outside channel
+            if rem(obj.Grid.xM,dx)>0 && rem(obj.Grid.xM,dx)<dx/2
                 subx = subx(2:end);
             end
             dz = zdiff(subx,:);
             dz(isnan(dz)) = 0;
-            vdiff = trapz(trapz(dz))*dxdy;
+            vdiff = trapz(trapz(dz))*dx*dy;
         end
 %%
         function zdiff = applyConstraints(obj,zdiff)
@@ -454,9 +469,10 @@ classdef CF_TransModel < FGDinterface
             %control vertical constraints
             if trnobj.inclGeoConstraint && ~isempty(trnobj.StConstraints)
                 ids = length(trnobj.StConstraints);
+                xM = obj.Valley.Data.Grid.UserData.xM;
                 for i=1:ids
                     x = obj.Grid.x;
-                    idx = x>trnobj.StConstraints(i) & x<trnobj.NdConstraints(i) & zdiff<0;
+                    idx = x>xM+trnobj.StConstraints(i) & x<xM+trnobj.NdConstraints(i) & zdiff<0;
                     zdiff(idx)=0;  %remove any erosion over constrained bed
                 end
             end
@@ -488,10 +504,12 @@ classdef CF_TransModel < FGDinterface
             %update grid based on transgression
             chgrid = getNewChannel(obj);             %new channel form and updates
             if isempty(chgrid.x), ok = 0; return; end%water levels in obj.RunParam.CF_HydroData
-            chgrid = updateMeander(obj,chgrid);            
+            chgrid = updateMeander(obj,chgrid);      %apply meander if included    
+            chgrid = updateGeoConstraints(obj,chgrid);%adjust channel for any non-erodible geology
+            chgrid = updateFloodPlain(obj,chgrid);   %adjust flood plain in channel model for any constraints
             newgrid = updateValley(obj,chgrid,true); %new combined channel+valley form            
             obj.Grid = updateShoreline(obj,newgrid); %shoreline adjusted 
-            obj = cf_offset_wls(obj);                %translate wls if coast erodes
+            obj = cf_offset_wls(obj,true);           %translate wls, ??? length of wl vectors
             obj.dTrans.FPA = floodPlainArea(obj);    %modified flood plain area
             %get the distance to tidal limit and indices to integrate over
             updateTidalLimit(obj); 
@@ -501,8 +519,7 @@ classdef CF_TransModel < FGDinterface
         function grid = getNewChannel(obj)
             %generate a new channel based on updated input parameters
             %with no offset (ie mouth is at x=0)
-            grid = obj.Grid;
-            z0 = grid.z;   %existing grid before updating (includes valley)
+            grid = obj.Grid;            
             option = obj.Selection.modeltype;
             %new channel grid and water levels in obj.RunParam.CF_HydroData
             %is also updated in the function called
@@ -529,28 +546,31 @@ classdef CF_TransModel < FGDinterface
             if obj.Selection.incmods
                 modobj = obj.RunParam.CF_ModsData;
                 grid.z = squeeze(setMorphMods(modobj,grid));
-            end
-            
+            end      
+            grid.metadata = obj.Channel.Data.Grid.MetaData;       
+        end
+%%
+        function grid = updateGeoConstraints(obj,grid)
             %apply any vertical constraints
             trnobj = obj.RunParam.CF_TransData; 
             if trnobj.inclGeoConstraint && ~isempty(trnobj.StConstraints)
+                yrec = length(grid.y);
                 %elevation of initial flood plain
                 hydobj0 = obj.Channel.Data.WaterLevels; %source form water levels
                 zFP0 = hydobj0.zhw+trnobj.FPoffset;     %initial flood plain levels
-                zFP0 = repmat(zFP0',1,length(grid.y));
+                zFP0 = repmat(zFP0',1,yrec);
                 ids = length(trnobj.StConstraints);
+                z0 = squeeze(obj.Channel.Data.Grid.Z);  %source channel grid
                 for i=1:ids
-                    %fixes channel only because only modifies below initial
-                    %flood plain elevation, zFP0
-                    x = grid.x;
+                    %constrains erosion relative to initial channel
+                    %form over the constraint distances defined
+                    x = grid.x;                    
+                    %index is for channel grid
                     idx = x>trnobj.StConstraints(i) & ...
-                          x<trnobj.NdConstraints(i) & grid.z<zFP0;
+                          x<trnobj.NdConstraints(i) & grid.z<z0;
                     grid.z(idx)=z0(idx);  %remove any erosion over constrained bed
                 end
-            end            
-            grid.metadata = obj.Channel.Data.Grid.MetaData;
-            %adjust flood plain in channel model for any constraints
-            grid = updateFloodPlain(obj,grid);            
+            end
         end
 %%
         function grid = updateFloodPlain(obj,grid)
@@ -621,40 +641,54 @@ classdef CF_TransModel < FGDinterface
             zFP = repmat(zFP',1,length(y));         %returns a row vector
         end
 %%
-        function grid = updateValley(obj,fgrid,isoffset)
+        function newgrid = updateValley(obj,fgrid,isoffset)
             %combine channel form (fgrid) with valley form (obj.Valley.Data.Grid)
             % fgrid - new channel grid to be added to valley grid
             % isoffset - flag to include offset if xM>0, model uses true,
             %            summary plots use false to generate initial form
-            grid = fgrid;                  %copy channel grid to retain struct data
-            vgrid = getGrid(obj.Valley,1); %valley grid (does not move)
             
-            if isoffset && ~isempty(obj.Grid) && obj.Grid.xM>0
-                %fgrid.x = fgrid.x+obj.Grid.xM; %moves grid by erosion distance
-                %subgrid scale movement makes control of property estimates
-                %complex. Only move coast when it has moved integer delx
-                [~,ixM] = gd_basin_indices(grid);
-                fgrid.x = fgrid.x+fgrid.x(ixM);
+            %apply an offset equivalent to any coastal erosion/accretion
+            fgrid.xM = sum(obj.Trans.cstdX)+obj.dTrans.cstdX;
+            %valley grid (does not move) but may be offset if shore present
+            vgrid = getGrid(obj.Valley,1);     
+            %copy channel grid to retain struct data
+            newgrid = fgrid;               
+            newgrid.xM = vgrid.xM+fgrid.xM;  %combined offset of shore & erosion/accretion
+
+            if isoffset && (vgrid.xM>0 || fgrid.xM>0)
+                %intial grid may include a shore so find the offset
+                %relative to the initial coast
+                [~,~,delx] = getGridDimensions(obj.RunParam.GD_GridProps);
+                idM = round((vgrid.xM+fgrid.xM)/delx)+1;
+                fgrid.x = fgrid.x+fgrid.x(idM);
+                Wz = obj.TranProp.Wz;
+                %pad vectors for shore and remove any landward point
+                %outside grid
+                varfunc = @(x) [NaN(1,idM-1),x(1:length(vgrid.x)-idM+1)];
+                obj.TranProp.Wz = varfun(varfunc,Wz);
+                obj.TranProp.Wz.Properties.VariableNames = Wz.Properties.VariableNames;
             end
+            
             %combine channel and valley grids
             [X,Y] = ndgrid(vgrid.x,vgrid.y);
             zf = griddata(fgrid.x,fgrid.y,fgrid.z',X,Y);%ensure both use the same grid
-            grid.x = vgrid.x;
-            grid.y = vgrid.y;
-            grid.z = max(zf,vgrid.z);                   %combined forms
+            newgrid.x = vgrid.x;
+            newgrid.y = vgrid.y;
+            newgrid.z = max(zf,vgrid.z);                   %combined forms
         end
 %%
         function grid = updateShoreline(obj,grid)
             %modify the shoreline if coast has retreated
-            if ~isempty(obj.Grid) && obj.Grid.xM>0
-                [~,ixM] = gd_basin_indices(grid);
-                if ixM>0
+            if grid.xM~=0
+                [~,ixM] = gd_basin_indices(grid); %nearest grid point
+                if ixM>1
                     subgrid = grid;
                     subgrid.x = grid.x(ixM:end);
                     subgrid.z = grid.z(ixM:end,:);
-                    shore = setShoreline(obj.RunParam.CF_ShoreData,subgrid,false); %shore strip grid
-                    grid.z(1:ixM,:) = shore.z(end-(ixM-1):end,:);                    
-                elseif ixM<0
+                    obj.RunParam.CF_ShoreData.ShoreWidth = grid.xM;
+                    shore = setShoreline(obj.RunParam.CF_ShoreData,grid,false); %false returns a shore strip grid
+                    grid.z(1:ixM-1,:) = shore.z(end-(ixM-2):end,:);                    
+                elseif ixM<1
                     warndlg('Seaward migration not handled in CF_TransModel.updateShoreline')
                 end
                 % %defined slope shoreline  
@@ -680,15 +714,22 @@ classdef CF_TransModel < FGDinterface
                     cline = grid.cline;
                     [~,ixM] = gd_basin_indices(grid);
                     if ixM>0
+                        %offset y-dimensions of meander by the amount of
+                        %coast erosion
+                        xM = sum(obj.Trans.cstdX)+obj.dTrans.cstdX;
+                        if grid.xM~=xM
+                            %grid includes a shore so find coastal erosion
+                            delx = abs(grid.x(2)-grid.x(1));
+                            ixM = round(xM/delx);
+                        end
                         cline.y = [ones(ixM,1)*cline.y(1);cline.y(1:end-ixM)];
                         grid.cline = cline;
                     end
-                    grid = gd_xy2sn(grid,cline,true,false);
                 else      
                     %meander is fixed as initially defined
                     cline = grid.cline;
-                    grid = gd_xy2sn(grid,cline,true,false);
                 end
+                grid = gd_xy2sn(grid,cline,true,false);
             end
         end
 %%
@@ -838,9 +879,9 @@ classdef CF_TransModel < FGDinterface
             hydobj = obj.RunParam.CF_HydroData; 
             grid = obj.Grid;
             tp = obj.TranProp;
-            %net change in position of "initial" mouth due transgression 
-            %of coast and estuary NB - relative to translating channel form
-            %and not x=0
+            %net change in position in a timestep of "initial" mouth 
+            %due transgression of coast and estuary NB - relative to 
+            %translating channel form and not x=0
             edX = obj.dTrans.estdX-obj.dTrans.cstdX; 
 
             %for the ckfa model the tidal limit and tidal amplitude 
@@ -863,11 +904,15 @@ classdef CF_TransModel < FGDinterface
 
             option = obj.Selection.modeltype;
             if strcmp(option,'Exponential') || strcmp(option,'Power')
+                %location of mouth in grid
+                [~,ixM] = gd_basin_indices(grid);
                 %depth at mouth to mtl
-                thalweg = grid.z(:,ceil(size(grid.z,2)/2));
+                subgrid.x = grid.x(ixM:end);    %remove shore
+                subgrid.z = grid.z(ixM:end,:);  
+                thalweg = subgrid.z(:,ceil(size(subgrid.z,2)/2)); %centreline
                 %invert x and add offset of mouth to max x to interpolate
                 %seaward of the exisitng form if edX is +ve
-                zm = interp1(flipud(grid.x),thalweg,max(grid.x)+edX,'linear','extrap');
+                zm = interp1(flipud(subgrid.x),thalweg,max(subgrid.x)+edX,'linear','extrap');
                 hc = hydobj.zmt(1)-zm;  %zmt is the new boundary value set in InitTimeStep
                            
                 %widths before transgression

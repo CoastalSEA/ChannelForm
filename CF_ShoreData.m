@@ -71,7 +71,7 @@ classdef CF_ShoreData < muiPropertyUI
             ubs = 1/obj.UpperBeachBS;
             
             delx = abs(grid.x(2)-grid.x(1));
-            nint = floor(obj.ShoreWidth/delx);
+            nint = round(obj.ShoreWidth/delx);
             xM = nint*delx;
             newx = 0:delx:xM-delx;
             zBC = grid.z(1,1);

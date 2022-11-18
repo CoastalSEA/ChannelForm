@@ -7,7 +7,7 @@ function obj = cf_offset_wls(obj,isextend)
 %   translate water levels landwards when mouth is some distance from x=0 
 %   and pad the water level vectors with values at the mouth
 % USAGE
-%   obj = cf_offset_wls(obj)
+%   obj = cf_offset_wls(obj,isextend)
 % INPUTS
 %   obj - CF_FormModel or CF_TransModel class instance with grid and 
 %         water level model inputs defined in RunParam versions of 
@@ -56,22 +56,26 @@ function obj = cf_offset_wls(obj,isextend)
 
             mask = ones(1,ixM-1);
             xrec = length(zhw);
-            %if isnan(zhw(1)), imouth = find(~isnan(zhw),1,'first'); end
+            ix0 = 1;                %index of first wls at zwl(1)
             if isextend             %extend wl vector seaward
-                range = 1:xrec;
-                ixM = 1;                  %first wls are at zwl(1)
+                xrec = min([xrec,length(grid.x)-ixM+1]);
+                range = 1:xrec;              
             else                    %wl vector correct length
                 if isnan(zhw(end))        %add seaward and remove landward values
                     range = 1:xrec-ixM+1;
-                    ixM = 1;              %first wls are at zwl(1)
-                else
+                elseif isnan(zhw(1))
                     range = ixM:xrec;     %overwrite seaward values
-                end                       %first wls are at zwl(ixM)
+                    ix0 = ixM;            %first wls are at zwl(ixM)
+%                 elseif xrec~=length(grid.x)
+%                     range = 1:xrec;
+                else
+                    range = 1:xrec-ixM+1; %add seaward and remove landward values
+                end
             end
 
-            zHWxM = [mask*zhw(ixM),zhw(range)];
-            zMTxM = [mask*zmt(ixM),zmt(range)];     
-            zLWxM = [mask*zlw(ixM),zlw(range)];            
+            zHWxM = [mask*zhw(ix0),zhw(range)];
+            zMTxM = [mask*zmt(ix0),zmt(range)];     
+            zLWxM = [mask*zlw(ix0),zlw(range)];            
             
             if istransient
                 obj.RunParam.CF_HydroData.zhw = zHWxM; %high water

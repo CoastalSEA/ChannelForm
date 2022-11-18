@@ -151,6 +151,7 @@ classdef CF_FormModel < FGDinterface
             formdst.DataTable.Z = reshape(grid.z,1,sz{:}); 
             formdst.UserData.xM = grid.xM;
             
+            
             %need to update seaward water levels in obj.Data.WaterLevels
             %hence cannot use addORupdate function
             answer = questdlg('Add or update existing?','Add Mods','Add','Update','Add');
@@ -165,6 +166,13 @@ classdef CF_FormModel < FGDinterface
                 %overwrite exisitng form data set with new form             
                 obj.Data.Grid = formdst;  
                 obj = cf_offset_wls(obj,true);  %translate wls, true extends vector
+                Wz = obj.Data.Plan.DataTable;
+                %pad vectors for shore and remove any landward points
+                %outside grid
+                [~,ixM] = gd_basin_indices(grid); %nearest grid point
+                varfunc = @(x) [NaN(1,ixM-1),x(1:length(grid.x)-ixM+1)];
+                obj.Data.Plan.DataTable = varfun(varfunc,Wz);
+                obj.Data.Plan.VariableNames = Wz.Properties.VariableNames;
                 classrec = classRec(muicat,caseRec(muicat,obj.CaseIndex)); 
                 updateCase(muicat,obj,classrec,true);
             end 
