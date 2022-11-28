@@ -20,7 +20,7 @@ function cf_summarytransplot(obj)
 %
     %composite set of plots to show results form Transgression table
     dst = obj.Data.Transgression;
-    slr = dst.dSLR(end);
+    slr = dst.SLR(end);
     t = dst.RowNames;
     vardesc = dst.VariableDescriptions;
     %varnames: 'delX','estdX','cstdX','dSLR','Lt','FPA','waterVol','sedVol','vdiffx'
@@ -69,7 +69,7 @@ function cf_summarytransplot(obj)
     end
     plot_labels(dst,9)
     
-    sgtitle(sprintf('%s, slr=%0.1g m',dst.Description,slr),'FontSize',12);
+    sgtitle(sprintf('%s, slr=%0.2g m',dst.Description,slr),'FontSize',12);
 end
 %%
 function plot_labels(dst,idx)

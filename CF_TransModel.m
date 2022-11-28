@@ -60,7 +60,7 @@ classdef CF_TransModel < FGDinterface
                        % delX - unadjusted transgression distance
                        % estdX - adjusted transgression distance (inc sediment flux)
                        % cstdX - open coast transgression distance
-                       % dSLR - increase in mean sea level at mouth
+                       % SLR - increase in mean sea level at mouth (m)
                        % Lt - distance to tidal limit (to record change - model uses CF_HydroData.xTidalLimit)
                        % vdiffx - volume difference for [0,delX/2,delX,3delX/2]
                        % sedVol - sediment flux (+ve=sediment import)
@@ -120,17 +120,17 @@ classdef CF_TransModel < FGDinterface
             timestepInput(obj); 
             
             %cumulative values for first 4 variables in Trans output table
-            %order is: 'delX','estdX','cstdX','dSLR','Lt','FPA','sedVol','vdiffx'                                                
+            %order is: 'delX','estdX','cstdX','SLR','Lt','FPA','sedVol','vdiffx'                                                
             obj.Trans(:,1:4) = varfun(@cumsum,obj.Trans(:,1:4)); 
             obj.Trans.waterVol = cumsum(obj.Trans.waterVol,1);
             obj.Trans.sedVol = cumsum(obj.Trans.sedVol,1);
             obj.Trans.vdiffx = cumsum(obj.Trans.vdiffx,1);
             %plots of run
-            slr = obj.Trans.dSLR(end);
-            %summaryGridPlots(obj,slr);
-            %crossectionPlot(obj,slr);
+            [~,slr,~] = netChangeWL(obj.RunParam.WaterLevels,obj);
+            summaryGridPlots(obj,slr);
+            crossectionPlot(obj,slr);
             changePlot(obj,slr);         
-            %thalwegPlot(obj,slr);
+            thalwegPlot(obj,slr);
 
             %now assign results to object properties  
             mtime = years(obj.StepTime/obj.cns.y2s);
@@ -202,13 +202,13 @@ classdef CF_TransModel < FGDinterface
             % delX - unadjusted transgression distance
             % estdX - adjusted transgression distance (inc sediment flux)
             % cstdX - open coast transgression distance
-            % dSLR - rate of sea level rise in time step
+            % SLR - sea level rise in time step
             % Lt - distance to tidal limit (to record change - model uses CF_HydroData.xTidalLimit)
             % FPA - flood plain area
             % waterVol - water volume change due to changes in slr and tidal range
             % sedVol - sediment flux (+ve=sediment import)            
             % vdiffx - volume difference for [0,delX/2,delX,3delX/2]
-            varnames = {'delX','estdX','cstdX','dSLR','Lt','FPA',...
+            varnames = {'delX','estdX','cstdX','SLR','Lt','FPA',...
                                            'waterVol','sedVol','vdiffx'};                                                        
             vars = {0,0,0,0,0,0,0,0,[0,0,0,0]};                    
             obj.dTrans = table(vars{:},'VariableNames',varnames);
@@ -258,20 +258,19 @@ classdef CF_TransModel < FGDinterface
             obj.Grid.t = obj.DateTime/obj.cns.y2s;
             %update water levels at boundary
             newWaterLevels(obj.RunParam.CF_HydroData,obj);
-            %set slr increment for timestep
-            dt = obj.Time/obj.cns.y2s;
-            obj.dTrans.dSLR = obj.RunParam.CF_HydroData.dslr*dt;
+            %net change in MSL over the simulation period
+            [~,obj.dTrans.SLR] = netChangeWL(obj.RunParam.WaterLevels,obj);
             %change in water volume over run duration
-            obj.dTrans.waterVol =  obj.CSTparams.Shw*obj.dTrans.dSLR;
+            obj.dTrans.waterVol =  obj.CSTparams.Shw*obj.dTrans.SLR;
             
             %get transgression distance for the combined form
             hd = setdialog('Processing transgression');
             pause(0.1)
             obj = getTransDist(obj);
-            obj.dTrans.estdX = obj.dTrans.delX;
+            obj.dTrans.estdX = obj.dTrans.delX;    %ignore sediment flux
             %coastal transgression 
             trnobj = obj.RunParam.CF_TransData;
-            obj.dTrans.cstdX = trnobj.BruunRatio*obj.dTrans.dSLR;;
+            obj.dTrans.cstdX = trnobj.BruunRatio*obj.dTrans.SLR;
             
             %update form input parameters
             updateFormParams(obj);
@@ -321,8 +320,8 @@ classdef CF_TransModel < FGDinterface
             %is in CF_HydroData and NOT WaterLevels
             newWaterLevels(obj.RunParam.CF_HydroData,obj);
             %set slr increment for timestep
-            dt = obj.delta/obj.cns.y2s;
-            obj.dTrans.dSLR = obj.RunParam.CF_HydroData.dslr*dt;
+%             dt = obj.delta/obj.cns.y2s;
+            obj.dTrans.SLR = obj.RunParam.CF_HydroData.slr; %change in msl over a time step
             %could also update river discharge if required
             % Qr = source of river discharge time series;
             % obj.RunParam.CF_HydroData.RiverDischarge = Qr;
@@ -350,10 +349,8 @@ classdef CF_TransModel < FGDinterface
             %adjusted delX accounts for sediment input/output
             obj.dTrans.estdX = interp1(vdiffx,delint,obj.dTrans.sedVol,...
                                                         'linear','extrap');            
-            %shoreline change on open coast
-            hydobj = obj.RunParam.CF_HydroData;
-            incslr = hydobj.dslr*obj.delta/obj.cns.y2s; %slr in time step
-            obj.dTrans.cstdX = trnobj.BruunRatio*incslr;%coastal transgression 
+            %shoreline change on open coast, ie coastal transgression 
+            obj.dTrans.cstdX = trnobj.BruunRatio*obj.dTrans.SLR;
 
             %update form input parameters
             updateFormParams(obj);
@@ -393,8 +390,9 @@ classdef CF_TransModel < FGDinterface
             %using fzero is slower but more accurate  
             F = obj.Grid;           
             Lt = obj.RunParam.CF_HydroData.xTidalLimit;
-            slr = obj.RunParam.CF_HydroData.dslr*obj.delta/obj.cns.y2s;
-            adist = Lt/abs(min(min(F.z,[],'omitnan')))*slr; %used as initial guess
+%             slr = obj.RunParam.CF_HydroData.dslr*obj.delta/obj.cns.y2s;
+            hc = obj.RunParam.CF_FormData.MTmouthDepth; %depth at mouth - *****DOES NOT work for CKFA model
+            adist = Lt/hc*obj.dTrans.SLR;               %used as initial guess
             %reducing TolX to 1 reduces time by ~7% but increases vdiff@delX
             %using fminsearch is much slower
             % vdiff = @(delx) getZdiff(obj,delx); 
@@ -450,14 +448,14 @@ classdef CF_TransModel < FGDinterface
             %apply limits to domain and any vertical constraints
             %control lateral spatial extent
             trnobj = obj.RunParam.CF_TransData;                        
-            [Y,Yhw0,Yhw,~,zFP,dely] = constraintGrids(obj);
+            [Y,Yhw0,Yhw,~,idV,dely] = constraintGrids(obj,obj.Grid);
             
             if trnobj.inclHWConstraint       %sea wall fixes HW line                
                 zdiff(Y<Yhw0.left) = NaN;    %left side of initial hw
                 zdiff(Y>Yhw0.right) = NaN;   %right side of initial hw
             elseif trnobj.inclFloodPlain     %open flood plain
                 %flood plain surface that determines intersection with valley slope
-                zdiff(obj.Grid.z>zFP) = NaN; %use combined channel+valley to HW limit        
+                zdiff(idV) = NaN; %use combined channel+valley to HW limit        
             else
                 %HW changes but flood plain excluded, sediment demand limited to near bank
                 fact = 4; %needs to be consistent with value in updateValley
@@ -488,16 +486,51 @@ classdef CF_TransModel < FGDinterface
             % subplot(2,1,2)
             % contourf(zv');
             
-            dVpos = getZdiff(obj,0);
-            dVneg = dVpos; 
-            count = 2;           
-            while dVneg>0
-                %ensure the largest delX value gives a negative vdiffx
-                newdel = count*adist;
-                dVneg = getZdiff(obj,newdel);
-                count = count+1;
+%             dVpos = getZdiff(obj,0);
+%             sgn = 1;
+%             if dVpos<0
+%                 sgn = -1;
+%             end
+%             dVneg = dVpos; 
+%             count = 2;           
+%             while sgn*dVneg>0
+%                 %ensure the largest delX value gives a negative vdiffx
+%                 newdel = sgn*count*adist;
+%                 dVneg = getZdiff(obj,newdel);
+%                 count = count+1;
+%             end
+%             delX = dVpos/((dVpos-dVneg)/newdel);
+
+            dV0 = getZdiff(obj,0);      %diffference with zero translation
+            dV1 = getZdiff(obj,adist);  %guestimate with dx=adist
+            sgnx = +1;
+            if (dV0>0 && dV0<dV1) || (dV0<0 && dV0>dV1) 
+                sgnx = -sgnx;           %going in wrong direction
             end
-            delX = dVpos/((dVpos-dVneg)/newdel);
+            count = 2;
+            
+            if (dV0>0 && dV1<0) || (dV0<0 && dV1>0)
+                %opposited signs so solution found for +ve dx
+            elseif dV0>0                %increase in volume with dx=0
+                while dV1>0
+                    newdel = sgnx*count*adist;
+                    dV1 = getZdiff(obj,newdel);
+                    if dV0<dV1, sgnx = -sgnx; end %direction should be established but check
+                    count = count+1;
+                end
+            elseif dV0<0                %decrease in volume with dx=0
+                while dV1<0
+                    newdel = sgnx*count*adist;
+                    dV1 = getZdiff(obj,newdel);
+                    if dV0>dV1, sgnx = -sgnx; end %direction should be established but check
+                    count = count+1;
+                end
+            else                        %dV0=0
+                dV1 = 0;                %implies no change in sea level
+                newdel = 1;             %hence no transgression
+            end
+
+            delX = dV0/((dV0-dV1)/newdel);    
         end
 %%
         function ok = updateModelGrid(obj)
@@ -554,11 +587,7 @@ classdef CF_TransModel < FGDinterface
             %apply any vertical constraints
             trnobj = obj.RunParam.CF_TransData; 
             if trnobj.inclGeoConstraint && ~isempty(trnobj.StConstraints)
-                yrec = length(grid.y);
-                %elevation of initial flood plain
-                hydobj0 = obj.Channel.Data.WaterLevels; %source form water levels
-                zFP0 = hydobj0.zhw+trnobj.FPoffset;     %initial flood plain levels
-                zFP0 = repmat(zFP0',1,yrec);
+                %find areas of erosion relative to initial grid
                 ids = length(trnobj.StConstraints);
                 z0 = squeeze(obj.Channel.Data.Grid.Z);  %source channel grid
                 for i=1:ids
@@ -577,7 +606,7 @@ classdef CF_TransModel < FGDinterface
             %apply any constraints at high water, and/or exclude flood plain
             %note: geological constraints are applied when creating fgrid
             trnobj = obj.RunParam.CF_TransData;
-            [Y,Yhw0,Yhw,zFP0,~,dely] = constraintGrids(obj);
+            [Y,Yhw0,Yhw,zFP0,idV,dely] = constraintGrids(obj,grid);
 
             if ~trnobj.inclFloodPlain && ~trnobj.inclHWConstraint
                 %exclude flood plain with no constraint at HW so reset levels
@@ -601,10 +630,18 @@ classdef CF_TransModel < FGDinterface
                 idzright = Y>Yhw0.right & Y<(Yhw0.right+dely); %wall on right bank
                 idz = idzleft | idzright;
                 grid.z(idz) = grid.z(idz)+2; %offset to define a wall crest level
-            end            
+            end   
+            
+            if obj.RunParam.CF_TransData.MaxFPwidth>0
+                %impose a maximum width on the valley flood plain
+                %zFP is the flood plain elevation along the channel and the
+                %valley dtm outside of the channel
+                %idv = grid.z>zFP;       %model grid above flood plain
+                grid.z(idV) = NaN; %apply flood plain/valley values
+            end
         end
 %%
-        function [Y,Yhw0,Yhw,zFP0,zFP,dely] = constraintGrids(obj)
+        function [Y,Yhw0,Yhw,zFP0,idV,dely] = constraintGrids(obj,grid)
             %grid arrays for the y-dimension, alongchannel high water
             %widths for left and right bank flood plain elevations. Returns
             %values for initial condition and current grid
@@ -624,7 +661,7 @@ classdef CF_TransModel < FGDinterface
             Yhw0.right = yCL+Yhwo;
 
             %grid of high water y co-ordinates
-            xhw = obj.TranProp.Wz.Whw/2;                     %current state
+            xhw = obj.TranProp.Wz.Whw/2;            %current state
             Yhwi = repmat(xhw',1,length(y)); 
             Yhw.left = yCL-Yhwi;    
             Yhw.right = yCL+Yhwi;
@@ -638,7 +675,24 @@ classdef CF_TransModel < FGDinterface
             %elevation of current flood plain based on current zhw
             hydobj = obj.RunParam.CF_HydroData;
             zFP = hydobj.zhw+trnobj.FPoffset;       %flood plain levels
-            zFP = repmat(zFP',1,length(y));         %returns a row vector
+            if isscalar(zFP)
+                zFP = repmat(zFP,length(x),length(y));
+            else
+                zFP = repmat(zFP',1,length(y));     %returns array with size(z)
+            end
+            
+            idV = grid.z>zFP;                       %valley above flood plain  
+            if obj.RunParam.CF_TransData.MaxFPwidth>0
+                %impose a maximum width on the valley flood plain
+                %used when modelling Holocene and starting offshore of
+                %present day coastline/valley formation to limit extent of
+                %sediment demand on the flood plain
+                zV = squeeze(obj.Valley.Data.Grid.Z);
+                vb = obj.RunParam.CF_TransData.MaxFPwidth/2;  %limit valley;
+                idv = ~(Y>=yCL-vb & Y<=yCL+vb); %indices for valley outwith limit
+                idV = idv | idV;
+                %zFP0(idV) = zV(idV);            %restore valley levels outside limit
+            end
         end
 %%
         function newgrid = updateValley(obj,fgrid,isoffset)
@@ -686,7 +740,8 @@ classdef CF_TransModel < FGDinterface
                     subgrid.x = grid.x(ixM:end);
                     subgrid.z = grid.z(ixM:end,:);
                     obj.RunParam.CF_ShoreData.ShoreWidth = grid.xM;
-                    shore = setShoreline(obj.RunParam.CF_ShoreData,grid,false); %false returns a shore strip grid
+                    z0 = obj.RunParam.CF_HydroData.zmt(ixM); %msl at the mouth
+                    shore = setShoreline(obj.RunParam.CF_ShoreData,grid,z0,false); %false returns a shore strip grid
                     grid.z(1:ixM-1,:) = shore.z(end-(ixM-2):end,:);                    
                 elseif ixM<1
                     warndlg('Seaward migration not handled in CF_TransModel.updateShoreline')
@@ -796,14 +851,14 @@ classdef CF_TransModel < FGDinterface
             %get the sediment flux in a time step
             % conc is an optional output but is not currently used
             trnobj = obj.RunParam.CF_TransData;
-            dt = obj.delta/obj.cns.y2s; 
             hydobj = obj.RunParam.CF_HydroData;
-            slr = hydobj.dslr;     %rate of slr in time step
+            dt = obj.delta/obj.cns.y2s; %time step in years            
+            slr = obj.dTrans.SLR;       %slr in time step (m)
 
             if trnobj.SedFlux>0
                 %user defined import/export flux in m3/yr              
                 sedvol = trnobj.SedFlux*dt;                %+ve volume for import
-                watervol = obj.CSTparams.Shw*slr*dt;
+                watervol = obj.CSTparams.Shw*slr;
             else
                 %compute flux from form and hydraulics in m3/yr
                 %parameters assigned in updateInputParameters
@@ -836,7 +891,7 @@ classdef CF_TransModel < FGDinterface
                 inp = sedExchanges(obj,inp); 
                 
                 %sediment flux with external environment
-                [sedvol,watervol,conc] = get_sed_flux(inp,slr);
+                [sedvol,watervol,conc] = get_sed_flux(inp,slr/dt);
                 %report sedvol as +ve volume for sediment import       
                 sedvol = -sign(inp.TransportCoeff)*sedvol*dt; 
                 watervol = watervol*dt;
@@ -913,7 +968,7 @@ classdef CF_TransModel < FGDinterface
                 %invert x and add offset of mouth to max x to interpolate
                 %seaward of the exisitng form if edX is +ve
                 zm = interp1(flipud(subgrid.x),thalweg,max(subgrid.x)+edX,'linear','extrap');
-                hc = hydobj.zmt(1)-zm;  %zmt is the new boundary value set in InitTimeStep
+                hc = hydobj.zmt(1)-zm;  %zmt is the new boundary value set in InitTimeStep and is scalar
                            
                 %widths before transgression
                 Wu = obj.RunParam.CF_FormData.HWmouthWidth;
@@ -1107,7 +1162,7 @@ classdef CF_TransModel < FGDinterface
             hf.Position(1) = 0.1;
             hf.Position(3) = hf.Position(3)*2;
             p = uipanel('Parent',hf,'BorderType','none'); 
-            p.Title = sprintf('Change plot, slr=%0.1g',slr);
+            p.Title = sprintf('Change plot, slr=%0.2g m',slr);
             p.TitlePosition = 'centertop'; 
             p.FontSize = 12;
             p.FontWeight = 'bold';
@@ -1160,7 +1215,7 @@ classdef CF_TransModel < FGDinterface
             h_c.Label.String = 'Change in elevation (m) for +/-2.slr';
             timetxt = num2str(obj.Grid.t);
             infotxt = sprintf('Dashed lines are HW/LW at T=%s yrs',timetxt);
-            tltxt = sprintf('dV=0 for: SLR = %0.1g m, Transgression = %d m, Coast erosion = %d m\n%s',...
+            tltxt = sprintf('dV=0 for: SLR = %0.2g m, Transgression = %d m, Coast erosion = %d m\n%s',...
                                         slr,round(adX),round(cdX),infotxt);
             title(tltxt,'FontSize',10);
         end  
@@ -1250,7 +1305,7 @@ classdef CF_TransModel < FGDinterface
             ylabel('Change in level (m)');
             hL=legend('0pre','0post','0.1pre','0.1post','0.2pre','0.2post','Location','SouthEast');
             set(hL, 'Color', 'none');
-            casedesc = sprintf('Cross-sections difference plot, slr=%0.1g',slr);
+            casedesc = sprintf('Cross-sections difference plot, slr=%0.2g m',slr);
             title(casedesc,'FontWeight','normal','FontSize',10);            
         end
 %%
@@ -1287,7 +1342,7 @@ classdef CF_TransModel < FGDinterface
             ylabel('Elevation (mAD)');
             hL=legend('Initial','Final','Location','SouthEast');
             set(hL, 'Color', 'none');
-            casedesc = sprintf('Centre-line difference plot, slr=%0.1g',slr);
+            casedesc = sprintf('Centre-line difference plot, slr=%0.2g m',slr);
             title(casedesc,'FontWeight','normal','FontSize',10); 
         end
 %%
@@ -1321,7 +1376,7 @@ classdef CF_TransModel < FGDinterface
             h3 = colorbar; 
             h3.Label.String = 'Change in elevation (m)';
             title('Difference plot (showing +/-2.slr)')
-            casedesc = sprintf('Summary of change, slr=%0.1g',slr);
+            casedesc = sprintf('Summary of change, slr=%0.2g',slr);
             sgtitle(casedesc,'FontWeight','normal','FontSize',10); 
         end
 %% ------------------------------------------------------------------------
@@ -1339,6 +1394,7 @@ classdef CF_TransModel < FGDinterface
             % delX - unadjusted transgression distance
             % estdX - adjusted transgression distance (inc sediment flux)
             % cstdX - open coast transgression distance
+            % SLR - cumulative sea level rise
             % Lt - distance to tidal limit (to record change - model uses CF_HydroData.xTidalLimit)
             % FPA - flood plain area
             % waterVol - water volume change due to changes in slr and tidal range
@@ -1346,7 +1402,7 @@ classdef CF_TransModel < FGDinterface
             % vdiffx - volume difference for [0,delX/2,delX,3delX/2]
             
             dsp.Variables = struct(...
-                        'Name',{'delX','estdX','cstdX','dSLR','Lt','FPA',...
+                        'Name',{'delX','estdX','cstdX','SLR','Lt','FPA',...
                                             'waterVol','sedVol','vdiffx'},...
                         'Description',{'Unadjusted transgression distance',...
                                        'Adjusted transgression distance',...

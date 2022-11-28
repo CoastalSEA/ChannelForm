@@ -446,6 +446,7 @@ classdef ChannelForm < muiModelUI
             
             cobj = selectCaseObj(obj.Cases,[],{'CF_TransModel'},promptxt);
             if isempty(cobj), return; end
+            cobj.cns.y2s = obj.Constants.y2s;
             switch src.Text
                 case 'Grid Plot'
                     cf_summarygridplot(cobj);

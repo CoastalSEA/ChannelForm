@@ -27,9 +27,9 @@ function cf_sectionplot(obj)
     hf.Position(3) = hf.Position(3)*2;
     
     dst = obj.Data.Transgression;
-    slr = dst.dSLR(end);
+    slr = dst.SLR(end);
     p = uipanel('Parent',hf,'BorderType','none'); 
-    p.Title = sprintf('Change plot, slr=%0.1g',slr);
+    p.Title = sprintf('Change plot, slr=%0.2g m',slr);
     p.TitlePosition = 'centertop'; 
     p.FontSize = 12;
     p.FontWeight = 'bold';
@@ -98,7 +98,7 @@ function crossectionPlot(obj,ax,slr)
     ylabel('Change in level (m)');
     hL=legend('0pre','0post','0.1pre','0.1post','0.2pre','0.2post','Location','SouthEast');
     set(hL, 'Color', 'none');
-    casedesc = sprintf('Cross-sections difference plot, slr=%0.1g m',slr);
+    casedesc = sprintf('Cross-sections difference plot, slr=%0.2g m',slr);
     title(casedesc,'FontWeight','normal','FontSize',10);            
 end
 %%
@@ -137,6 +137,6 @@ function thalwegPlot(obj,ax,slr)
     ylabel('Elevation (mAD)');
     hL=legend('Initial','Final','Location','SouthEast');
     set(hL, 'Color', 'none');
-    casedesc = sprintf('Centre-line difference plot, slr=%0.1g',slr);
+    casedesc = sprintf('Centre-line difference plot, slr=%0.2g m',slr);
     title(casedesc,'FontWeight','normal','FontSize',10); 
 end

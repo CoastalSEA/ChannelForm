@@ -32,14 +32,17 @@ function obj = cf_offset_wls(obj,isextend)
     if isprop(obj,'Grid') && ~isempty(obj.Grid)
         %called from CF_TransModel and using RunParam.CF_HydroProps
         grid = obj.Grid;
-        hydobj = obj.RunParam.CF_HydroData;
         istransient = true;
+        hydobj = obj.RunParam.CF_HydroData;        
     elseif isprop(obj,'Data') && isfield(obj.Data,'Grid') && ...
                                                    ~isempty(obj.Data.Grid)
-       %
        grid = getGrid(obj,1);
-       hydobj = obj.Data.WaterLevels;
        istransient = false;
+       if isfield(obj.Data,'WaterLevels')
+           hydobj = obj.Data.WaterLevels;
+       else
+           grid = []; 
+       end       
     else
         grid = [];
     end

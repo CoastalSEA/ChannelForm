@@ -24,11 +24,10 @@ function cf_changeplot(obj)
                                             'Tag','PlotFig');                                    
     hf.Position(1) = 0.1;
     hf.Position(3) = hf.Position(3)*2;
-    
-    dst = obj.Data.Transgression;
-    slr = dst.dSLR(end);
+
+    [~,slr,~] = netChangeWL(obj.RunParam.WaterLevels,obj);
     p = uipanel('Parent',hf,'BorderType','none'); 
-    p.Title = sprintf('Change plot, slr=%0.1g',slr);
+    p.Title = sprintf('Change plot, slr=%0.2g m',slr);
     p.TitlePosition = 'centertop'; 
     p.FontSize = 12;
     p.FontWeight = 'bold';
@@ -88,7 +87,7 @@ function netchangePlot(obj,ax,slr)
     h_c.Label.String = 'Change in elevation (m) for +/-2.slr';
     timetxt = cellstr(grid1.t);
     infotxt = sprintf('Dashed lines are HW/LW at T=%s',timetxt{1});
-    tltxt = sprintf('dV=0 for: SLR = %0.1g m, Transgression = %d m, Coast erosion = %d m\n%s',...
+    tltxt = sprintf('dV=0 for: SLR = %0.2g m, Transgression = %d m, Coast erosion = %d m\n%s',...
                                 slr,round(adX),round(cdX),infotxt);
     title(tltxt,'FontSize',10);
 end  

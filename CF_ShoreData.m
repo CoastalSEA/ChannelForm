@@ -19,7 +19,8 @@ classdef CF_ShoreData < muiPropertyUI
         PropertyLabels = {'Width of shore to depth of closure (m)',...
                           'Depth of shore closure from mtl (m)',...
                           'Offshore bed slope (1:obs)',...
-                          'Upper beach slope (1:ubs)'};
+                          'Upper beach slope (1:ubs)'...
+                          'Beach crest height above mean sea level (m)'};
         %abstract properties in muiPropertyUI for tab display
         TabDisplay   %structure defines how the property table is displayed 
     end
@@ -28,7 +29,8 @@ classdef CF_ShoreData < muiPropertyUI
         ShoreWidth = 5000    %shore normal width to depth of closure (m) 
         ShoreDepth = 8       %closure depth of profile from mtl (m) 
         OffshoreBS = 5000    %offshore bed slope - defines bed alope of channel
-        UpperBeachBS = 20    %upper beach slope - defines slope above 0mAD
+        UpperBeachBS = 20    %upper beach slope - defines slope above msl
+        UpperBeachHeight = 5 %beach crest height above mean sea level (m)
     end    
 
 %%   
@@ -61,36 +63,41 @@ classdef CF_ShoreData < muiPropertyUI
     end       
 %%  
     methods
-        function grid = setShoreline(obj,grid,isfull)
+        function grid = setShoreline(obj,grid,z0,isfull)
             %create shoreline strip based on equilibrium profile 
+            % z0 - elevation of mean sea level to model datum
             % isfull - flag return coastal strip added to input grid if
             % true, otherwise just returns coastal strip
             %function intended for model grids where xM=0 in the source grid
             %and this is modified by the width of the shore (xM=Shorewidth)
-            obs = 1/obj.OffshoreBS;
-            ubs = 1/obj.UpperBeachBS;
-            
+            [~,ixM] = gd_basin_indices(grid); %nearest grid point
             delx = abs(grid.x(2)-grid.x(1));
+            
+            %parameters for beach profile
+            obs = 1/obj.OffshoreBS;     %offshore bed slope
+            ubs = 1/obj.UpperBeachBS;   %beach slope above msl
+            zBC = obj.UpperBeachHeight; %beach crest height above msl
             nint = round(obj.ShoreWidth/delx);
-            xM = nint*delx;
-            newx = 0:delx:xM-delx;
-            zBC = grid.z(1,1);
-            z1km = [xM,-obj.ShoreDepth];
+            xS = nint*delx;             %width of shore along x-axis
+            newx = 0:delx:xS-delx;      %shore x-axis
+            zdc = z0-obj.ShoreDepth;    %elevation of closure depth
+            z1km = [xS,zdc];   %distance and depth of offshore limit
+            %beach shore profile
             [~,zp,~] = deanbeachprofile(newx,zBC,z1km,ubs,false);
             zp = flipud(zp(1:nint));  %function adds upper beach so clip to required size
             shorez = repmat(zp,1,length(grid.y));
             
-            %slope seaward from estuary mouth
-            zM = grid.z(1,:); %elevation at mouth
-            estz = zM-(xM-newx(1:nint)')*obs;
+            %slope seaward from estuary mouth 
+            zM = grid.z(ixM,:); %elevation at mouth
+            estz = zM-(xS-newx(1:nint)')*obs;
             shorez = min(shorez,estz);
             if isfull
                 %return original grid with coastal strip added
                 if grid.x(1)~=0   %grid co-ordinates are being used 
-                    newx = grid.x(1)-xM:delx:grid.x(1)-delx;
+                    newx = grid.x(1)-xS:delx:grid.x(1)-delx;
                     grid.x = [newx';grid.x];
                 else       %model grid so move origin to include shoreface
-                    grid.x = [newx';grid.x+xM];
+                    grid.x = [newx';grid.x+xS];
                 end
                 grid.z = [shorez;grid.z];                
             else
@@ -98,7 +105,7 @@ classdef CF_ShoreData < muiPropertyUI
                 grid.x = newx';
                 grid.z = shorez;
             end
-            grid.xM = xM;
+            grid.xM = xS;
         end
     end  
 end

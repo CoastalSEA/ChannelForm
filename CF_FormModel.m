@@ -142,8 +142,10 @@ classdef CF_FormModel < FGDinterface
                 warndlg('No shoreline data available')
                 return
             end
-            grid = setShoreline(obj.RunParam.CF_ShoreData,grid,true);
-
+            [~,ixM] = gd_basin_indices(grid);   %nearest grid point to mouth
+            z0 = obj.Data.WaterLevels.zmt(ixM); %msl at the mouth
+            grid = setShoreline(obj.RunParam.CF_ShoreData,grid,z0,true);
+            
             %create new grid dstable and update  
             formdst = copy(obj.Data.Grid);
             formdst.Dimensions.X = grid.x;

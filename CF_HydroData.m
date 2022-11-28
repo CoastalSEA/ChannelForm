@@ -50,8 +50,8 @@ classdef CF_HydroData < muiPropertyUI
         zhw = 0         %high and low water level from amplitude+mtl 
         zmt = 0         %or CST model if varying along channel and/or
         zlw = 0         %time dependent (mOD)
-        dhw = 0         %change in high water during time step
-        dslr = 0        %rate of sea level rise at time t (only changes if SLRrate is not constant)
+        dhw = 0         %change in high water during time step (can include ntc)
+        slr = 0         %sea level rise during time step (change in msl)
         Qr = 0          %time dependent river discharge
         FormModel       %definition of morphological form
         cstres          %struct with velocity and hyd.depth from cst model
@@ -274,15 +274,16 @@ classdef CF_HydroData < muiPropertyUI
             % obj - CF_HydroData class instance
             % anobj - model class instance (eg CF_TransModel)
             wlvobj = anobj.RunParam.WaterLevels;
-
+            rnpobj = anobj.RunParam.RunProperties;
+            y2s = anobj.cns.y2s;
             mtime = anobj.Time;  %model time in seconds from model t=0
-            startyr = anobj.DateTime;
+            startyr = rnpobj.StartYear*y2s;  %startyear in seconds form Julian 0
             wlvobj = newWaterLevel(wlvobj,mtime,startyr);
             obj.zhw = wlvobj.HWaterLevel;
             obj.zmt = wlvobj.MeanSeaLevel;
             obj.zlw = wlvobj.LWaterLevel;
             obj.dhw = wlvobj.dHWchange;  %change in high water over a time step
-            obj.dslr = wlvobj.dslr;
+            obj.slr = wlvobj.dMWchange;  %change in mean water level
         end        
     end
 %%    

@@ -20,7 +20,7 @@ function cf_summarygridplot(obj)
 %--------------------------------------------------------------------------
 %
     dst = obj.Data.Transgression;
-    slr = dst.dSLR(end);
+    slr = dst.SLR(end);
     
     grid0 = getGrid(obj,1);
     grid1 = getGrid(obj,height(dst));
@@ -50,6 +50,6 @@ function cf_summarygridplot(obj)
     h3 = colorbar; 
     h3.Label.String = 'Change in elevation (m)';
     title('Difference plot (showing +/-2.slr)')
-    casedesc = sprintf('Summary of change, slr=%0.1g m',slr);
+    casedesc = sprintf('Summary of change, slr=%0.2g m',slr);
     sgtitle(casedesc,'FontWeight','normal','FontSize',10); 
 end
