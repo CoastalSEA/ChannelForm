@@ -69,7 +69,7 @@ function cf_summarytransplot(obj)
     end
     plot_labels(dst,9)
     
-    sgtitle(sprintf('%s, slr=%0.2g m',dst.Description,slr),'FontSize',12);
+    sgtitle(sprintf('Case: %s, slr=%0.3g m',dst.Description,slr),'FontSize',12);
 end
 %%
 function plot_labels(dst,idx)

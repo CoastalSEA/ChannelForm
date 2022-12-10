@@ -29,7 +29,7 @@ function cf_sectionplot(obj)
     dst = obj.Data.Transgression;
     slr = dst.SLR(end);
     p = uipanel('Parent',hf,'BorderType','none'); 
-    p.Title = sprintf('Change plot, slr=%0.2g m',slr);
+    p.Title = sprintf('Case: %s, slr=%0.3g m',obj.Data.Grid.Description,slr);
     p.TitlePosition = 'centertop'; 
     p.FontSize = 12;
     p.FontWeight = 'bold';
@@ -98,7 +98,7 @@ function crossectionPlot(obj,ax,slr)
     ylabel('Change in level (m)');
     hL=legend('0pre','0post','0.1pre','0.1post','0.2pre','0.2post','Location','SouthEast');
     set(hL, 'Color', 'none');
-    casedesc = sprintf('Cross-sections difference plot, slr=%0.2g m',slr);
+    casedesc = sprintf('Cross-sections relative to mouth at end of run, slr=%0.2g m',slr);
     title(casedesc,'FontWeight','normal','FontSize',10);            
 end
 %%

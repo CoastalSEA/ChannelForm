@@ -143,7 +143,13 @@ classdef CF_FormModel < FGDinterface
                 return
             end
             [~,ixM] = gd_basin_indices(grid);   %nearest grid point to mouth
-            z0 = obj.Data.WaterLevels.zmt(ixM); %msl at the mouth
+            if isfield(obj.Data,'WaterLevels')
+                z0 = obj.Data.WaterLevels.zmt(ixM); %msl at the mouth
+            else
+                answer = inputdlg('Mean sea level at mouth?','Water level',1,{'0'});
+                if isempty(answer), return; end 
+                z0 = str2double(answer{1});
+            end
             grid = setShoreline(obj.RunParam.CF_ShoreData,grid,z0,true);
             
             %create new grid dstable and update  

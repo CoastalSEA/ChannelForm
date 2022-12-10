@@ -27,7 +27,7 @@ function cf_changeplot(obj)
 
     [~,slr,~] = netChangeWL(obj.RunParam.WaterLevels,obj);
     p = uipanel('Parent',hf,'BorderType','none'); 
-    p.Title = sprintf('Change plot, slr=%0.2g m',slr);
+    p.Title = sprintf('Case: %s, slr=%0.3g m',obj.Data.Grid.Description,slr);
     p.TitlePosition = 'centertop'; 
     p.FontSize = 12;
     p.FontWeight = 'bold';
@@ -96,15 +96,14 @@ function rateofchangePlot(obj,ax)
     %plot the volume difference for different distanes of transgression
     % NB uses transient properties so only works in current session
     
-    dst = obj.Data.Transgression;
-    
+    dst = obj.Data.Transgression;   
     delX = dst.delX(end);
-    dx = [0,delX/2,delX,delX+delX/2];  %x intervals used            
-    dV = dst.vdiffx(end,:);      %volume change for dx
+    edX = dst.estdX(end);
+    dx = [0,edX,delX];  %x intervals used            
+    dV = dst.diffv(end,:);      %volume change for dx
     trnobj = obj.RunParam.CF_TransData;
     sedvol = dst.sedVol(end);
-    edX = dst.estdX(end);
-    
+       
     plot(ax,dx,dV,'-k','LineWidth',1)
     ax.YGrid = 'on';
     xlabel('Landward transgression (m)');

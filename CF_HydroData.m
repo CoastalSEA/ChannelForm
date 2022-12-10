@@ -283,7 +283,7 @@ classdef CF_HydroData < muiPropertyUI
             obj.zmt = wlvobj.MeanSeaLevel;
             obj.zlw = wlvobj.LWaterLevel;
             obj.dhw = wlvobj.dHWchange;  %change in high water over a time step
-            obj.slr = wlvobj.dMWchange;  %change in mean water level
+            obj.slr = wlvobj.dMWchange;  %change in mean water level over a time step
         end        
     end
 %%    

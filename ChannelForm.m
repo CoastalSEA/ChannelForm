@@ -174,9 +174,9 @@ classdef ChannelForm < muiModelUI
             menu.Analysis(1).Separator = {'off','off','on'};
             
             menu.Analysis(2).List = {'Grid Plot','Change Plot','Section Plot',...
-                                    'Transgression Plot','Export Tables'};
-            menu.Analysis(2).Callback = repmat({@obj.analysisPlotOptions},[1,5]);
-            menu.Analysis(2).Separator = [repmat({'off'},[1,4]),{'on'}]; 
+                                    'Transgression Plot','Animation','Export Tables'};
+            menu.Analysis(2).Callback = repmat({@obj.analysisPlotOptions},[1,6]);
+            menu.Analysis(2).Separator = [repmat({'off'},[1,5]),{'on'}]; 
             
             %% Help menu --------------------------------------------------
             menu.Help(1).Callback = {@obj.Help}; %make model specific?
@@ -445,7 +445,10 @@ classdef ChannelForm < muiModelUI
             end
             
             cobj = selectCaseObj(obj.Cases,[],{'CF_TransModel'},promptxt);
-            if isempty(cobj), return; end
+            if isempty(cobj)
+                getdialog('No transgression model results available');
+                return; 
+            end
             cobj.cns.y2s = obj.Constants.y2s;
             switch src.Text
                 case 'Grid Plot'
@@ -456,6 +459,8 @@ classdef ChannelForm < muiModelUI
                     cf_sectionplot(cobj);
                 case'Transgression Plot'
                     cf_summarytransplot(cobj); 
+                case 'Animation'
+                    cf_animation(cobj);
                 case 'Export Tables'
                     cf_writetable(cobj);
             end

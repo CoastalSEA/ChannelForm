@@ -79,7 +79,7 @@ classdef CF_ShoreData < muiPropertyUI
             zBC = obj.UpperBeachHeight; %beach crest height above msl
             nint = round(obj.ShoreWidth/delx);
             xS = nint*delx;             %width of shore along x-axis
-            newx = 0:delx:xS-delx;      %shore x-axis
+            newx = 0:delx:(xS-delx);    %shore x-axis
             zdc = z0-obj.ShoreDepth;    %elevation of closure depth
             z1km = [xS,zdc];   %distance and depth of offshore limit
             %beach shore profile
@@ -89,23 +89,30 @@ classdef CF_ShoreData < muiPropertyUI
             
             %slope seaward from estuary mouth 
             zM = grid.z(ixM,:); %elevation at mouth
-            estz = zM-(xS-newx(1:nint)')*obs;
-            shorez = min(shorez,estz);
+            estz = zM-(xS-newx(1:nint)')*obs; %bed sloping at 1:obs from grid levels at shoreline
+            shorez = min(shorez,estz);            
             if isfull
                 %return original grid with coastal strip added
                 if grid.x(1)~=0   %grid co-ordinates are being used 
-                    newx = grid.x(1)-xS:delx:grid.x(1)-delx;
-                    grid.x = [newx';grid.x];
+                    dx = grid.x(2)-grid.x(1);
+                    newx = grid.x(ixM)-sign(dx)*xS:dx:(grid.x(ixM)-dx);
+                    grid.x = [newx';grid.x(ixM:end)];
+                    if sign(dx)>0
+                        grid.xM = grid.x(1)+xS;    %distance to shore from x(1)
+                    else
+                        %grid xM does not change if axis is descending
+                    end
                 else       %model grid so move origin to include shoreface
-                    grid.x = [newx';grid.x+xS];
+                    grid.x = [newx';grid.x(ixM:end)+xS]; 
+                    grid.xM = xS;                  %distance to shore from x=0
                 end
-                grid.z = [shorez;grid.z];                
+                grid.z = [shorez;grid.z(ixM:end,:)];                
             else
                 %return just the coastal strip
                 grid.x = newx';
                 grid.z = shorez;
+                grid.xM = xS;                     %distance to shore from x=0
             end
-            grid.xM = xS;
         end
     end  
 end
