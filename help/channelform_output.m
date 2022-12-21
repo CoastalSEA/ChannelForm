@@ -192,7 +192,7 @@
 % _MetaData_ - details any manipulation e.g. type of model or grid rotation.
 
 %% See Also
-% The <matlab:open_manual manual> provides further details of setup and 
+% The <matlab:cfm_open_manual manual> provides further details of setup and 
 % configuration of the model.
 %%
 % Townend I H, Zhou Z, Guo L and Coco G, 2021, A morphological investigation 

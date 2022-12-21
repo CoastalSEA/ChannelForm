@@ -55,9 +55,9 @@
 % * xy2sn and sn2xy - Juernjakob Dugge (2015). jdugge/xy2sn, https://github.com/jdugge/xy2sn  
 
 %% Manual
-% The <matlab:open_manual manual> provides further details of setup and 
+% The <matlab:cfm_open_manual manual> provides further details of setup and 
 % configuration of the model. The files for the example use case can be found in
-% the example folder <matlab:example_folder here>. 
+% the example folder <matlab:cfm_example_folder here>. 
 
 %% See Also
 % <matlab:doc('muitoolbox') muitoolbox>, <matlab:doc('dstoolbox') dstoolbox>.

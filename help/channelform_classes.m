@@ -54,5 +54,5 @@
 
 %% See Also 
 % <matlab:doc('channelform_functions') ChannelForm functions> used in 
-% ChannelForm App and the <matlab:open_manual manual>, which provides further details 
+% ChannelForm App and the <matlab:cfm_open_manual manual>, which provides further details 
 % of setup and configuration of the model.

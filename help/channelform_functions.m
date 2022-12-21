@@ -7,7 +7,6 @@
 % Functions that implement various form models
 
 %%
-
 % * *cf_changeplot* - plot volume difference over the model run and the
 % variation of sediment exchange with transgression distance.
 % * *cf_cst2grid* - interpolate the CST water levels onto the model grid.
@@ -149,5 +148,5 @@
 
 %% See Also
 % The <matlab:doc('channelform_classes') additional classes> used in ChannelForm and
-% the <matlab:open_manual manual>, which provides further details of setup and 
+% the <matlab:cfm_open_manual manual>, which provides further details of setup and 
 % configuration of the model.

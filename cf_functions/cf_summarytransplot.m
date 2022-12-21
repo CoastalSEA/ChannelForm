@@ -61,10 +61,10 @@ function cf_summarytransplot(obj)
     %
     subplot(2,2,4)
     %plot Volume change for [0,dx/2,dx,3dx/2]
-    vardescs = {[varnames{9},'-0'],[varnames{9},'-dx/2'],...
-                [varnames{9},'-dx'],[varnames{9},'-3dx/2']};
+    vardescs = {[varnames{9},'-0'],[varnames{9},'-sedX'],...
+                [varnames{9},'-estdX']};
     hp = plot(t,dst.(varnames{9}));
-    for i=1:4
+    for i=1:3
         hp(i).DisplayName = vardescs{i};
     end
     plot_labels(dst,9)

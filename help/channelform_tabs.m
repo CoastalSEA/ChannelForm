@@ -52,5 +52,5 @@
 % model used.
 
 %% See Also
-% The <matlab:open_manual manual> provides further details of setup and 
+% The <matlab:cfm_open_manual manual> provides further details of setup and 
 % configuration of the model.

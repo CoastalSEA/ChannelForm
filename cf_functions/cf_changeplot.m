@@ -108,6 +108,9 @@ function rateofchangePlot(obj,ax)
     ax.YGrid = 'on';
     xlabel('Landward transgression (m)');
     ylabel('Volume change (m^3)');
+    if ax.YLim(1)>-ax.YLim(2)/10
+        ax.YLim(1) = -ax.YLim(2)/10; %Add small negtive offset
+    end
     %add explanatory text
     mxX = ax.XLim(2); mxY = ax.YLim(2);
     hold on
