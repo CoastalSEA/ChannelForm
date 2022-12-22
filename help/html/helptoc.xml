@@ -33,6 +33,7 @@
             <tocitem target="channelform_classes.html">ChannelForm classes</tocitem>
             <tocitem target="channelform_functions.html">ChannelForm functions</tocitem>
             <tocitem target="grid_class_fcns.html">Grid classes and functions</tocitem>
+            <tocitem target="fgdinterface.html">FGDinterface abstract class</tocitem>
             <tocitem target="gdinterface.html">GDinterface abstract class</tocitem>
         </tocitem>
         <!-- Optional link or links to your or other Web sites -->
