@@ -320,7 +320,7 @@ classdef CF_TransModel < FGDinterface
             obj.DateTime = obj.DateTime+obj.delta;
             obj.Grid.t = obj.DateTime/obj.cns.y2s;
 
-            %update flux model parameters (call be fore updating waterlevels)
+            %update flux model parameters (call before updating waterlevels)
             updateFluxParams(obj);
             
             %update water levels at boundary (mouth) - NB: this method
@@ -895,12 +895,14 @@ classdef CF_TransModel < FGDinterface
             dt = obj.delta/obj.cns.y2s; %time step in years            
             slr = obj.dTrans.SLR;       %slr in time step (m)
             conc_ratio = 1;
-            if obj.Trans.SLR(end)>0
-                %scale concentration based ratio of slr in t and t-1 to
-                %reflect potential change in supply eg from coastal erosion
-                %assumes slr always increases monotonically
-                conc_ratio = slr/obj.Trans.SLR(end);
-            end
+            % if obj.Trans.SLR(end)>0
+            %     %scale concentration based ratio of slr in t-1 and t to
+            %     %reflect potential change in supply eg from coastal erosion
+            %     %assumes slr always increases monotonically. If previous
+            %     %slr(t-1) was larger a lag in supply increases
+            %     %concentration and vice versa
+            %     conc_ratio = obj.Trans.SLR(end)/slr;
+            % end
             
             if trnobj.SedFlux>0
                 %user defined import/export flux in m3/yr              
@@ -916,7 +918,7 @@ classdef CF_TransModel < FGDinterface
                 %sediment input data
                 sedobj = obj.RunParam.CF_SediData;
                 inp.TransportCoeff = sedobj.TransportCoeff;%transport coefficient n (3-5)
-                inp.EqConc = sedobj.EqConcentration*conc_ratio;       %equilibrium concentration (-)
+                inp.EqConc = sedobj.EqConcentration*conc_ratio;%equilibrium concentration (-)
                 inp.RiverConc = sedobj.RiverConcentration; %river load imported by advection (-)
                 inp.BedConc = sedobj.BedConcentration;     %concentration of bed (-)
                 inp.y2s = obj.cns.y2s;                     %factor to convert from years to seconds                
@@ -926,8 +928,6 @@ classdef CF_TransModel < FGDinterface
                     V0 = obj.Channel.Data.GrossProps.Vhw;
                     Pr0 = obj.Channel.Data.GrossProps.PrA;
                     inp.EqScaleCoeff = V0/Pr0; 
-                    %used in v1 code - but updates each time step??
-                    % inp.EqScaleCoeff = inp.Volume/inp.Prism; 
                     inp.EqShapeCoeff = 1;
                 else
                     inp.EqScaleCoeff = sedobj.EqScaleCoeff;
@@ -963,7 +963,6 @@ classdef CF_TransModel < FGDinterface
                 L = min(3*obj.CSTparams.La,obj.dTrans.Lt);
                 ich = gd_basin_indices(obj.Grid,[],L); %indices from mouth to tidal limit
                 H = mean(hydobj.cstres.d(ich));        %average hydraulic depth
-                %H = mean(hydobj.cstres.d);
             else
                 %no hydraulic data
                 u = 1;                                 %assumed velocity at mouth
