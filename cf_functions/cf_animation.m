@@ -27,16 +27,16 @@ function cf_animation(obj)
                     'Visible','off','Tag','PlotFig');
     %create an instance of muiPlots and populate the properties that are
     %needed for the newAnimation method
-    pobj = muiPlots.get_muiPlots();   %create new instance          
+    pobj = muiPlots.get_muiPlots();     %create new instance          
     pobj.Plot.CurrentFig = hfig;
     pobj.Plot.FigNum = hfig.Number;
     pobj.UIset.callTab = '3DT';
     pobj.UIset.Polar = false;
     pobj.UIset.Type.String = 'surf';
-    pobj.UIset.iscmap = false;         %supress option to select colormap
+    pobj.UIset.iscmap = false;          %supress option to select colormap
     pobj.AxisLabels.X = 'Distance from mouth (m)';
     pobj.AxisLabels.Y = 'Width (m)';
-    pobj.AxisLabels.Y = 'Elevation (mAD)';
+    pobj.AxisLabels.Z = 'Elevation (mAD)';
     pobj.Legend = [];
     slr = obj.Data.Transgression.SLR;
     msl0 = obj.RunParam.WaterLevels.MSL0;
@@ -46,11 +46,11 @@ function cf_animation(obj)
     pobj.Data.Y = gridData.Dimensions.Y;
     pobj.Data.Z = gridData.Z;
     pobj.Data.T = gridData.RowNames;
-    xM = gridData.UserData.xM;
-    qLt = round(gridData.UserData.Lt/4);
-    nint = round(qLt/abs(pobj.Data.X(2)-pobj.Data.X(1)));
+    xM = gridData.UserData.xM;          %distance to mouth from grid origin                        
+    qLt = round(gridData.UserData.Lt/4);%distance from mouth to tidal limit
+    nint = round(qLt/abs(pobj.Data.X(2)-pobj.Data.X(1))); %number of grid intervals in Lt/4
     
-    ulim = max(pobj.Data.Z,[],'All');
+    ulim = max(pobj.Data.Z,[],'All');  
     dlim = min(pobj.Data.Z,[],'All'); 
     msl = msl0+slr(end)-slr;     %timeseries of mean sea level
 
@@ -128,7 +128,7 @@ function [figax,hp] = setupAnimation(pobj,var)
     %assign data source
     hp = figax.Children;
     hp.ZDataSource = 'vari';  
-    %set limites of colorbar    
+    %set limits of colorbar    
     hcb = findobj(hfig,'Type','colorbar');
     hcb.LimitsMode = 'manual'; %fix limits of contour bar
     hcb.Limits = figax.ZLim;
