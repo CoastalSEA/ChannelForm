@@ -1248,7 +1248,7 @@ classdef CF_TransModel < FGDinterface
             %contourf(ax,xi,yi2,zgrd','LineStyle', 'none');
             surf(ax,xs,ys,zdiff','FaceColor','interp','EdgeColor', 'none');
             colormap(cmap_selection(20));
-            caxis([-2*slr,2*slr])      %only show +/-2*slr change
+            clim([-2*slr,2*slr])      %only show +/-2*slr change
             view(2);
             hold on
             plot3(xs,yzhw,zyz,'--k');  %high water line
@@ -1419,7 +1419,7 @@ classdef CF_TransModel < FGDinterface
             surf(F.x,F.y,zdiff','FaceColor','interp','EdgeColor', 'none');            
             view(2); 
             colormap(s3,cmap_selection(20));
-            caxis([-2*slr,2*slr])      %only show +/-2*slr change
+            clim([-2*slr,2*slr])      %only show +/-2*slr change
             h3 = colorbar; 
             h3.Label.String = 'Change in elevation (m)';
             title('Difference plot (showing +/-2.slr)')
