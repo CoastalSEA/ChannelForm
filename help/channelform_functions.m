@@ -130,6 +130,8 @@
 %% Generic functions
 % Other functions used in ChannelForm, include:
 %%
+% * *cf_plot_centreline*
+% - plot 2 or3D line e.g., for valley/channel thalweg.
 % * *get_sed_flux* - single element ASMITA model to compute amount of
 % sedimentation.
 % * *lambertw* - computes the Lambert W-Function. Author: Pascal Getreuer,

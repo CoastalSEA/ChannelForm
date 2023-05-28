@@ -152,11 +152,12 @@ classdef ChannelForm < muiModelUI
                                       'Area of Flood Plain',...
                                       'CKFA Channel Dimensions',...
                                       'Morphological Timescale',...
-                                      'Channel-Valley Sub-Plot'};
+                                      'Channel-Valley Sub-Plot',...
+                                      'Centre-line Plot'};
             menu.Utilities(1).Callback = [repmat({@obj.utilsMenuOptions},[1,3]),...
-                                {'gcbo;'},repmat({@obj.utilsMenuOptions},[1,8])];
+                                {'gcbo;'},repmat({@obj.utilsMenuOptions},[1,9])];
             menu.Utilities(1).Separator = [repmat({'off'},[1,6]),{'on'},...
-                                            repmat({'off'},[1,5])]; %separator preceeds item
+                                            repmat({'off'},[1,6])]; %separator preceeds item
             
             menu.Utilities(2).List = {'Model Shore','Extrapolate Shore'};
             menu.Utilities(2).Callback = repmat({@obj.utilsMenuOptions},[1,2]);
@@ -386,6 +387,8 @@ classdef ChannelForm < muiModelUI
                     CF_SediData.displayMorphTime(obj);
                 case 'Channel-Valley Sub-Plot'
                     CF_ValleyModel.componentsPlot(obj);
+                case 'Centre-line Plot'
+                    cf_plot_centreline();
             end            
         end   
         %%
