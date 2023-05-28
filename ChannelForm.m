@@ -15,8 +15,8 @@ classdef ChannelForm < muiModelUI
 % 
     properties  (Access = protected)
         %implement properties defined as Abstract in muiModelUI
-        vNumber = '3.1'
-        vDate   = 'Oct 2022'
+        vNumber = '3.2'
+        vDate   = 'July 2023'
         modelName = 'ChannelForm'                    
         %Properties defined in muiModelUI that need to be defined in setGui
         % ModelInputs  %classes required by model: used in isValidModel check 
