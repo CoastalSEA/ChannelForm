@@ -154,7 +154,7 @@ function output = ckfa_flowprops(params)
     Vlw = Voc-am*(Soc+Slw)/2;      %volume at low water
     if Vlw<0, Vlw=Wrv*hrv*Le; end  %minimum volume based on river section
     Sfl = (1+pi/2)*nbk*am*mSeq;    %surface area of tidal flat
-    Vfl = (3+pi)/2*nbk*am^2*mSeq;  %volume of tidal flat %corrected 9/12/21, was (1+pi)/2
+    Vfl = (1+pi)/2*nbk*am^2*mSeq;  %volume of tidal flat
     Vp  = 2*am*Slw+Vfl;            %form based prism
     Arv = Wrv*hrv;                 %CSA of the regime river 
     %
