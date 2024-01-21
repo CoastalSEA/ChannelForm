@@ -73,9 +73,10 @@ function crossectionPlot(obj,ax,slr)
     noxi=length(xi);
     ix0 = find(xi>=grid1.xM-eps,1,'first'); 
     noxi = noxi-ix0;
-    nx1=ix0;  nx2=ceil(ix0+0.1*noxi);  nx3=ceil(ix0+0.2*noxi);
+    nx1=ix0;  nx2=ceil(ix0+0.2*noxi);  
+    nx3=ceil(ix0+0.4*noxi); nx4=ceil(ix0+0.6*noxi);
 
-    green = mcolor('green');
+    green = mcolor('green');  orange = mcolor('orange');
     plot(ax,yi,z0(nx1,:),'-r','LineWidth',0.6);
     hold on
     plot(ax,yi,zi(nx1,:),'--r','LineWidth',0.6);
@@ -85,6 +86,9 @@ function crossectionPlot(obj,ax,slr)
 
     plot(ax,yi,z0(nx3,:),'-','Color',green,'LineWidth',0.56);
     plot(ax,yi,zi(nx3,:),'--','Color',green,'LineWidth',0.56);
+
+    plot(ax,yi,z0(nx4,:),'-','Color',orange,'LineWidth',0.56);
+    plot(ax,yi,zi(nx4,:),'--','Color',orange,'LineWidth',0.56);
 
     %add water levels at mouth
     plot(xlim, wl0*[1 1],'-','Color',[0.7,0.7,0.7]);
@@ -96,7 +100,7 @@ function crossectionPlot(obj,ax,slr)
     %add meta-data
     xlabel('Width (m)'); 
     ylabel('Change in level (m)');
-    hL=legend('0pre','0post','0.1pre','0.1post','0.2pre','0.2post','Location','SouthEast');
+    hL=legend('0L-pre','0L-post','0.2L-pre','0.2L-post','0.4L-pre','0.4L-post','0.6L-pre','0.6L-post','Location','SouthEast');
     set(hL, 'Color', 'none');
     casedesc = sprintf('Cross-sections relative to mouth at end of run, slr=%0.2g m',slr);
     title(casedesc,'FontWeight','normal','FontSize',10);            
@@ -129,9 +133,16 @@ function thalwegPlot(obj,ax,slr)
     plot(ax,xi,zi(:,1),'--k');
 
     %add water levels at mouth
+    xoffset = diff(ax.XLim)/100;    yoffset = diff(ax.YLim)/50; 
     plot(xlim, wl0*[1 1],'-','Color',[0.7,0.7,0.7]);
     plot(xlim, wli*[1 1],'--','Color',[0.7,0.7,0.7]);  
-
+    text(xoffset,wl0+yoffset,'Zmt');
+    %add position of mouth
+    plot([1,1]*grid0.xM,ax.YLim,'-r');
+    plot([1,1]*grid1.xM,ax.YLim,'--r');
+    ytxt = ax.YLim(1)+yoffset;
+    xtxt = grid0.xM+xoffset;
+    text(xtxt,ytxt,'Mouth location');
     hold off
     xlabel('<= mouth       Distance along channel (m)       head =>'); 
     ylabel('Elevation (mAD)');

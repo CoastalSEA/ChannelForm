@@ -73,17 +73,28 @@ function netchangePlot(obj,ax,slr)
     %contourf(ax,xi,yi2,zgrd','LineStyle', 'none');
     surf(ax,xs,ys,zdiff','FaceColor','interp','EdgeColor', 'none');
     colormap(cmap_selection(20));
-    caxis([-2*slr,2*slr])      %only show +/-2*slr change
+    clim([-2*slr,2*slr])      %only show +/-2*slr change
     view(2);
+    %add contours for high and low water
     hold on
     plot3(xs,yzhw,zyz,'--k');  %high water line
     plot3(xs,-yzhw,zyz,'--k');
     plot3(xs,yzlw,zyz,'-.k');  %low water line
     plot3(xs,-yzlw,zyz,'-.k');
+
+    %add position of mouth
+    xoffset = diff(ax.XLim)/100;    yoffset = diff(ax.YLim)/50; 
+    plot([1,1]*grid0.xM,ax.YLim,'-r');
+    plot([1,1]*grid1.xM,ax.YLim,'--r');
+    ytxt = ax.YLim(1)+yoffset;
+    xtxt = grid0.xM+xoffset;
+    text(xtxt,ytxt,max(zdiff,[],'all'),'Mouth location');
     hold off
+
     xlabel('Distance along channel (m)');
     ylabel('Width (m)');
     h_c = colorbar(ax);   
+
     h_c.Label.String = 'Change in elevation (m) for +/-2.slr';
     timetxt = cellstr(grid1.t);
     infotxt = sprintf('Dashed lines are HW/LW at T=%s',timetxt{1});

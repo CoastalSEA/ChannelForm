@@ -74,8 +74,8 @@ classdef CF_HydroData < muiPropertyUI
             %TabDisplay values defined in UI function setTabProperties used to assign
             %the tabname and position on tab for the data to be displayed
             obj = setTabProps(obj,mobj);  %muiPropertyUI function            
-            ok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
-            if ok<1, return; end
+            isok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
+            if ~isok, return; end
         end 
     end
 %%  

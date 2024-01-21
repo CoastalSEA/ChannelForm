@@ -210,7 +210,6 @@ function output = ckfa_waveprops(params)
     Wlw = Slw/Le;
     Whw = (Slw+Sfl)/Le;           %width at high water
     [dhw,yhw,dlw,ylw] = ckfa_wave_form(am,Uw,d50,tau,me,ws,conc,hm,Wlw,Whw);
-    Whw = (Slw+Sfl)/Le;          %width at high water
     %
     % Area and volume adjustments due to wave effects
     Lc = Slw/Le/nbk;             %flow only half-width of channel
