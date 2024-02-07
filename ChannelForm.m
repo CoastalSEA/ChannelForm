@@ -183,7 +183,8 @@ classdef ChannelForm < muiModelUI
             menu.Analysis(2).Separator = [repmat({'off'},[1,5]),{'on'}]; 
             
             %% Help menu --------------------------------------------------
-            menu.Help(1).Callback = {@obj.Help}; %make model specific?
+            menu.Help.List = {'Documentation','Manual'};
+            menu.Help.Callback = repmat({@obj.Help},[1,2]);
             
         end
         
@@ -473,10 +474,15 @@ classdef ChannelForm < muiModelUI
         end
         
         %% Help menu ------------------------------------------------------
-        function Help(~,~,~)
-            doc channelform
-        end
-
+        function Help(~,src,~)
+            %menu to access online documentation and manual pdf file
+            switch src.Text
+                case 'Documentation'
+                    doc channelform   %must be name of html help file  
+                case 'Manual'
+                    cfm_open_manual;
+            end
+        end 
         %% Check that toolboxes are installed------------------------------
         function isok = check4muitoolbox(~)
             %check that dstoolbox and muitoolbox have been installed
