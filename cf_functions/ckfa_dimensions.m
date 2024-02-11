@@ -31,24 +31,26 @@ function ckfa_dimensions(mobj)
     cn = getConstantStruct(mobj.Constants);
 
     Le = hydobj.xTidalLimit;         %distance to tidal limit
-    Lx = hydobj.xTideRiver;          %distance to tide/river switch
+    gamma = 1.1;                     %Dronkers gamma
 
     %channel sediment properties
     d50 = sedobj.SedimentSize;       %sediment grain size, D50 (m)
     rhoc = sedobj.EqDensity;         %suspended sediment concentration (kg/m3)
     taucr = sedobj.CritBedShear;     %critical bed shear stress (Pa)
+    %
 
     %river sediment properties
     d50riv = sedobj.d50river;        %sediment grain size, D50 (m)
     tauriv = sedobj.tauriver;        %critical bed shear stress (Pa)
 
     %hydraulic properties
-    am = wlvobj.TidalAmp;            %tidal amplitude (m)
+    amp = wlvobj.TidalAmp;            %tidal amplitude (m)
     tp = wlvobj.TidalPeriod*3600;    %tidal period (s)
+    omega = 2*pi()/tp;  %angular frequency (1/s)
     
     %river properties
     Qr = hydobj.RiverDischarge;      %river discharge (m^3/s)
-    Sr  = 2*am/Le;   %energy slope at tidal limit (-); **estimate**
+    Sr  = 2*amp/Le;   %energy slope at tidal limit (-); **estimate**
 
     % calc fall velocity.  Mud Manual, eqn 5.7 including floculation
     ws = settling_velocity(d50,cn.g,cn.rhow,cn.rhos,cn.visc,rhoc);   
@@ -62,20 +64,23 @@ function ckfa_dimensions(mobj)
 
     % Channel properties
     Arv = hrv*Wrv;
-    params = struct('am',am,...                  %tidal amplitude at mouth (m)
+    params = struct('amp',amp,...                %tidal amplitude at mouth (m)
                 'tp',tp,...                      %tidal period (s)
+                'omega',omega,...
                 'Le',hydobj.xTidalLimit,...      %channel length (m)
-                'Uw',hydobj.WindSpeed,...        %wind speed at 10m (m/s)
+                'Uw',hydobj.WindSpeed,'zw',10,...%wind speed at 10m (m/s)
                 'Qr',hydobj.Qr,...               %river discharge (m3/s)
                 'hrv',hrv,'Wrv',Wrv,'Arv',Arv,...%from river_regime
                 'g',cn.g,'rhow',cn.rhow,'rhos',cn.rhos,'rhoc',rhoc,...
+                'visc',cn.visc,...
                 'taucr',taucr,'d50',d50,'ws',ws,...%see above   
                 'tauriv',tauriv,'d50riv',d50riv,...%see above
                 'me',sedobj.ErosionRate,...      %erosion rate (kg/N/s)
+                'gamma',gamma,...                %Dronkers gamma
                 'Dsm',sedobj.AvMarshDepth,'Dmx',sedobj.MaxMarshDepth); 
    
-    initdepth = 1;  %initial guess of hydraulic depth
-    formdims1 = ckfa_form_solver(initdepth,params);
+    initdepth = 2*amp;  %initial guess of hydraulic depth
+    formdims1 = ckfa_form_solver(params,initdepth);
     if isempty(formdims1)
         warndlg('Unable to find solution in channel_form.m')
         return;

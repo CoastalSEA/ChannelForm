@@ -412,6 +412,7 @@ classdef CF_HydroData < muiPropertyUI
             rnp.TimeInt = 0;           %time increment in analytical model (hrs) - only needed if tidal cycle output required
             rnp.DistInt = obj.DistInt; %distance increment along estuary (m)
             rnp.useObs = false;        %flag to indicate whether to use observations
+            rnp.isfull = false;        %flag used in EnergyFlux for detail output
         end
 %%
         function inp = getHydroFormProps(obj,inp)

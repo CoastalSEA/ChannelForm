@@ -50,22 +50,13 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
     % Vpw = params.wave.Vpw;  %tidal prism including wave effects
     
     % Input parameters
-    am = params.input.am;        %tidal amplitude (m)
     tp = params.input.tp;        %tidal period (s)    
     Le = params.input.Le;        %estuary length (m)
-    Uw = params.input.Uw;        %wind speed at 10m (m/s)
-    d50 = params.input.d50;      %sediment grain size, D50 (m)
-    tau = params.input.taucr;    %critical bed shear stress (Pa)
-    me = params.input.me;        %erosion rate (kg/N/s)
-    ws = params.input.ws;        %sediment fall velocity (m/s)
-    rhoc = params.input.rhoc;    %suspended sediment concentration (kg/m3)
     Dsm = params.input.Dsm;      %average depth over saltmarsh (m)
     Dmx = params.input.Dmx;      %maximum depth of salt marsh (m)          
     
     % Constant properties
     g = params.input.g;          %acceleration due to gravity (m/s2)
-    rhos = params.input.rhos;    %density of sediment (default = 2650 kg
-    conc = rhoc/rhos;            %volume concentration (-)  
     omega = 2*pi/tp;             %tidal frequency (1/s)
     nc  = 2.0;                   %channel shape factor
     cflag = 0;                   %constraint based on basin area at 
@@ -92,7 +83,6 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
     eqtr = Slope*Le; %equivalent tidal range to use Slope in get_river_regime
     [~,wlwm,alwm] = get_river_regime(obj,eqtr); %Cao & Knight, 1996, uses Qr in RunParam.CF_HydroData
     
-
     Wbs = 1.2*(Slw+Sfl)/LW/(1-exp(-Le/LW)); %high water width to generate basin area
     Lsll= Ucr/omega;       %lower intertidal width along system axis
     
@@ -116,7 +106,7 @@ function [xi,yi,zi] = ckfa_3D_form(obj,params)
 %         hx  = Ax/Wx;                    %hydraulic depth (hAb) at xj
         %
         % Obtain depth and width of wave formed profile at high and low water
-        [dhw,yhw,dlw,ylw] = ckfa_wave_form(am,Uw,d50,tau,me,ws,conc,hm,Wlw,Whw);
+        [dhw,yhw,dlw,ylw] = ckfa_wave_form(params.input,hm,Wlw,Whw);
         %
         % correction for enlarged prism due to influence of waves
         %

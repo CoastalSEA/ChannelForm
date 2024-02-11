@@ -30,7 +30,7 @@ function [xi,yi,zgrd,Wz,Rv] = ckfa_form_model(obj,isfull)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    xi = []; yi = []; zgrd = []; Wz = [];
+    xi = []; yi = []; zgrd = []; Wz = []; Rv = [];
     if nargin<3
         isfull = true;
     end
@@ -70,8 +70,7 @@ function params = ckfa_properties(obj)
     %form, flow and tide+wave properties
     params.input = ckfa_parameters(obj);          
     %call solver function 
-    initdepth = 1;  %initial guess of hydraulic depth
-    params.form = ckfa_form_solver(initdepth,params.input);
+    params.form = ckfa_form_solver(params.input,2*params.input.amp);
     % flow only gross properties
     params.flow = ckfa_flowprops(params);
     % tide+wave gross properties (incl saltmarsh if included)
@@ -80,7 +79,7 @@ end
 %%
 function params = ckfa_parameters(obj)
     %intialise the properties required for the CKFA_solver function
-    
+    gamma = 1.1;                  %Dronkers gamma
     %default model constants (NB: not as held and modifiable in UI)
     cn = getConstantStruct(muiConstants.Evoke);    
     
@@ -93,24 +92,28 @@ function params = ckfa_parameters(obj)
     tauriv = sedobj.tauriver;%critical bed shear stress (Pa)
     
     % calc fall velocity.  Mud Manual, eqn 5.7 including floculation
-    ws = settling_velocity(d50,cn.g,cn.rhow,cn.rhos,cn.visc,rhoc);    
+    ws = settling_velocity(d50,cn.g,cn.rhow,cn.rhos,cn.visc,rhoc);   
 
     %parameters required by solver
     hydobj = obj.RunParam.CF_HydroData;
-    am0 = (hydobj.zhw(1)-hydobj.zlw(1))/2;    
-    [hrv,Wrv,Arv] = get_river_regime(obj,2*am0); %Cao & Knight, 1996, uses Qr in RunParam.CF_HydroData
+    omega = 2*pi()/hydobj.tidalperiod;
+    amp = (hydobj.zhw(1)-hydobj.zlw(1))/2;    
+    [hrv,Wrv,Arv] = get_river_regime(obj,2*amp); %Cao & Knight, 1996, uses Qr in RunParam.CF_HydroData
     
-    params = struct('am',am0,...                     %tidal amplitude at mouth (m)
+    params = struct('amp',amp,...                    %tidal amplitude at mouth (m)
                     'tp',hydobj.tidalperiod,...      %tidal period (s)
+                    'omega',omega,...                %angular frequency (1/s)
                     'Le',hydobj.xTidalLimit,...      %channel length (m)
-                    'Uw',hydobj.WindSpeed,...        %wind speed at 10m (m/s)
+                    'Uw',hydobj.WindSpeed,'zw',10,...%wind speed at 10m (m/s)
                     'Qr',hydobj.Qr,...               %river discharge (m3/s)
                     'hrv',hrv,'Wrv',Wrv,'Arv',Arv,...%from river_regime
                     'g',cn.g,'rhow',cn.rhow,'rhos',cn.rhos,'rhoc',rhoc,...
-                    'taucr',taucr,'d50',d50,'ws',ws,...%see above  
+                    'visc',cn.visc,...
+                    'taucr',taucr,'d50',d50,'ws',ws,...%see above   
                     'tauriv',tauriv,'d50riv',d50riv,...%see above
                     'me',sedobj.ErosionRate,...      %erosion rate (kg/N/s)
-                    'Dsm',sedobj.AvMarshDepth,'Dmx',sedobj.MaxMarshDepth);        
+                    'gamma',gamma,...                %Dronkers gamma
+                    'Dsm',sedobj.AvMarshDepth,'Dmx',sedobj.MaxMarshDepth); 
 end
 %%
 function output = ckfa_flowprops(params)
@@ -126,7 +129,7 @@ function output = ckfa_flowprops(params)
     Ucr = params.form.Ucr;         %peak tidal amplitude (m/s)    
     
     %Input parameters
-    am = params.input.am;          %tidal amplitude (m)
+    amp = params.input.amp;        %tidal amplitude (m)
     tp = params.input.tp;          %tidal period (s)
     Le = params.input.Le;          %estuary length (m)
     hrv = params.input.hrv;        %hydraulic depth of regime river channel (m)
@@ -138,24 +141,24 @@ function output = ckfa_flowprops(params)
     % Lower intertidal slope
     phi = Wm/2/Le*(1-exp(-Le/LW)); %average angle of bank to direction of flow
     Lst = Ucr/omega*tan(phi);      %lower intertidal width
-    meq = Lst/am;                  %lower intertidal slope
+    meq = Lst/amp;                 %lower intertidal slope
     mSeq= meq*Le;                  %lower intertidal slope-area
     %
     % Tidal prism
     etaA = omega*LA/sqrt(g*hm);    %wave number ratio
-    etah = am/hm;                  %amplitude-depth ratio
+    etah = amp/hm;                 %amplitude-depth ratio
     Vph = Ucr*Wm*hm/2/omega*(4-pi*etah*sin(etaA));  %prism
     %
     % Gross properties for flow only
     Soc = Wm*LW*(1-exp(-Le/LW));   %surface area at mtl
     Voc = Am*LA*(1-exp(-Le/LA));   %volume at mtl
-    Slw = Soc - nbk*am*mSeq;       %surface area at low water
+    Slw = Soc - nbk*amp*mSeq;      %surface area at low water
     if Slw<0, Slw=Wrv*Le; end      %minimum area based on river section
-    Vlw = Voc-am*(Soc+Slw)/2;      %volume at low water
+    Vlw = Voc-amp*(Soc+Slw)/2;     %volume at low water
     if Vlw<0, Vlw=Wrv*hrv*Le; end  %minimum volume based on river section
-    Sfl = (1+pi/2)*nbk*am*mSeq;    %surface area of tidal flat
-    Vfl = (1+pi)/2*nbk*am^2*mSeq;  %volume of tidal flat
-    Vp  = 2*am*Slw+Vfl;            %form based prism
+    Sfl = (1+pi/2)*nbk*amp*mSeq;   %surface area of tidal flat
+    Vfl = (1+pi)/2*nbk*amp^2*mSeq; %volume of tidal flat
+    Vp  = 2*amp*Slw+Vfl;           %form based prism
     Arv = Wrv*hrv;                 %CSA of the regime river 
     %
     % Set up output array for flow only
@@ -181,15 +184,9 @@ function output = ckfa_waveprops(params)
     Lst = params.flow.Lst;       %width of lower intertidal - LW to MT (m)
     
     % Input parameters
-    am = params.input.am;        %tidal amplitude (m)
+    amp = params.input.amp;      %tidal amplitude (m)
     tp = params.input.tp;        %tidal period (s)    
     Le = params.input.Le;        %estuary length (m)
-    Uw = params.input.Uw;        %wind speed at 10m (m/s)
-    d50 = params.input.d50;      %sediment grain size, D50 (m)
-    tau = params.input.taucr;    %critical bed shear stress (Pa)
-    me = params.input.me;        %erosion rate (kg/N/s)
-    ws = params.input.ws;        %sediment fall velocity (m/s)
-    rhoc = params.input.rhoc;    %suspended sediment concentration (kg/m3)
     Dsm = params.input.Dsm;      %average depth over saltmarsh (m)
     Dmx = params.input.Dmx;      %maximum depth of salt marsh (m)
     d50riv = params.input.d50riv;%sediment grain size in river (m)
@@ -202,14 +199,13 @@ function output = ckfa_waveprops(params)
 
     % Initialise model settings
     if Dmx==0, ism = false; else, ism = true; end %include saltmarsh if Dmx>0
-    conc = rhoc/rhos;            %volume concentration (-)   
-    meq = Lst/am;                %lower intertidal slope
+    meq = Lst/amp;               %lower intertidal slope
     mSeq= meq*Le;                %lower intertidal slope-area
     
     % Obtain depth and width of wave formed profile at high and low water
     Wlw = Slw/Le;
-    Whw = (Slw+Sfl)/Le;           %width at high water
-    [dhw,yhw,dlw,ylw] = ckfa_wave_form(am,Uw,d50,tau,me,ws,conc,hm,Wlw,Whw);
+    Whw = (Slw+Sfl)/Le;          %width at high water
+    [dhw,yhw,dlw,ylw] = ckfa_wave_form(params.input,hm,Wlw,Whw);
     %
     % Area and volume adjustments due to wave effects
     Lc = Slw/Le/nbk;             %flow only half-width of channel
@@ -221,10 +217,10 @@ function output = ckfa_waveprops(params)
     if dlw<dc, y0lw = Lc*(1+2*(-dlw)/mu/Lc)^0.5; end  %distance from c.l. to dlw
     dLlw = y0lw+ylw-Lc;          %increase in channel width due to waves
     %
-    if dhw>2*am %handle case where hw wave profile is greater than tidal range
-        y0hwc= Lc*(1+2*(-(dhw-2*am))/mu/Lc)^0.5; %distance from cl to dhw
+    if dhw>2*amp %handle case where hw wave profile is greater than tidal range
+        y0hwc= Lc*(1+2*(-(dhw-2*amp))/mu/Lc)^0.5; %distance from cl to dhw
         if y0hwc<0, y0hwc=0; end
-        ylwc = yhw*(1-(2*am/dhw)^1.5); %distance from dhw to 2a intersection on wave profle
+        ylwc = yhw*(1-(2*amp/dhw)^1.5); %distance from dhw to 2a intersection on wave profle
         dLlw = y0hwc+ylwc-Lc;    %increase in channel width due to waves
     end 
     %
@@ -238,23 +234,23 @@ function output = ckfa_waveprops(params)
     Aclw = nbk*dc/3*(2*Lc-y0lw*((3*Lc^2-y0lw^2)/Lc^2)); %area of flow only profile from y0lw to Lc
     %
     if (Awlw-Aclw)>0, Vlww = Vlw+(Awlw-Aclw)*Le; end     %adjusted channel volume
-    if dhw>2*am %handle case where hw wave profile is greater than tidal range
+    if dhw>2*amp %handle case where hw wave profile is greater than tidal range
         %Aclc = nbk*dc/3*(2*Lc-y0hwc*((3*Lc^2-y0hwc^2)/Lc^2)); %area of lw profile from y0hwc to Lc
         Awlc = nbk*3/5*yhw*dhw*(1-((yhw-ylwc)/yhw)^(5/3)); 
-        Awlc = Awlc-nbk*2*am*ylwc; %area of hw profile from y0hwc to lw
-        ylww = ylw*(1-((dhw-2*am)/dlw)^1.5); %distance from dlw to r of (dhw-2a) wiht lw wave profile
+        Awlc = Awlc-nbk*2*amp*ylwc; %area of hw profile from y0hwc to lw
+        ylww = ylw*(1-((dhw-2*amp)/dlw)^1.5); %distance from dlw to r of (dhw-2a) wiht lw wave profile
         Alww = nbk*3/5*ylw*dlw*(1-((ylw-ylww)/ylw)^(5/3));
-        Alww = Alww-nbk*(dhw-2*am)*ylww; %area of lw profile from y0lw to intersection of (dhw-2a)
-        dAlw = nbk*(y0hwc-y0lw)*(dhw-2*am); %area of box between y0lw and y0hwc
+        Alww = Alww-nbk*(dhw-2*amp)*ylww; %area of lw profile from y0lw to intersection of (dhw-2a)
+        dAlw = nbk*(y0hwc-y0lw)*(dhw-2*amp); %area of box between y0lw and y0hwc
         Vlww = Vlw+(Awlc+dAlw+Alww-Aclw)*Le;
     end
     % High water adjustments
-    y0hwu= Lst*(asin((am-dhw)/am)+1);  %distance from lw to dhw if dhw<a
-    y0hwl= Lst*((am-dhw)/am+1);        %distance from lw to dhw if dhw>a
+    y0hwu= Lst*(asin((amp-dhw)/amp)+1);  %distance from lw to dhw if dhw<a
+    y0hwl= Lst*((amp-dhw)/amp+1);        %distance from lw to dhw if dhw>a
     %
-    if dhw>am, y0hw = y0hwl; else y0hw = y0hwu; end
+    if dhw>amp, y0hw = y0hwl; else, y0hw = y0hwu; end
     Whww = nbk*(y0hw+yhw+(y0lw+ylw)); %width at high water
-    if dhw>2*am,  Whww = nbk*(y0hwc+yhw); end
+    if dhw>2*amp,  Whww = nbk*(y0hwc+yhw); end
     %
     if Whww<Whw, Whww = Whw; end
     Sflw = Whww*Le-Slww;               %adjusted flat area
@@ -262,34 +258,34 @@ function output = ckfa_waveprops(params)
     ycu = (1+pi/2)*Lst-y0hwu;   %width of flow profile replaced by wave profile
     ycl = Lst-y0hwl;   %width of flow profile below z=0 replaced by wave profile
     %
-    if dhw>am, yc = ycl; else yc = ycu; end
-    Acu = nbk*am*(yc-Lst*(0.54*cos(y0hw/Lst)+0.841*sin(y0hw/Lst)));%area of flow only profile from y0hw to Li if dhw<a
-    Acl = nbk*((pi/2-1)*am*Lst+((am+dhw)/2)*yc);%area of flow only profile from y0hw to Li if dhw>a
+    if dhw>amp, yc = ycl; else, yc = ycu; end
+    Acu = nbk*amp*(yc-Lst*(0.54*cos(y0hw/Lst)+0.841*sin(y0hw/Lst)));%area of flow only profile from y0hw to Li if dhw<a
+    Acl = nbk*((pi/2-1)*amp*Lst+((amp+dhw)/2)*yc);%area of flow only profile from y0hw to Li if dhw>a
     %
-    if dhw>am Achw = Acl; else Achw = Acu; end
+    if dhw>amp, Achw = Acl; else, Achw = Acu; end
     Vflw = Vfl;
     %
     if (Awhw-Achw)>0, Vflw = Vflw+(Awhw-Achw)*Le; end  %adjusted flat volume
-    if dhw>2*am 
-        Vflw = (Awhw-Awlc-nbk*(Lc-y0hwc)*2*am)*Le; 
+    if dhw>2*amp 
+        Vflw = (Awhw-Awlc-nbk*(Lc-y0hwc)*2*amp)*Le; 
     end
 
     % Calculate mtl area
-    Sow = Slww+nbk*am*mSeq;   %adjusted mtl area when dhw<a
+    Sow = Slww+nbk*amp*mSeq;   %adjusted mtl area when dhw<a
     %Wmw = Sow/Le;
-    if dhw>2*am %hw wave profile is greater than tidal range
+    if dhw>2*amp %hw wave profile is greater than tidal range
                %y0hwc is distance from cl to dhw, when dhw>2a (see above)
-        ymtl = yhw*(1-(am/dhw)^1.5);%distance from dhw to a intersection on wave profle
+        ymtl = yhw*(1-(amp/dhw)^1.5);%distance from dhw to a intersection on wave profle
         ymtl = y0hwc+ymtl;          %mtl half-width inc influence of waves
         Sow  = nbk*Le*ymtl;         %mtl area inc influence of waves
-    elseif dhw>am %hw wave profile is greater than tidal amplitude
-        y0ow = (dLlw+Lc)+(2*am-dhw)*meq;   %distance from cl to dhw, when dhw>a
-        ymtl = yhw*(1-(am/dhw)^1.5);%distance from dhw to a intersection on wave profle
+    elseif dhw>amp %hw wave profile is greater than tidal amplitude
+        y0ow = (dLlw+Lc)+(2*amp-dhw)*meq;   %distance from cl to dhw, when dhw>a
+        ymtl = yhw*(1-(amp/dhw)^1.5);%distance from dhw to a intersection on wave profle
         ymtl = y0ow+ymtl;           %mtl half-width inc influence of waves
         Sow  = nbk*Le*ymtl;         %mtl area inc influence of waves
     end
     %
-    Vpw = 2*am*Slww+Vflw;           %form based estimate of prism
+    Vpw = 2*amp*Slww+Vflw;           %form based estimate of prism
     % Correct Low water volume for effect of increased prism (pro-rata)
     % [should be able to do this using prism to estimate hm and whence h(lw)]
     Qp = pi*Vpw/tp/2;
@@ -297,7 +293,7 @@ function output = ckfa_waveprops(params)
         Qp = Le/LA*Qp;
     end
     if Vpw>Vp
-        Slope = 4*am/tp/sqrt(g*hm);
+        Slope = 4*amp/tp/sqrt(g*hm);
         [hom,Wom,~] = river_regime(Qp,Slope,d50riv,tauriv,rhos,rhow);
         Aav  = (hom*Wom)*LA*(1-exp(-Le/LA))/Le;
         Vlww = Aav*Le;
@@ -306,8 +302,8 @@ function output = ckfa_waveprops(params)
     end
 
     if dLlw>0 && type==7, Slww = Slww+nbk*dLlw*Le; end  %adjusted channel area
-    Vow = Vlww+am*(Slww+Sow)/2;                         %adjusted mtl volume
-    Vpw = 2*am*Slww+Vflw; 
+    Vow = Vlww+amp*(Slww+Sow)/2;                         %adjusted mtl volume
+    Vpw = 2*amp*Slww+Vflw; 
     %
     Wmw = Le*Sow/Le/LW/(1-exp(-Le/LW));                 %width at mouth
     Amw = Le*Vow/Le/LA/(1-exp(-Le/LA));                 %CSA at mouth   
@@ -320,9 +316,9 @@ function output = ckfa_waveprops(params)
         usf = Sfl/Le;       %area per unit length
         uvf = Vfl/Le;       %volume per unit length
         %
-        usm = nbk.*am.*meq.*(3.142/2-asin((am-Dmx)/am)); %marsh area per unit length
-        sfm = (usf-usm)/nbk/am/meq;
-        uvm = am*(usm-nbk*am*meq*(0.54*cos(sfm)+0.841*sin(sfm))); % unvegetated marsh volume per unit length
+        usm = nbk.*amp.*meq.*(3.142/2-asin((amp-Dmx)/amp)); %marsh area per unit length
+        sfm = (usf-usm)/nbk/amp/meq;
+        uvm = amp*(usm-nbk*amp*meq*(0.54*cos(sfm)+0.841*sin(sfm))); % unvegetated marsh volume per unit length
         if Dmx<=dhw %if marsh is within wave profile
             %find values with inclusion of waves
             ysm  = yhw*(Dmx/dhw)^1.5;   %distance from Dmx to hw

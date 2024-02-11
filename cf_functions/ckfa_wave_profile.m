@@ -1,4 +1,4 @@
-function [dw,yw] = ckfa_wave_profile(Uw,zw,Fch,cnc,df,ds,d50,tau,me,ws)
+function [dw,yw,Aw] = ckfa_wave_profile(inp,Uw,Fch,rhoc,df,ds)
 %
 %-------header-------------------------------------------------------------
 % NAME
@@ -6,26 +6,31 @@ function [dw,yw] = ckfa_wave_profile(Uw,zw,Fch,cnc,df,ds,d50,tau,me,ws)
 % PURPOSE
 %   Depth and width of wave formed profile d=dw*(1-y/yw)^2/3
 % USAGE
-%   [dw yw] = ckfa_wave_profile(Uw,zw,Fch,cnc,df,ds,d50,tau,me,ws)
+%   [dw yw] = ckfa_wave_profile(inp,Uw,Fch,rhoc,df,ds)
 % INPUTS
-%   Uw  = wind speed (m/s)
-%   zw  = elevation of wind speed (m) - default is 10m
-%   Fch = fetch length (m)
-%   cnc = suspended sediment concentration
-%   df  = average depth over fetch (m)
-%   ds  = depth at site (m) - taken as depth at edge of profile
-%   d50 = median sediment grain size diameter (m)
-%   tau = critical threshold bed shear stress (Pa)
-%   me  = erosion rate coeficient (kg/N/s)
-%   ws  = sediment fall velocity (m/s)
+%   inp is a struct with fields 
+%       rhow = density of water (kg/m^3)
+%       zw  = elevation of wind speed (m) - default is 10m
+%       taucr= critical threshold bed shear stress (Pa)
+%       d50  = median sediment grain size diameter (m)
+%       ws   = sediment fall velocity (m/s)
+%       me   = erosion rate coeficient (kg/N/s)
+%       g    = acceleration due to gravity (m/s2)
+%   Uw  - wind speed (m/s)
+%   Fch - fetch length (m)
+%   rhoc - suspended sediment concentration (kg/m^3)
+%   df - average depth oveer fetch (m)
+%   ds - depth at site (m)
 % OUTPUTS
 %   dw = depth at outer edge of wave profile
 %   yw = width of wave profile
+%   Aw - cross-sectional area of profile
 % NOTES
 %   Equates rate of erosion due to waves with rate of deposition to find
 %   depth at which there is a balance
 %   Calls internal function fun_dw, which calculates the sedimentation
 %   balance for a given depth and wave conditions
+%   v2 - now same as wave_form_solver.m
 % SEE ALSO
 %   ckfa_form_model.m and ckfa_form_properties.m
 %
@@ -33,83 +38,52 @@ function [dw,yw] = ckfa_wave_profile(Uw,zw,Fch,cnc,df,ds,d50,tau,me,ws)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-g  = 9.81;
-ks = 2.5*d50;
-visc = 1.34*10^-6; %viscosity of water (m2/s)
-rhos = 2650;       %density of sediment (kg/m3)
-rhow = 1025;       %density of water (kg/m3)
-rhoc = cnc*rhos;   %density of suspended sediment (kg/m3)
-%
-if Uw==0
-    dw = 0;
-    yw = 0;
-    return
-end
-% Adjust wind speed to 10m using power law profile
-% U  = Uw*(10/zw)^(1/7);
-% depth at which waves can erode bed (initial <high> estimate)
-% kcon = 0.5*10^-3;  %concentration coefficient
-%dw1 = 2.89*10^-6*sqrt(kcon/cnc)*g*Fch^0.44*U^2.4;
 
-% wave parameters
-[Hs, Tp, ~] = tma_spectrum(Uw,zw,Fch,df,ds);
-Hrms = Hs/sqrt(2);
+    %wind speed is zero
+    dw = 0; yw = 0; Aw = 0;
+    if Uw==0 || ds<0.01, return; end
+    % wave parameters
+    [Hs, Tp, ~] = tma_spectrum(Uw,inp.zw,Fch,df,ds);
+    if Hs==0 || ds<0.01, return; end
+    Hrms = Hs/sqrt(2);
 
-%the convergence algorithm is different to the one used in the CKFA model
-dw1 = eps;
-fdw1= fun_dw(dw1,Hrms,Tp,rhoc,rhow,tau,me,ws,ks,visc);
-if fdw1<0
-    dw=0; yw=0;
-    sprintf('Warning: no lower bound in wave_profile.m, ds= %g', ds)
-    return   %if no lower bound then no wave profile
+    fd = @(dwe) fun_dw(inp,Hrms,Tp,rhoc,dwe);
+    options = optimset('TolX',1e-3);
+    dw = fminsearch(fd,eps,options);         %depth of profile
+    % width of wave formed profile
+    [Cd,~,~] = frictionCoefficient(inp,Hrms,Tp,dw);
+    yw = 3*pi*dw^2/4/Cd/Hrms;                %width of profile 
+    Aw = 3/5*dw*yw;                          %area of profile
 end
-dw2 = ds;
-fdw2= fun_dw(dw2,Hrms,Tp,rhoc,rhow,tau,me,ws,ks,visc);
-while fdw2>0                         %force upper bound to have f(x)<0
-    dw2=dw2*2;
-    fdw2= fun_dw(dw2,Hrms,Tp,rhoc,rhow,tau,me,ws,ks,visc);
-end
-
-% function f(hm)=(ero-depo)=>equilib
-fd = @(dw) fun_dw(dw,Hrms,Tp,rhoc,rhow,tau,me,ws,ks,visc);
-% function to find root of f(dw)
-options = optimset('TolX',1e-3);
-dw = fzero(fd,[dw1 dw2],options); %built-in function for root of f(x)
-%
-% width of wave formed profile
-fs  = 0.095*(Hrms^2*g*Tp/dw/visc)^-0.187;
-fr  = 0.237*(Hrms*sqrt(g*dw)*Tp/4/pi/dw/ks)^-0.52;
-cd  = 0.5*max(fs,fr);
-yw = 3*pi*dw^2/4/cd/Hrms;
-%
-%--------------------------------------------------------------------------
-%
-function fd = fun_dw(dwe,Hrms,Tp,rhoc,rhow,tau,me,ws,ks,visc)
-%
-% Function used to find the erosion depth of wave profile based on a 
-% balance of eorsion and deposition with Uw determined from the hydraulics 
-%
-    g = 9.81;
-    %
-    %friction factor
-    fs  = 0.095*(Hrms^2*g*Tp/dwe/visc)^-0.187;
-    fr  = 0.237*(Hrms*sqrt(g*dwe)*Tp/4/pi/dwe/ks)^-0.52;
-    Cd  = 0.5*max(fs,fr);
-    %
-    Uw = Hrms/2*sqrt(g/dwe);
-    %   
-    ust = rhow*Cd*Uw^2;
+%%
+function fd = fun_dw(inp,Hrms,Tp,rhoc,dwe)
+    % Function used to find the erosion depth of wave profile based on a 
+    % balance of eorsion and deposition with Uw determined from the hydraulics 
+    [Cd,~,~] = frictionCoefficient(inp,Hrms,Tp,dwe);
+    %orbital wave amplitude
+    Uw = Hrms/2*sqrt(inp.g/dwe);
+    %bed shear stress
+    tau = inp.rhow*Cd*Uw^2;
     if  Uw<=0 || dwe<0
         ero = NaN;
-    elseif ust-tau<0
+    elseif tau<inp.taucr
         ero=0;
     else
-        ero1= 2*ust/Uw*sqrt((ust-tau)/ust)*sqrt(tau/rhow/Cd);
-        ero2= (ust-2*tau)*(pi-2*asin(sqrt(tau/rhow/Cd)/Uw));
-        ero = me*(ero1+ero2)/2/pi;
+        ero = (tau-2*inp.taucr)*(pi/2-asin(sqrt(inp.taucr/tau)));
+        ero = inp.me/pi*(ero+sqrt(inp.taucr*(tau-inp.taucr)));
     end
     %
-    sed = rhoc*ws;
+    sed = rhoc*inp.ws;  %NB -mass concentration to be consistent with erosion
     %
-    fd = ero-sed;
-%
+    fd = abs(ero-sed);
+end
+
+%%
+function [Cd,fs,fr] = frictionCoefficient(inp,Hrms,Tp,dw)
+    %max of smooth and rough wave friction factor
+    g = inp.g;
+    ks = 2.5*inp.d50;
+    fs  = 0.095*(Hrms^2*g*Tp/dw/inp.visc)^-0.187;
+    fr  = 0.237*(Hrms*sqrt(g*dw)*Tp/4/pi/dw/ks)^-0.52;
+    Cd  = 0.5*max(fs,fr);
+end
