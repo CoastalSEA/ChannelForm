@@ -1,4 +1,4 @@
-function hydobj = cf_cst2grid(obj,resX,cstx,isflip)
+function hydobj = cf_cst2grid(obj,res,cstx,isflip)
 %
 %-------function help------------------------------------------------------
 % NAME
@@ -9,7 +9,7 @@ function hydobj = cf_cst2grid(obj,resX,cstx,isflip)
 %   cstvar = cf_cst2grid(obj,resX,cstx,isflip)
 % INPUTS
 %   obj - CF_FormModel class instance
-%   resX - along-channel results from cst_model (part of CSTmodel App)
+%   res -  struct of results from cst_model (part of CSTmodel App)
 %   cstx - distances used in cst_model
 %   isflip - logical true if results are to be reversed (optional, default is false)
 % OUTPUTS
@@ -32,14 +32,15 @@ function hydobj = cf_cst2grid(obj,resX,cstx,isflip)
     xi = getGridDimensions(grdobj)';   %x co-ordinates         
     
     if isflip
-        resX = cellfun(@fliplr,resX,'UniformOutput',false);
+        res.X = cellfun(@fliplr,res.X,'UniformOutput',false);
+        res.F = cellfun(@fliplr,res.F,'UniformOutput',false);        
     end
     
-    z = interp1(cstx,resX{1},xi,'linear','extrap'); %water level
-    a = interp1(cstx,resX{2},xi,'linear','extrap'); %elevation amplitude
-    U = interp1(cstx,resX{3},xi,'linear','extrap'); %tidal velocity amplitude
-    v = interp1(cstx,resX{4},xi,'linear','extrap'); %river velocity 
-    d = interp1(cstx,resX{5},xi,'linear','extrap'); %hydraulic depth
+    z = interp1(cstx,res.X{1},xi,'linear','extrap'); %water level
+    a = interp1(cstx,res.X{2},xi,'linear','extrap'); %elevation amplitude
+    U = interp1(cstx,res.X{4},xi,'linear','extrap'); %tidal velocity amplitude
+    v = interp1(cstx,res.X{5},xi,'linear','extrap'); %river velocity 
+    d = interp1(cstx,res.F{2},xi,'linear','extrap'); %hydraulic depth
     hydobj.cstres = struct('z',z,'a',a,'U',U,'v',v,'d',d);
     
     hydobj.zhw = z+a;  %mean tide level+tidal amplitude

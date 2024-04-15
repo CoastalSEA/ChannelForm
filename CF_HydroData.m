@@ -62,6 +62,7 @@ classdef CF_HydroData < muiPropertyUI
         CSTmodel         %dstable from CSTrunmodel with following fields
         % MeanTideLevel  %z - mean water suface elevation along estuary
         % TidalElevAmp   %a - elevation amplitude along estuary
+        % LWHWratio      %ratio of LW to HW amplitude (not used)
         % TidalVelAmp    %U - tidal velocity amplitude along estuary
         % RiverVel       %v - river flow velocity along estuary
         % HydDepth       %d - along estuary hydraulic depth 
@@ -162,32 +163,29 @@ classdef CF_HydroData < muiPropertyUI
                 obj.Qrange = obj.Qr;
             end
             nrow = length(obj.Qrange);
-            resX{nrow,5} = [];
+            resX{nrow,5} = []; resD{nrow,1} = [];
             for i=1:nrow
                 inp = updateModelParameters(obj,inp,i);
                 try
-                    [res,xy,~,~] = cst_model(inp,rnp,est);
-                    resX(i,:) = res;
-                catch
+                    [res,xdim] = cst_model(inp,rnp,est);
+                    resX(i,:) = res.X;
+                    resD(i,1) = res.F(2); %v2.2 CSTmodel changed output format
+                catch ME                  %moved hydraulic depth to form table
                     %remove the waitbar if program did not complete
-                    hw = findall(0,'type','figure','tag','TMWWaitbar');
-                    delete(hw);
-                    inpQr = inp.RiverDischarge;
-                    msg = sprintf('Failed to find solution in cst_model for Qr=%d',inpQr);
-                    warndlg(msg);
-                    return;
+                    model_catch(ME,'cst_model','Qr',inp.RiverDischarge); 
                 end
             end
             resXQ = cell(1,5);
             for col = 1:5
                resXQ{col} = vertcat(resX{:,col});
             end
+            resXQ{6} = cell2mat(resD);
             %now assign results to object properties
             %--------------------------------------------------------------------------
             % Assign model output to a dstable using the defined dsproperties meta-data
             %--------------------------------------------------------------------------
             dst = dstable(resXQ{:},'RowNames',inp.Qrange','DSproperties',dsp);
-            dst.Dimensions.X = xy{:,1};     %grid x-coordinate
+            dst.Dimensions.X = xdim{1};     %grid x-coordinate
             %--------------------------------------------------------------------------
             % Save results
             %--------------------------------------------------------------------------
@@ -199,12 +197,12 @@ classdef CF_HydroData < muiPropertyUI
             getdialog('Run complete');            
         end
 %%
-        function [resX,xyz,resXT,time] = runHydroModel(obj,estobj)
+        function [res,xyz,time] = runHydroModel(obj,estobj)
             %run model when updating models eg adding surface to form model or in
             %transgression model (i) no checks made; (ii) uses current transient
             %properties for water levels; and (iii) specified form model. 
             %See cst_model help for definitions of output.
-            resX = []; resXT = []; time = []; xyz = [];
+            res = []; time = []; xyz = [];
             ok = initialise_mui_app('CSTmodel',obj.cstmsg,'CSTfunctions');
             if ok<1, return; end
             
@@ -212,7 +210,7 @@ classdef CF_HydroData < muiPropertyUI
             [inp,rnp] = getHydroModelParams(obj,true);
             
             try
-                [resX,xyz,resXT,time] = cst_model(inp,rnp,[]);
+                [res,xyz,time] = cst_model(inp,rnp,[]);
             catch ME
                 %remove the waitbar if program did not complete
                 model_catch(ME,'cst_model','Qr',inp.RiverDischarge);                
@@ -461,19 +459,22 @@ classdef CF_HydroData < muiPropertyUI
             %struct entries are cell arrays and can be column or row vectors
             %static ouput (mean tide values)
             dsp.Variables = struct(...
-                'Name',{'MeanTideLevel','TidalElevAmp','TidalVelAmp',...
-                        'RiverVel','HydDepth'},...
+                'Name',{'MeanTideLevel','TidalElevAmp','LWHWratio',...
+                'TidalVelAmp','RiverVel','HydDepth'},...
                 'Description',{'Mean water level',...
-                               'Tidal elevation amplitude',...
-                               'Tidal velocity amplitude',...
-                               'River flow velocity',...
-                               'Hydraulic depth'},...
-                'Unit',{'m','m','m/s','m/s','m'},...
+                'Tidal elevation amplitude',...
+                'LW/HW ratio',...               
+                'Tidal velocity amplitude',...
+                'River flow velocity',...
+                'Hydraulic depth'},...
+                'Unit',{'m','m','-','m/s','m/s','m'},...
                 'Label',{'Mean water level (m)',...
-                         'Elevation amplitude (m)',...
-                         'Velocity amplitude (m/s)',...
-                         'Velocity (m/s)','Depth (m)'},...
-                'QCflag',repmat({'model'},1,5));
+                'Elevation amplitude (m)',...
+                'LW/HW ratio (-)',...
+                'Velocity amplitude (m/s)',...
+                'Velocity (m/s)',...
+                'Hydraulic depth (m)'},...
+                'QCflag',repmat({'model'},1,6));
             dsp.Row = struct(...
                 'Name',{''},...
                 'Description',{''},...

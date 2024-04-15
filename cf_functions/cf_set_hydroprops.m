@@ -35,10 +35,10 @@ function [obj,ok] = cf_set_hydroprops(obj)
     
     if obj.Selection.wlflag==0
         %use cst_model to set-up water levels for model           
-        [resX,xyz,~,~] = runHydroModel(hydobj,obj);
-        if isempty(resX), return; end
+        [res,xyz,~] = runHydroModel(hydobj,obj);
+        if isempty(res), return; end
         %interpolate CSTmodel results onto model grid + reverse for xmin @ head
-        obj.RunParam.CF_HydroData = cf_cst2grid(obj,resX,xyz{:},false);
+        obj.RunParam.CF_HydroData = cf_cst2grid(obj,res,xyz{:},false);
     else
         %use constant high water level and linear reducing low water
         Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit 

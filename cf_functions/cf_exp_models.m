@@ -32,7 +32,7 @@ function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
 % CoastalSEA (c) Jan 2022
 %--------------------------------------------------------------------------
 %
-    xi = []; yi = []; zgrd = []; Wz = [];
+    xi = []; yi = []; zgrd = []; Wz = []; Rv = [];
     if nargin<3
         isfull = true;
     end

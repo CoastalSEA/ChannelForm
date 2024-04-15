@@ -83,6 +83,7 @@ classdef CF_FormModel < FGDinterface
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
                     hf = setFormSelection(obj); 
                     waitfor(hf);
+                    if isempty(obj.Selection), obj = []; return; end %user cancelled selection
                     [xi,yi,zi,Wz,Rv] = cf_exp_models(obj);
                     sel = obj.Selection;
                     meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
@@ -291,19 +292,29 @@ classdef CF_FormModel < FGDinterface
                 'Style','pushbutton',...
                 'String', 'Accept selection',...
                 'Units','normalized', ...
-                'Position', [0.3,0.1,0.4,0.1],...
-                'Callback',@obj.pushbutton_callback);  
+                'Position', [0.3,0.1,0.2,0.1],...
+                'Callback',@obj.pushbutton_callback); 
+            uicontrol('Parent',hf,...  %callback button
+                'Style','pushbutton',...
+                'String', 'Quit',...
+                'Units','normalized', ...
+                'Position', [0.6,0.1,0.2,0.1],...
+                'Callback',@obj.pushbutton_callback);
         end
 %%
         function pushbutton_callback(obj,src,~)
             %callback function for the accept button on the selection UI
             hf = src.Parent;
-            temp = findobj(hf.Children,'Tag','PlanUI');
-            obj.Selection.planform = temp.String{temp.Value};
-            temp = findobj(hf.Children,'Tag','ChannelUI');
-            obj.Selection.channelform = temp.String{temp.Value};
-            temp = findobj(hf.Children,'Tag','IntertidalUI');
-            obj.Selection.intertidalform = temp.String{temp.Value}; 
+            if strcmp(src.String,'Accept selection')                
+                temp = findobj(hf.Children,'Tag','PlanUI');
+                obj.Selection.planform = temp.String{temp.Value};
+                temp = findobj(hf.Children,'Tag','ChannelUI');
+                obj.Selection.channelform = temp.String{temp.Value};
+                temp = findobj(hf.Children,'Tag','IntertidalUI');
+                obj.Selection.intertidalform = temp.String{temp.Value}; 
+            else
+                obj.Selection = [];
+            end
             close(hf);
         end
     end    

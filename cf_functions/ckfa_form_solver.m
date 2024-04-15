@@ -92,7 +92,7 @@ function fy = fun_hm(inp,hme)
     tau = inp.rhow*Cdc*Uc^2;                     %bed shear stress
 
     if inp.Uw>0                                  %winds included
-        Wm = inp.Wrv*exp(inp.Le*inp.cLw/Lw);
+        Wm = inp.Wrv*exp(inp.Le/Lw);
         Fch = sqrt(2)*Wm; 
         [Hs, Tp, ~] = tma_spectrum(inp.Uw,inp.zw,Fch,hme,hme);
         Hrms = Hs/sqrt(2);
