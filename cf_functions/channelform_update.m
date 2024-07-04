@@ -22,13 +22,15 @@ function channelform_update(obj,oldV,newV)
 % CoastalSEA (c) Oct 2023 
 %--------------------------------------------------------------------------
 %
-    if strcmp(newV,'3.3')
-        if strcmp(oldV,'2.1')
+    switch oldV
+        case '2.1'
             update_v21_to_v31(obj);
-        end
-        update_v32_to_v33(obj);
-    else
-        warndlg(sprintf('No update for version %s to version %s', oldV,newV))
+            update_v32_to_v33(obj);
+        case '3.2'
+            update_v32_to_v33(obj);
+        case '3.3'
+            
+        otherwise
+            warndlg(sprintf('No update for version %s to version %s', oldV,newV))
     end
 end
-

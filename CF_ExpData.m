@@ -11,7 +11,6 @@ classdef CF_ExpData < muiPropertyUI
 %   inherits muiPropertyUI
 % NOTES
 %   Notation used in model, with expobj an instance of this class:
-%     Le = expobj.ChannelLength;     %total length of channel (m)
 %     bu = expobj.HWmouthWidth/2;    %half-width of mouth at high water(m)
 %     bl = expobj.LWmouthWidth/2;    %half-width of mouth at low water level(m)
 %     nc = expobj.ChannelShapeParam; %channel shape parameter (-)

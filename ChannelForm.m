@@ -15,8 +15,8 @@ classdef ChannelForm < muiModelUI
 % 
     properties  (Access = protected)
         %implement properties defined as Abstract in muiModelUI
-        vNumber = '3.3'
-        vDate   = 'Jan 2024'
+        vNumber = '3.4'
+        vDate   = 'Aug 2024'
         modelName = 'ChannelForm'                    
         %Properties defined in muiModelUI that need to be defined in setGui
         % ModelInputs  %classes required by model: used in isValidModel check 
@@ -117,9 +117,11 @@ classdef ChannelForm < muiModelUI
             menu.Setup(1).Separator = [repmat({'off'},[1,3]),{'on'},...
                                        repmat({'off'},[1,4]),{'on'}]; %separator preceeds item
             menu.Setup(2).List = {'Exp Form Parameters','Power Form Parameters',...
+                                        'Inlet Form Parameters',...
                                         'Valley Parameters','Shore Parameters'};
-            menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,4]); 
-            
+            menu.Setup(2).Callback = repmat({@obj.setupMenuOptions},[1,5]); 
+            menu.Setup(2).Separator = {'off','off','off','on','off'}; %separator preceeds item
+
             menu.Setup(3).List = {'Hydraulic Parameters','Sediment Parameters',...
                                   'Transgression Parameters','Morphological Modifications'};
             menu.Setup(3).Callback = [{'gcbo;'},repmat({@obj.setupMenuOptions},[1,3])];  
@@ -167,10 +169,11 @@ classdef ChannelForm < muiModelUI
 
             %% Run menu ---------------------------------------------------
             menu.Run(1).List = {'Exponential form model','Power form model',...
-                                'CKFA form model','Valley form model',...
-                                'Transgression model','Derive Output'};                                
-            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,6]);
-            menu.Run(1).Separator = [repmat({'off'},[1,5]),{'on'}]; %separator preceeds item
+                                'CKFA form model','Inlet form model',...
+                                'Valley form model','Transgression model',...
+                                'Derive Output'};                                
+            menu.Run(1).Callback = repmat({@obj.runMenuOptions},[1,7]);
+            menu.Run(1).Separator = [repmat({'off'},[1,4]),{'on','off','on'}]; %separator preceeds item
             
             %% Plot menu --------------------------------------------------  
             menu.Analysis(1).List = {'Plots','Statistics','Transgression Plots'};
@@ -205,8 +208,9 @@ classdef ChannelForm < muiModelUI
             tabs.Form = {'  Form  ',''};
             subtabs.Form(1,:) = {' Exponential ',@obj.InputTabSummary};
             subtabs.Form(2,:) = {'  Power  ',@obj.InputTabSummary};
-            subtabs.Form(3,:) = {'  Valley  ',@obj.InputTabSummary};
-            subtabs.Form(4,:) = {'  Shore  ',@obj.InputTabSummary};
+            subtabs.Form(3,:) = {'  Inlet  ',@obj.InputTabSummary};
+            subtabs.Form(4,:) = {'  Valley  ',@obj.InputTabSummary};
+            subtabs.Form(5,:) = {'  Shore  ',@obj.InputTabSummary};
             tabs.Settings = {'  Settings  ',''};
             subtabs.Settings(1,:) = {' Forcing ',@obj.InputTabSummary}; 
             subtabs.Settings(2,:) = {' Sediments ',@obj.InputTabSummary};
@@ -233,6 +237,7 @@ classdef ChannelForm < muiModelUI
             props = {...                                    
                 'CF_ExpData','Exponential',[0.90,0.60],{220,70}, 'Exponential model parameters:';...  
                 'CF_PowerData','Power',[0.90,0.60],{220,70}, 'Power model parameters:';...
+                'CF_InletData','Inlet',[0.90,0.60],{220,70}, 'Inlet model parameters:';...
                 'CF_ValleyData','Valley',[0.90,0.60],{220,70}, 'Valley model parameters:';... 
                 'CF_ShoreData','Shore',[0.90,0.60],{220,70}, 'Shore model parameters:';... 
                 'CF_ModsData','Modifications',[0.90,0.96],{240,260},'Morphological modifications:';...
@@ -303,6 +308,9 @@ classdef ChannelForm < muiModelUI
                 case 'Power Form Parameters'
                     CF_PowerData.setInput(obj);  
                     tabtxt = 'Power';
+                case 'Inlet Form Parameters'
+                    CF_InletData.setInput(obj);  
+                    tabtxt = 'Inlet';
                 case 'Valley Parameters'    
                     CF_ValleyData.setInput(obj); 
                     tabtxt = 'Valley';
@@ -423,6 +431,8 @@ classdef ChannelForm < muiModelUI
                     CF_FormModel.runModel(obj,'Power');
                 case 'CKFA form model'
                     CF_FormModel.runModel(obj,'CKFA');
+                case 'Inlet form model'
+                    CF_FormModel.runModel(obj,'Inlet');
                 case 'Valley form model'
                     CF_ValleyModel.runModel(obj);
                 case 'Transgression model'

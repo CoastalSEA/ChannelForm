@@ -96,6 +96,18 @@ classdef CF_FormModel < FGDinterface
                 case 'CKFA'
                     [xi,yi,zi,Wz,Rv] = ckfa_form_model(obj);
                     meta.data = sprintf('CKFA exogenous form, %s',wlstxt);
+                case 'Inlet'
+                    %prompt user to select plan form and x-sect form 
+                    %model selection assigned to obj.Selection struct
+                    obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_InletData');
+                    hf = setFormSelection(obj); 
+                    waitfor(hf);
+                    if isempty(obj.Selection), obj = []; return; end %user cancelled selection
+                    [xi,yi,zi,Wz,Rv] = cf_inlet_models(obj);
+                    sel = obj.Selection;
+                    meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
+                                        sel.planform,sel.intertidalform,...
+                                        sel.channelform,wlstxt);
             end
             if isempty(xi), return; end
             

@@ -19,7 +19,7 @@ function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
 %   xi - x co-ordinate (m)
 %   yi - y co-ordinate (m)
 %   zgrd - bed elevation grid (m)
-%   Wz -  table of Whw,Wmt,Wlw for width at hw,mt,lw (m)
+%   Wz -  table of Whw, Wmt, Wlw for width at hw, mt, lw (m)
 %   Rv - struct of river regime properties Hr, Wr, Ar
 % NOTES
 %   Cross-section comprises a channel using Cao&Knight section, or a 
@@ -316,9 +316,4 @@ function [yu,yo,yl] = powPlan(xxi,Lu,Ll,bu,bl,bh,mu,ml,fact)
     xo = xxi+Lu/fact;                %adjust to origin of mtl plan form
     yo = (((bo-bh)*(xo/Lo)^mo))*(xo>0+bh);   %distance from centre line to mtl
     yl = (((bl-bh)*(xxi/Ll)^ml))*(xxi>0+bh); %distance from centre line to lw
-end
-%%
-function [Am,La] = csa_properties()
-    %cross-ectional area at the mouth
-    
 end
