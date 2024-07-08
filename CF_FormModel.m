@@ -46,7 +46,8 @@ classdef CF_FormModel < FGDinterface
             %model being run, selections for cf_exp_model, wlflag for wl 
             %selection, flag to indicate if modifiaction have been added
             obj.Selection = struct('modeltype','','planform',0,'intertidalform',0,...
-                                   'channelform',0,'wlflag',0,'incmods',false);
+                                   'channelform',0,'basinform',0,...
+                                   'wlflag',0,'incmods',false);
         end
     end      
 %%
@@ -55,7 +56,7 @@ classdef CF_FormModel < FGDinterface
 % Model implementation
 %--------------------------------------------------------------------------         
         function obj = runModel(mobj,option)
-            %function to run a simple 2D diffusion model
+            %function to run the various form models
             obj = CF_FormModel;             
             %now check that the input data has been entered
             %isValidModel checks the InputHandles defined in ChannelForm
@@ -73,7 +74,7 @@ classdef CF_FormModel < FGDinterface
             hydobj = obj.RunParam.CF_HydroData;
             setTransHydroProps(hydobj,mobj); 
             %add water level definition to the run parameters
-            [obj.Selection.wlflag,wlstxt] = setWaterLevels(obj);
+            [obj.Selection.wlflag,wlstxt] = setWaterLevels(obj,option);
             
             obj.Selection.modeltype = option;
             switch option
@@ -81,7 +82,11 @@ classdef CF_FormModel < FGDinterface
                     %prompt user to select plan form and x-sect form 
                     %model selection assigned to obj.Selection struct
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
-                    hf = setFormSelection(obj); 
+                    if isempty(obj.RunParam.CF_FormData)
+                        warndlg('No data defined for exponential law form')
+                        return;
+                    end
+                    hf = setFormSelection(obj,option); 
                     waitfor(hf);
                     if isempty(obj.Selection), obj = []; return; end %user cancelled selection
                     [xi,yi,zi,Wz,Rv] = cf_exp_models(obj);
@@ -91,6 +96,10 @@ classdef CF_FormModel < FGDinterface
                                         sel.channelform,wlstxt);
                 case 'Power'
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
+                    if isempty(obj.RunParam.CF_FormData)
+                        warndlg('No data defined for power law form')
+                        return;
+                    end
                     [xi,yi,zi,Wz,Rv] = cf_pow_model(obj);
                     meta.data = sprintf('PR power form, %s',wlstxt);
                 case 'CKFA'
@@ -100,14 +109,14 @@ classdef CF_FormModel < FGDinterface
                     %prompt user to select plan form and x-sect form 
                     %model selection assigned to obj.Selection struct
                     obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_InletData');
-                    hf = setFormSelection(obj); 
+                    hf = setFormSelection(obj,option); 
                     waitfor(hf);
                     if isempty(obj.Selection), obj = []; return; end %user cancelled selection
                     [xi,yi,zi,Wz,Rv] = cf_inlet_models(obj);
                     sel = obj.Selection;
-                    meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s',...
+                    meta.data = sprintf('%s plan form, %s intertidal, %s channel, %s basin, %s',...
                                         sel.planform,sel.intertidalform,...
-                                        sel.channelform,wlstxt);
+                                        sel.channelform,sel.basinform,wlstxt);
             end
             if isempty(xi), return; end
             
@@ -240,29 +249,34 @@ classdef CF_FormModel < FGDinterface
     end 
 %%    
     methods (Access = private) 
-        function [wlflag,mtxt] = setWaterLevels(~)
+        function [wlflag,mtxt] = setWaterLevels(~,option)
             %set water levels for form model using either the surface
             %defined by the cst_model, or high water at the mouth and a 
             %reducing tidal amplitude    
             % wlflag - flag to indicate type of water surface to use
             % mtxt - text to define type of water surface
-            answer = questdlg('Use which hydro surface?','Select hydro',...
-                              'CST surface','Constant HW',...
-                              'Constant HW&LW','CST surface');
-
-            if strcmp(answer,'CST surface')
-                wlflag = 0;
-                mtxt = 'hydraulic surfaces from CSTmodel';
-            elseif strcmp(answer,'Constant HW')
-                wlflag = 1; 
-                mtxt = 'constant HW surface, tapered LW surface';
-            else
+            if strcmp(option,'Inlet')
                 wlflag = 2;
                 mtxt = 'constant HW and LW surfaces';
-            end                              
+            else
+                answer = questdlg('Use which hydro surface?','Select hydro',...
+                                  'CST surface','Constant HW',...
+                                  'Constant HW&LW','CST surface');
+
+                if strcmp(answer,'CST surface')
+                    wlflag = 0;
+                    mtxt = 'hydraulic surfaces from CSTmodel';
+                elseif strcmp(answer,'Constant HW')
+                    wlflag = 1; 
+                    mtxt = 'constant HW surface, tapered LW surface';
+                else
+                    wlflag = 2;
+                    mtxt = 'constant HW and LW surfaces';
+                end      
+            end
         end
 %%
-        function hf = setFormSelection(obj)   
+        function hf = setFormSelection(obj,option)   
             %initialise ui for selection of form options
             hf = figure('Name','Channel Form', ...
                 'NumberTitle','off', ...
@@ -279,14 +293,22 @@ classdef CF_FormModel < FGDinterface
                 'ZColor','none', ...
                 'Tag','Gui'); 
             
+            nvar = 3;
             vartitle = {'Plan form:','Channel form:','Intertidal form:'};
             varorder = {'PlanUI','ChannelUI','IntertidalUI'};
             uioptions{1} = {'Exponential','Power'};
             uioptions{2} = {'Parabolic','Rectangular'};
             uioptions{3} = {'Linear','Rectangular','Stepped','Uniform Shear','L&M muddy shore'};
+            
+            if strcmp(option,'Inlet')
+                nvar = 4;
+                vartitle = {'Plan form:','Channel form:','Intertidal form:','Basin shape:'};
+                varorder = {'PlanUI','ChannelUI','IntertidalUI','BasinUI'};
+                uioptions{4} = {'Ellipse','Rectangle'};   
+            end
 
-            for i=1:3
-                height = 1-i/5;
+            for i=1:nvar
+                height = 1-i/(nvar+2);
                 uicontrol('Parent',hf, 'Style','text',...
                     'String',vartitle{i},...
                     'HorizontalAlignment', 'right',...
@@ -302,7 +324,7 @@ classdef CF_FormModel < FGDinterface
             end            
             uicontrol('Parent',hf,...  %callback button
                 'Style','pushbutton',...
-                'String', 'Accept selection',...
+                'String', 'Accept',...
                 'Units','normalized', ...
                 'Position', [0.3,0.1,0.2,0.1],...
                 'Callback',@obj.pushbutton_callback); 
@@ -317,13 +339,17 @@ classdef CF_FormModel < FGDinterface
         function pushbutton_callback(obj,src,~)
             %callback function for the accept button on the selection UI
             hf = src.Parent;
-            if strcmp(src.String,'Accept selection')                
+            if strcmp(src.String,'Accept')                
                 temp = findobj(hf.Children,'Tag','PlanUI');
                 obj.Selection.planform = temp.String{temp.Value};
                 temp = findobj(hf.Children,'Tag','ChannelUI');
                 obj.Selection.channelform = temp.String{temp.Value};
                 temp = findobj(hf.Children,'Tag','IntertidalUI');
                 obj.Selection.intertidalform = temp.String{temp.Value}; 
+                temp = findobj(hf.Children,'Tag','BasinUI');
+                if ~isempty(temp)
+                    obj.Selection.basinform = temp.String{temp.Value};
+                end
             else
                 obj.Selection = [];
             end
