@@ -64,6 +64,9 @@ function [xi,yi,zgrd,Wz,Rv] = cf_pow_model(obj,isfull)
     else                             %return half grid
         zgrd = zi;
     end
+     
+%     [X,Y] = meshgrid(xi,yi);
+%     figure; surf(X,Y,zgrd);   
 end
 %%
 function obj = pr_properties(obj)
@@ -91,7 +94,7 @@ end
 %%
 function [xi,yi,zi,Wz,Rv] = pr_3D_form(obj)    
     %generate the 3D form
-
+    xi = []; yi = []; zi = []; Wz = []; Rv = [];
     %get the required input parameter classes
     pwrobj = obj.RunParam.CF_FormData;
     grdobj = obj.RunParam.GD_GridProps;
@@ -110,7 +113,13 @@ function [xi,yi,zi,Wz,Rv] = pr_3D_form(obj)
     mu = pwrobj.HWdepthExponent;   %depth exponent at high water (-)
     ml = pwrobj.LWdepthExponent;   %depth exponent at low water (-)
     zm = obj.zMouthInvert;         %thalweg bed level at mouth to zero datum (m)    
-    
+
+    if any([nu,nl,mu,ml]<=0)
+        %negative exponents result in invalid complex forms
+        warndlg('One or more exponents for power form not set or invalid')
+        return; 
+    end           
+
     %sediment properties (if saltmarsh defined)
     dmax = 0;
     if ~isempty(sedobj.MaxMarshDepth)
@@ -156,6 +165,7 @@ function [xi,yi,zi,Wz,Rv] = pr_3D_form(obj)
         %is applied
         xLi = Lu+xi(ix);
         temp = Le/Lu.*((yi./bu).^(1/nu)-xi(ix)./Le);
+        temp(temp<0) = 0;
         zu = du.*((temp.*(xLi>=0)).^mu); %equation only valid to tidal limit
         %elevation when above tidal limit set to be same as surrounding land
         if xLi<0, zu = ones(size(yi))*zhw+offset; end  
@@ -166,6 +176,7 @@ function [xi,yi,zi,Wz,Rv] = pr_3D_form(obj)
         %and z<zso in the same coordinate system (see definitions sketch in
         %manual)
         temp = (xi(ix)./Ll-(yi./bl).^(1/nl));
+        temp(temp<0) = 0;
         %apply along channel and cross-channel limits to validity of eqn
         limit = (xi(ix)>0) & (temp>=0);   
         zl = dl.*((temp.*limit).^ml); 
