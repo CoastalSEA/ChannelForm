@@ -69,6 +69,9 @@ function [xi,yi,zgrd,Wz,Rv] = cf_exp_models(obj,isfull)
     else                               %return half grid
         zgrd = zi;
     end
+    
+%     [X,Y] = meshgrid(xi,yi);
+%     figure; surf(X,Y,zgrd);
 end    
 %%
 function obj = channel_properties(obj)
@@ -105,7 +108,7 @@ end
 %%
 function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     %generate the 3D form
-    
+    xi = []; yi = []; zi = []; Wz = []; Rv = [];
     %get the required input parameter classes
     expobj = obj.RunParam.CF_FormData;
     grdobj = obj.RunParam.GD_GridProps;
@@ -130,13 +133,15 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     Lt = hydobj.xTidalLimit;         %distance from mouth to tidal limit
     
     if strcmp(obj.Selection.planform,'Power')
-        if nu<=0 
-            warndlg('Exponents for power form not set')
+        %negative exponents result in invalid complex forms
+        if  any([nu,nl]<=0)
+            warndlg('One or more exponents for power form not set or invalid')
             return; 
         end           
     elseif strcmp(obj.Selection.planform,'Exponential')
-        if Lwu<=0 
-            warndlg('Exponents for exponential form not set')
+        %allow divergent landwards exponential at HW but not at LW
+        if Lwl<=0
+            warndlg('Low water exponents for exponential form not set or invalid')
             return; 
         end 
     end
@@ -168,7 +173,7 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     
     %river properties
     [Rv.Hr,Rv.Wr,Rv.Ar] = get_river_regime(obj,2*amp0);
-    [hrv,bh,mcr] = get_river_profile(obj,2*amp0,yi);  
+    [hrv,bh,mcr] = get_river_profile(obj,2*amp0,yi);   %#ok<ASGLU>
 
     %aspect ratio and slope coefficient (mc) at mouth    
     dl = hydobj.zlw(1)-zm;           %depth of lower form at mouth to lw (m)
@@ -197,7 +202,7 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
                 xexp = Ll-xi(ix);    %x defined from mouth for exponential          
                 [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lt,Lwu,Lwl,fact);
             case 'Power'
-                [yu,yo,yl] = powPlan(xi(ix),Lm-Ll,Ll,bu,bl,bh,nu,nl,fact);
+                [yu,yo,yl] = powPlan(xi(ix),Lt,Ll,bu,bl,bh,nu,nl,fact);
         end
         ls = (yu-yl)/fact;           %lower intertidal width from lw to mtl 
         
@@ -236,12 +241,17 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
                     zdl = (ax.*((yi-yl)./ls-1)).*(yi<=yo & yi>=yl);                    
                 end
             case 'L&M muddy shore'
-                yol = (yi-yl)/(yu-yl);
-                yol = yol.*(yol<=1);
-                %upper intertidal form
-                zdu = ax*(1 - 2*exp(4*ki.*yol).*(1-yol).^2).*(yi<=yu & yi>yo);                
-                %lower intertidal form
-                zdl = ax*(1- 2*exp(4*ki.*yol).*(1-yol).^2).*(yi<=yo & yi>=yl);
+                if yu==yl             %no intertidal present
+                    zdu = yi*0;
+                    zdl =yi*0;
+                else
+                    yol = (yi-yl)/(yu-yl);
+                    yol = yol.*(yol<=1);
+                    %upper intertidal form
+                    zdu = ax*(1 - 2*exp(4*ki.*yol).*(1-yol).^2).*(yi<=yu & yi>yo);                
+                    %lower intertidal form
+                    zdl = ax*(1- 2*exp(4*ki.*yol).*(1-yol).^2).*(yi<=yo & yi>=yl);
+                end
         end
 
         %check for saltmarsh on upper intertidal form
@@ -304,16 +314,25 @@ function [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lt,Lhw,Llw,fact)
     end
 end
 %%
-function [yu,yo,yl] = powPlan(xxi,Lu,Ll,bu,bl,bh,mu,ml,fact)
+function [yu,yo,yl] = powPlan(xxi,Lt,Ll,bu,bl,bh,mu,ml,fact)
     %compute controlling dimensions (y) for a power plan form
     mo = (mu+ml)/2; %width shape factor as average of upper and lower values
-    Lt = Ll+Lu;                      %total length of estuary (m)
+    %Lt = Ll+Lu;                     %total length of estuary (m)
+    Lu = Lt-Ll;
     Lo = Ll+Lu/fact;                 %length of channel at mtl(m)
     Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
     bo = bl+Ls;                      %half-width at mtl(m)
     xu = xxi+Lu;                     %adjust to origin of high water plan form
-    yu = ((bu-bh)*(xu/Lt)^mu)+bh;    %distance from centre line to hw
+    %use eps as an offset in x to avoid inf if x=0
+    yu = ((bu-bh)*((xu)/Lt)^mu)*(xu>0)+bh;   %distance from centre line to hw
     xo = xxi+Lu/fact;                %adjust to origin of mtl plan form
-    yo = (((bo-bh)*(xo/Lo)^mo))*(xo>0+bh);   %distance from centre line to mtl
-    yl = (((bl-bh)*(xxi/Ll)^ml))*(xxi>0+bh); %distance from centre line to lw
+    yo = ((bo-bh)*((xo)/Lo)^mo)*(xo>0)+bh;   %distance from centre line to mtl
+    yl = ((bl-bh)*((xxi)/Ll)^ml)*(xxi>0)+bh; %distance from centre line to lw
+    
+    
+    if xxi<Ll-Lt       
+        if yu<bh, yu = bh; end        
+        if yo<bh, yo = bh; end 
+        if yl<bh, yl = bh; end 
+    end
 end
