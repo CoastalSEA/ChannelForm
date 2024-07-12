@@ -46,7 +46,7 @@ classdef CF_FormModel < FGDinterface
             %model being run, selections for cf_exp_model, wlflag for wl 
             %selection, flag to indicate if modifiaction have been added
             obj.Selection = struct('modeltype','','planform',0,'intertidalform',0,...
-                                   'channelform',0,'basinform',0,...
+                                   'channelform',0,'basinform',0,'lwform',0,...
                                    'wlflag',0,'incmods',false);
         end
     end      
@@ -81,7 +81,7 @@ classdef CF_FormModel < FGDinterface
                 case 'Exponential'                    
                     %prompt user to select plan form and x-sect form 
                     %model selection assigned to obj.Selection struct
-                    obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_ExpData');
+                    obj.RunParam.CF_FormData = copy(getClassObj(mobj,'Inputs','CF_ExpData'));
                     if isempty(obj.RunParam.CF_FormData)
                         warndlg('No data defined for exponential law form')
                         return;
@@ -95,7 +95,7 @@ classdef CF_FormModel < FGDinterface
                                         sel.planform,sel.intertidalform,...
                                         sel.channelform,wlstxt);
                 case 'Power'
-                    obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_PowerData');
+                    obj.RunParam.CF_FormData = copy(getClassObj(mobj,'Inputs','CF_PowerData'));
                     if isempty(obj.RunParam.CF_FormData)
                         warndlg('No data defined for power law form')
                         return;
@@ -108,7 +108,7 @@ classdef CF_FormModel < FGDinterface
                 case 'Inlet'
                     %prompt user to select plan form and x-sect form 
                     %model selection assigned to obj.Selection struct
-                    obj.RunParam.CF_FormData = getClassObj(mobj,'Inputs','CF_InletData');
+                    obj.RunParam.CF_FormData = copy(getClassObj(mobj,'Inputs','CF_InletData'));
                     hf = setFormSelection(obj,option); 
                     waitfor(hf);
                     if isempty(obj.Selection), obj = []; return; end %user cancelled selection
@@ -125,7 +125,11 @@ classdef CF_FormModel < FGDinterface
             if size(Wz,2)~=3, Wz = Wz'; end  %widths used in model 
 
             gridyear = years(0);  %durataion data for rows 
-            Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit
+            if strcmp(option,'Inlet')
+                Lt = obj.RunParam.CF_FormData.xHWbasinLength+(xi(2)-xi(1));
+            else
+                Lt = obj.RunParam.CF_HydroData.xTidalLimit; %distance from mouth to tidal limit
+            end
 
             dims = struct('x',xi,'y',yi,'t',gridyear,'xM',0,...
                                           'Lt',Lt,'Rv',Rv,'ishead',false);
@@ -293,7 +297,6 @@ classdef CF_FormModel < FGDinterface
                 'ZColor','none', ...
                 'Tag','Gui'); 
             
-            nvar = 3;
             vartitle = {'Plan form:','Channel form:','Intertidal form:'};
             varorder = {'PlanUI','ChannelUI','IntertidalUI'};
             uioptions{1} = {'Exponential','Power'};
@@ -301,12 +304,15 @@ classdef CF_FormModel < FGDinterface
             uioptions{3} = {'Linear','Rectangular','Stepped','Uniform Shear','L&M muddy shore'};
             
             if strcmp(option,'Inlet')
-                nvar = 4;
-                vartitle = {'Plan form:','Channel form:','Intertidal form:','Basin shape:'};
-                varorder = {'PlanUI','ChannelUI','IntertidalUI','BasinUI'};
-                uioptions{4} = {'Ellipse','Rectangle'};   
+                vartitle = {'Plan form:','Channel form:','Intertidal form:','Basin shape:','Taper low water boundary'};
+                varorder = {'PlanUI','ChannelUI','IntertidalUI','BasinUI','LowWaterUI'};                
+                uioptions{4} = {'Rectangle','Ellipse','Half-ellipse',...
+                                'Divergent-shore','Divergent-bay',...
+                                'Logistic-shore','Logistic-bay'};  
+                uioptions{5} = {'Yes','No'};
             end
 
+            nvar = length(vartitle);
             for i=1:nvar
                 height = 1-i/(nvar+2);
                 uicontrol('Parent',hf, 'Style','text',...
@@ -349,6 +355,8 @@ classdef CF_FormModel < FGDinterface
                 temp = findobj(hf.Children,'Tag','BasinUI');
                 if ~isempty(temp)
                     obj.Selection.basinform = temp.String{temp.Value};
+                    temp = findobj(hf.Children,'Tag','LowWaterUI');
+                    obj.Selection.lwform = temp.String{temp.Value};
                 end
             else
                 obj.Selection = [];

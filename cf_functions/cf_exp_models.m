@@ -184,9 +184,11 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     %calculate the transformation of the x co-ordinate for given x and y values
     %and then use this to obtain a vaule of z    
     for ix=1:length(xi)
-        zhw = zHWxi(ix); zlw = zLWxi(ix);
+        zhw = zHWxi(ix); 
+        zlw = zLWxi(ix);
         ax = (zhw-zlw)/2;            %tidal amplitude(m)
         zo = zhw-ax;                 %mean tide level(m)  
+        
         %------------------------------------------------------------------
         %Note - see how this relates to work of Uncles re along channel
         %slope variation. *************************************************
