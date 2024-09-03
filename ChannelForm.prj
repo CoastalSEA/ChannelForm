@@ -1,0 +1,86 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="2719141503" file="D:\Matlab Code\MUImodels\muiApps\ChannelForm\ChannelForm.prj" location="D:\Matlab Code\MUImodels\muiApps\ChannelForm" name="ChannelForm" target="target.mlapps" target-name="Package App">
+    <param.appname>ChannelForm</param.appname>
+    <param.authnamewatermark>Ian Townend</param.authnamewatermark>
+    <param.email>i.townend@soton.ac.uk</param.email>
+    <param.company>University of Southampton</param.company>
+    <param.icon>${PROJECT_ROOT}\ChannelForm_resources\icon_24.png</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}\ChannelForm_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\ChannelForm_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\ChannelForm_resources\icon_16.png</file>
+    </param.icons>
+    <param.summary>A model to examine marine transgression of estuary and inlet landforms in their landscape setting (valley and flood plain).</param.summary>
+    <param.description>ChannelForm provides a framework for studying estuary and inlet morphological landforms in the context of the surrounding landscape (valley and flood plain). A set of tools allow digital terrain models (DTMs) to be created from models or imported. Channel and Valley forms can be combined to create a landscape setting, which can also include a shoreface and channel meanders. A kinematic model is used to consider the migration of the channel under the influence of sea level change, taking account of sediment supply from the sea and river.</param.description>
+    <param.screenshot>${PROJECT_ROOT}\ChannelForm_logo.jpg</param.screenshot>
+    <param.version>3.12</param.version>
+    <param.products.name>
+      <item>MATLAB</item>
+    </param.products.name>
+    <param.products.id>
+      <item>1</item>
+    </param.products.id>
+    <param.products.version>
+      <item>9.13</item>
+    </param.products.version>
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>05bbb74d-cb4f-4185-80d5-5f7cd53c2022</param.guid>
+    <unset>
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\ChannelForm.m</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\CF_ExpData.m</file>
+      <file>${PROJECT_ROOT}\CF_FormModel.m</file>
+      <file>${PROJECT_ROOT}\CF_HydroData.m</file>
+      <file>${PROJECT_ROOT}\CF_ModsData.m</file>
+      <file>${PROJECT_ROOT}\CF_PowerData.m</file>
+      <file>${PROJECT_ROOT}\CF_SediData.m</file>
+      <file>${PROJECT_ROOT}\CF_ShoreData.m</file>
+      <file>${PROJECT_ROOT}\CF_TransData.m</file>
+      <file>${PROJECT_ROOT}\CF_TransModel.m</file>
+      <file>${PROJECT_ROOT}\CF_ValleyData.m</file>
+      <file>${PROJECT_ROOT}\CF_ValleyModel.m</file>
+      <file>${PROJECT_ROOT}\RunProperties.m</file>
+      <file>${PROJECT_ROOT}\WaterLevels.m</file>
+    </fileset.depfun>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\cf_functions</file>
+      <file>${PROJECT_ROOT}\ChannelForm_logo.jpg</file>
+      <file>${PROJECT_ROOT}\doc</file>
+      <file>${PROJECT_ROOT}\example</file>
+      <file>${PROJECT_ROOT}\help</file>
+      <file>${PROJECT_ROOT}\info.xml</file>
+      <file>D:\Matlab Code\MUImodels\muiApps\muiAppEstuaryFcns</file>
+      <file>D:\Matlab Code\MUImodels\muiApps\muiAppGridFcns</file>
+    </fileset.resources>
+    <fileset.package />
+    <build-deliverables>
+      <file location="D:\Matlab Code\MUImodels\muiApps" name="ChannelForm" optional="false">D:\Matlab Code\MUImodels\muiApps\ChannelForm</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2022b</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
