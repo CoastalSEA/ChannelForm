@@ -320,9 +320,7 @@ function [yu,yo,yl] = expPlan(xexp,bu,bl,br,bt,Lt,Ll,Li,Llw,fact,basin)
     Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
     bo = bl+Ls;                      %half-width at mtl(m)    
     if xexp<=Li
-        yl = bl;
-        yo = bo;
-        yu = bu;
+        yl = bl;  yo = bo;  yu = bu;
     else
         yl = (bl-br)*exp(-(xexp-Li)/Llw)+br;  %distance from centre line to lw 
         if br==0 && xexp>Ll && yl<1
@@ -357,13 +355,11 @@ function [yu,yo,yl] = powPlan(xxi,bu,bt,Lt,Ll,Li,ml,basin)
     Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
     bo = bl+Ls;                      %half-width at mtl(m)    
     if xxi>Ll-Li                     %inlet reach 
-        yl = bl;
-        yo = bo;
-        yu = bu;
-    elseif xxi<Ll-Lt                 %landward reach
-        yl = br; 
-        yu = br; 
-        yo = br; 
+        yl = bl;  yo = bo;  yu = bu;
+    elseif xxi<Ll-Lt && br>0         %landward reach with river
+        yl = br;  yu = br;  yo = br; 
+    elseif xxi<Ll-Lt
+        yu = 0;   yo = 0;    yl = 0; %landward reach no river  
     else                             %central channel reach
         yl = (((bl-br)*(xxi/(Ll-Li))^ml))*(xxi>0)+br; %distance from centre line to lw
         %
@@ -428,13 +424,13 @@ end
 %%
 function params = setGLstruct(bu,bt,Ll,Li)
     %   p - struct containing:
-    A = 0;      %left horizontal asymptote
-    B = 10;      %growth rate
-    C = 1;      %upper asymptote of A+(K-A)/C^(1/nu) - typically 1
-    K = 1;      %right horizontal asymptote when C=1
-    nu = 1;   %>0 - affects proximity to which asymptote maximum growth occurs
+    A = 0.0;      %left horizontal asymptote
+    B = 10;       %growth rate
+    C = 1.0;      %upper asymptote of A+(K-A)/C^(1/nu) - typically 1
+    K = 1.0;      %right horizontal asymptote when C=1
+    nu = 1.0;     %>0 - affects proximity to which asymptote maximum growth occurs
     M = 0.5;      %start point (controls length of channel before expansion)
-    Q = 1;  %related to the value y(0).
+    Q = 1.0;      %related to the value y(0).
 
     params = struct('A',A,'B',B,'C',C,'K',K,'nu',nu,'M',M,'Q',Q);
 end

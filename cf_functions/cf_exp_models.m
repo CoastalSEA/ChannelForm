@@ -173,7 +173,7 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     
     %river properties
     [Rv.Hr,Rv.Wr,Rv.Ar] = get_river_regime(obj,2*amp0);
-    [hrv,bh,mcr] = get_river_profile(obj,2*amp0,yi);   %#ok<ASGLU>
+    [hrv,br,mcr] = get_river_profile(obj,2*amp0,yi);   %#ok<ASGLU>
 
     %aspect ratio and slope coefficient (mc) at mouth    
     dl = hydobj.zlw(1)-zm;           %depth of lower form at mouth to lw (m)
@@ -202,9 +202,9 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
         switch obj.Selection.planform
             case 'Exponential'
                 xexp = Ll-xi(ix);    %x defined from mouth for exponential          
-                [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lt,Lwu,Lwl,fact);
+                [yu,yo,yl] = expPlan(xexp,bu,bl,br,Lt,Lwu,Lwl,fact);
             case 'Power'
-                [yu,yo,yl] = powPlan(xi(ix),Lt,Ll,bu,bl,bh,nu,nl,fact);
+                [yu,yo,yl] = powPlan(xi(ix),Lt,Ll,bu,bl,br,nu,nl,fact);
         end
         ls = (yu-yl)/fact;           %lower intertidal width from lw to mtl 
         
@@ -269,7 +269,7 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
                 if yl>0
                     zdco = mc*yl/nc.*(1-(yi/yl).^nc).*(yi<yl); %depth at yi
                     zdc = -ax.*(zdco>0) -zdco;
-                    isriver = yi<bh & hrv>-zdc;
+                    isriver = yi<br & hrv>-zdc;
                     if any(isriver)
                         zdcr = -hrv.*isriver;
                         zdc = zdc.*(~isriver)+zdcr;
@@ -283,7 +283,7 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
                     hydep = mc*yl/(nc+1);        
                     zdco = ones(size(yi))*hydep.*(yi<yl); %depth at yl
                     zdc = -ax.*(zdco>0) -zdco;
-                    isriver = yi<bh & hrv>-zdc;
+                    isriver = yi<br & hrv>-zdc;
                     if any(isriver)
                         zdcr = -hrv.*isriver;
                         zdc = zdc.*(~isriver)+zdcr;
@@ -301,22 +301,24 @@ function [xi,yi,zi,Wz,Rv] = channel_3D_form(obj)
     end
 end
 %%
-function [yu,yo,yl] = expPlan(xexp,bu,bl,bh,Lt,Lhw,Llw,fact)
+function [yu,yo,yl] = expPlan(xexp,bu,bl,br,Lt,Lhw,Llw,fact)
     %compute controlling dimensions (y) for an exponential plan form
     Lmt = (Lhw+Llw)/2;               %width shape factor as average of upper and lower values
     Ls = (bu-bl)/fact;               %Lstar in F&A, lower intertial width (lw to mtl)(m) 
     bo = bl+Ls;                      %half-width at mtl(m)
-    yu = (bu-bh)*exp(-xexp/Lhw)+bh;  %distance from centre line to hw
-    yo = (bo-bh)*exp(-xexp/Lmt)+bh;  %distance from centre line to mtl
-    yl = (bl-bh)*exp(-xexp/Llw)+bh;  %distance from centre line to lw 
-    if xexp>Lt        
-        if yu<bh, yu = bh; end        
-        if yo<bh, yo = bh; end 
-        if yl<bh, yl = bh; end 
+    yu = (bu-br)*exp(-xexp/Lhw)+br;  %distance from centre line to hw
+    yo = (bo-br)*exp(-xexp/Lmt)+br;  %distance from centre line to mtl
+    yl = (bl-br)*exp(-xexp/Llw)+br;  %distance from centre line to lw 
+    if xexp>Lt && br>0       
+        if yu<br, yu = br; end        
+        if yo<br, yo = br; end 
+        if yl<br, yl = br; end 
+    elseif xexp>Lt
+        yu = 0; yo = 0; yl = 0;    
     end
 end
 %%
-function [yu,yo,yl] = powPlan(xxi,Lt,Ll,bu,bl,bh,mu,ml,fact)
+function [yu,yo,yl] = powPlan(xxi,Lt,Ll,bu,bl,br,mu,ml,fact)
     %compute controlling dimensions (y) for a power plan form
     mo = (mu+ml)/2; %width shape factor as average of upper and lower values
     %Lt = Ll+Lu;                     %total length of estuary (m)
@@ -326,15 +328,17 @@ function [yu,yo,yl] = powPlan(xxi,Lt,Ll,bu,bl,bh,mu,ml,fact)
     bo = bl+Ls;                      %half-width at mtl(m)
     xu = xxi+Lu;                     %adjust to origin of high water plan form
     %use eps as an offset in x to avoid inf if x=0
-    yu = ((bu-bh)*((xu)/Lt)^mu)*(xu>0)+bh;   %distance from centre line to hw
+    yu = ((bu-br)*((xu)/Lt)^mu)*(xu>0)+br;   %distance from centre line to hw
     xo = xxi+Lu/fact;                %adjust to origin of mtl plan form
-    yo = ((bo-bh)*((xo)/Lo)^mo)*(xo>0)+bh;   %distance from centre line to mtl
-    yl = ((bl-bh)*((xxi)/Ll)^ml)*(xxi>0)+bh; %distance from centre line to lw
+    yo = ((bo-br)*((xo)/Lo)^mo)*(xo>0)+br;   %distance from centre line to mtl
+    yl = ((bl-br)*((xxi)/Ll)^ml)*(xxi>0)+br; %distance from centre line to lw
     
     
-    if xxi<Ll-Lt       
-        if yu<bh, yu = bh; end        
-        if yo<bh, yo = bh; end 
-        if yl<bh, yl = bh; end 
+    if xxi<Ll-Lt && br>0        
+        if yu<br, yu = br; end        
+        if yo<br, yo = br; end 
+        if yl<br, yl = br; end 
+    if xxi<Ll-Lt
+        yu = 0; yo = 0; yl = 0;          
     end
 end
