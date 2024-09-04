@@ -3,13 +3,13 @@
 % flood plain and valley landscape.
 
 %% Licence
-% The code is provided as Open Source code (issued under a GNU General 
-% Public License).
+% The code is provided as Open Source code (issued under a BSD 3-clause License).
 
 %% Requirements
-% ModelUI is written in Matlab(TM) and requires v2016b, or later. In addition, 
-% ModelUI requires both the <matlab:doc('dstoolbox') dstoolbox> and the 
-% <matlab:doc('muitoolbox') muitoolbox>
+% ChannelForm is written in Matlab(TM) and requires v2016b, or later. In addition, 
+% ChannelForm requires both the <matlab:doc('dstoolbox') dstoolbox> and the 
+% <matlab:doc('muitoolbox') muitoolbox>. To include hydrodynamic water 
+% surfaces, the CSTmodel App also needs to be installed.
 
 %% Background
 % ChannelForm is a Matlab(TM) App that provides a framework for studying 
