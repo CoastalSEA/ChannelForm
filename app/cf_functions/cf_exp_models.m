@@ -338,7 +338,7 @@ function [yu,yo,yl] = powPlan(xxi,Lt,Ll,bu,bl,br,mu,ml,fact)
         if yu<br, yu = br; end        
         if yo<br, yo = br; end 
         if yl<br, yl = br; end 
-    if xxi<Ll-Lt
+    elseif xxi<Ll-Lt
         yu = 0; yo = 0; yl = 0;          
     end
 end

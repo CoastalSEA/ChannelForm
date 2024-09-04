@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="2719141503" file="D:\Matlab Code\MUImodels\muiApps\ChannelForm\ChannelForm.prj" location="D:\Matlab Code\MUImodels\muiApps\ChannelForm" name="ChannelForm" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="3150923593" file="D:\Matlab Code\muiModels\ChannelForm\app\ChannelForm.prj" location="D:\Matlab Code\muiModels\ChannelForm\app" name="ChannelForm" target="target.mlapps" target-name="Package App">
     <param.appname>ChannelForm</param.appname>
     <param.authnamewatermark>Ian Townend</param.authnamewatermark>
     <param.email>i.townend@soton.ac.uk</param.email>
@@ -13,7 +13,7 @@
     <param.summary>A model to examine marine transgression of estuary and inlet landforms in their landscape setting (valley and flood plain).</param.summary>
     <param.description>ChannelForm provides a framework for studying estuary and inlet morphological landforms in the context of the surrounding landscape (valley and flood plain). A set of tools allow digital terrain models (DTMs) to be created from models or imported. Channel and Valley forms can be combined to create a landscape setting, which can also include a shoreface and channel meanders. A kinematic model is used to consider the migration of the channel under the influence of sea level change, taking account of sediment supply from the sea and river.</param.description>
     <param.screenshot>${PROJECT_ROOT}\ChannelForm_logo.jpg</param.screenshot>
-    <param.version>3.12</param.version>
+    <param.version>3.20</param.version>
     <param.products.name>
       <item>MATLAB</item>
     </param.products.name>
@@ -37,6 +37,7 @@
       <file>${PROJECT_ROOT}\CF_ExpData.m</file>
       <file>${PROJECT_ROOT}\CF_FormModel.m</file>
       <file>${PROJECT_ROOT}\CF_HydroData.m</file>
+      <file>${PROJECT_ROOT}\CF_InletData.m</file>
       <file>${PROJECT_ROOT}\CF_ModsData.m</file>
       <file>${PROJECT_ROOT}\CF_PowerData.m</file>
       <file>${PROJECT_ROOT}\CF_SediData.m</file>
@@ -55,12 +56,11 @@
       <file>${PROJECT_ROOT}\example</file>
       <file>${PROJECT_ROOT}\help</file>
       <file>${PROJECT_ROOT}\info.xml</file>
-      <file>D:\Matlab Code\MUImodels\muiApps\muiAppEstuaryFcns</file>
-      <file>D:\Matlab Code\MUImodels\muiApps\muiAppGridFcns</file>
+      <file>D:\Matlab Code\muiModels\muiAppLib</file>
     </fileset.resources>
     <fileset.package />
     <build-deliverables>
-      <file location="D:\Matlab Code\MUImodels\muiApps" name="ChannelForm" optional="false">D:\Matlab Code\MUImodels\muiApps\ChannelForm</file>
+      <file location="D:\Matlab Code\muiModels\ChannelForm" name="app" optional="false">D:\Matlab Code\muiModels\ChannelForm\app</file>
     </build-deliverables>
     <workflow />
     <matlab>

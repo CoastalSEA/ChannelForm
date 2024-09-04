@@ -1,0 +1,273 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Menu Options</title><meta name="generator" content="MATLAB 9.9"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-12-21"><meta name="DC.source" content="channelform_menus.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Menu Options</h1><!--introduction--><p>Summary of the options available for each drop down menu.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">File</a></li><li><a href="#2">Tools</a></li><li><a href="#3">Project</a></li><li><a href="#5">Setup &gt; Form Parameters</a></li><li><a href="#7">Setup &gt; System Parameters</a></li><li><a href="#8">Setup &gt; Run Parameters</a></li><li><a href="#9">Setup &gt; Import Grid</a></li><li><a href="#11">Setup &gt; Grid Tools</a></li><li><a href="#12">Setup (other)</a></li><li><a href="#13">Utilities</a></li><li><a href="#14">Run</a></li><li><a href="#15">Analysis</a></li><li><a href="#16">Help</a></li><li><a href="#17">See Also</a></li></ul></div><h2 id="1">File</h2><div><ul><li><b>New</b>: clears any existing model (prompting to save if not already saved) and a popup dialog box prompts for Project name and Date (default is current date).</li><li><b>Open</b>: existing Asmita models are saved as *.mat files. User selects a model from dialog box.</li><li><b>Save</b>: save a file that has already been saved.</li><li><b>Save as</b>: save a file with a new or different name.</li><li><b>Exit</b>: exit the program. The close window button has the same effect.</li></ul></div><h2 id="2">Tools</h2><div><ul><li><b>Refresh</b>: updates Cases tab.</li><li><b>Clear all &gt; Project</b>: deletes the current project, including all Setup data and all Cases.</li><li><b>Clear all &gt; Figures</b>: deletes all results plot figures (useful if a large number of plots have been produced).</li><li><b>Clear all &gt; Cases</b>: deletes all Cases listed on the Cases tab but does not affect the model setup.</li></ul></div><h2 id="3">Project</h2><div><ul><li><b>Project Info</b>: edit the Project name and Date</li><li><b>Cases &gt; Edit Description</b>: user selects a Case to edit the Case description.</li><li><b>Cases &gt; Edit Data Set</b>: initialises the Edit Data UI for editing data sets.</li><li><b>Cases &gt; Save</b>: user selects a data set to be saved from a list box of Cases and the is then prompted to name the file. The data are written to an Excel spreadsheet.</li><li><b>Cases &gt; Delete</b>: user selects Case(s) to be deleted from a list box of Cases and results are then deleted (model setup is not changed).</li><li><b>Cases &gt; Reload</b>: user selects a Case to reload as the current parameter settings.</li><li><b>Cases &gt; View settings</b>: user selects a Case to display a table listing the parameters used for the selected Case.</li><li><b>Export/Import &gt; Export</b>: user selects a Case class instance to export as a mat file.</li><li><b>Export/Import &gt; Import</b>: user selects an exported Case class instance (mat file) to be loaded.</li></ul></div><p>
+<table border=1><tr><td><u>Note</u>: to export the data from a Case for use in another application
+(eg text file, Excel, etc), use the <b>Project>Cases>Edit Data Set</b> option
+to make a selection and then use the <i>Copy to Clipboard</i> button to paste
+the selection to the clipboard.
+</td></tr></table>
+</p><h2 id="5">Setup &gt; Form Parameters</h2><div><ul><li><b>Exp Form Parameters</b>: UI to input the parameters needed for the exponential form model.</li><li><b>Power Form Parameters</b>: UI to input the parameters needed for the power form model.</li><li><b>Valley Parameters</b>: UI to input the parameters needed for the valley form model.</li><li><b>Shore Parameters</b>: UI to input parameters needed for the shore profile, when adding a shoreline strip to Channel or Valley models.</li></ul></div><p>
+<table border=1><tr><td><u>Note</u>: the CKFA model input parameters are
+derived from the water level, hydrodynamic and sediment parameter settings.
+</td></tr></table>
+</p><h2 id="7">Setup &gt; System Parameters</h2><div><ul><li><b>Hydraulic Parameters &gt; Tidal Forcing</b>: UI to input water level parameters including sea level rise and any cyclic variations in tidal range.</li><li><b>Hydraulic Parameters &gt; Hydraulic Model</b>: UI to input parameters needed for the CST hydraulic model.</li><li><b>Sediment Parameters</b>: UI to input parameters needed to determine external sediment exchange.</li><li><b>Transgression Parameters</b>: UI to set inclusion/exclusion of various constraints, computation parameters and open coast erosion settings.</li><li><b>Morphological Modifications</b>: UI to input the x,y,z definitions of the, one or more, boxout forms that can be imposed on model forms.</li></ul></div><h2 id="8">Setup &gt; Run Parameters</h2><div><ul><li><b>Grid Parameters</b>: define dimensions of default grid</li><li><b>Run Time Parameters</b>: settings for time step and duration of model run</li></ul></div><h2 id="9">Setup &gt; Import Grid</h2><p>Load x,y,z data from a file. To create a new instance (e.g. for a different location or data source) use Load. To add data to an existing data set, use Add.</p><div><ul><li><b>Load</b>: prompts user for file to be loaded. Once files have been read, user is prompted for a description (working title) for the data set.</li><li><b>Add</b>: prompts user for file to be loaded (only one file at a time can be added). Only files with the same dimensions as the existing data set can be used to Add data to a data record.</li><li><b>Delete</b>: delete a grid from an existing Case table (ie a row).</li></ul></div><h2 id="11">Setup &gt; Grid Tools</h2><div><ul><li><b>Grid Tools &gt; Translate Grid</b>: interactively translate grid x-y coordinates;</li><li><b>Grid Tools &gt; Rotate Grid</b>: interactively flip or rotate grid;</li><li><b>Grid Tools &gt; Re-Grid</b>: regrid a gridded dataset to match another grid or to user specified dimensions;</li><li><b>Grid Tools &gt; Sub-Grid</b>: interactively define a subgrid and save grid as a new Case;</li><li><b>Grid Tools &gt; Combine Grids</b>: superimpose one grid on another based on maximum or minimum set of values;</li><li><b>Grid Tools &gt; Add Surface</b>: add horizontal surface to an extisting grid;</li><li><b>Grid Tools &gt; To curvilinear</b>: map grid from cartesian to curvilinear coordinates;</li><li><b>Grid Tools &gt; From curvilinear</b>: map grid from curvilinear to cartesian coordinates;</li><li><b>Grid Tools &gt; Display Dimensions</b>: display a table with the dimensions of a selected grid;</li><li><b>Grid Tools &gt; Difference Plot</b>: generate a plot of the difference between two grids;</li><li><b>Grid Tools &gt; Plot Sections</b>: interactively define sections and plot them on a figure;</li><li><b>Grid Tools &gt; Digitise Line</b>: interactively digitise a line (with option to add z values) using selected grid as base map;</li><li><b>Grid Tools &gt; Export xyz Grid</b>: select a Case and export grid as xyz tuples;</li></ul></div><h2 id="12">Setup (other)</h2><div><ul><li><b>Add Properties</b>: add form properties to a gridded data set.</li><li><b>Delete Properties</b>: delete ALL property tables associated with a selected gridded data set.</li><li><b>Edit Inlet Definition</b>: provides access to the definition of the position of the head of the inlet, distance from the x-axis origin to the mouth and any definition of the channel centre-line (if used).</li><li><b>Model Constants</b>: various constants are defined for use in models, such as the acceleration due to gravity, viscosity and density of sea water, and density of sediment.</li></ul></div><h2 id="13">Utilities</h2><div><ul><li><b>Hydraulic Model</b>: runs the CSTmodel (if CSTmodel App is installed).</li><li><b>Add Form to Valley</b>: combines channel and valley grids.</li><li><b>Utilities&gt;Add Meander</b>: adds a user defined meander to an idealised channel form model. After selecting a model, the user is prompted to load a text file containing the x-y co-ordinates of the channel centreline. These are used to map the straight channel into curvilinear co-ordinates that follow the centreline and then interpolate the results onto the cartesian model grid.</li><li><b>Utilities&gt;Add Shoreline&gt;Model Shore</b>: add a shoreline strip to a channel or valley model. This extends the grid seawards by the distance to the closure depth specified in Setup&gt;Form Parameters&gt;Shore Parameters. This comprises a beach profile using Dean&#8217;s equilibrium model on the open coast and the defined offshore bed slope across the mouth of the channel.</li><li><b>Utilities&gt;Add Shoreline&gt;Extrapolate Shore</b>: add a shoreline strip to a grid (imported or model). The user is prompted to define the width of the extension, the seaward or offshore depth and an exponent. An exponent of 1, gives linear extrapolation between the grid shore values and the defined offshore value, a value greater than one gives a shore that is concave down and a value greater than one gives a shore that is convex up.</li><li><b>Utilities&gt;Add Modifications</b>: adds defined modifications to a grid.</li><li><b>Utilities&gt;Add Thalweg to Valley</b>: uses an xyz definition of a channel thalweg, to create a valley base in an existing model or imported grid. This is used to modify an existing valley grid, to extend the valley form down to the pre-Holocene surface (i.e. below the existing channel bed) using the defined the thalweg data. User is prompted a thalweg file. This has a header of %f %f %f, followed by rows of x, y, z values that define the pre-Holocene valley bed. The upper and lower cut-offs must then be defined.  These are used to mask out the channel in the valley grid in order to introduce the new channel base (thalweg). Typically values just above high water and below the deepest depth in the valley grid channel should suffice.</li><li><b>River Dimensions</b>: calculates the river dimensions based on the current input parameters.</li><li><b>Valley Thalweg</b>: plots the valley centre-line along the x-axis.</li><li><b>Area of Flood Plain</b>: calculates the area of the flood plain.</li><li><b>CKFA Channel Dimensions</b>: calculates the governing dimensions that would be used in the CKFA model based on the current input parameters.</li><li><b>Morphological Timescale</b>: calculate the morphological timescale using the ASMITA model parameterisation and the current input parameters.</li><li><b>Channel-Valley Sub-Plot</b>: create a plot showing the channel, valley and combined form as 3 sub-plots.</li></ul></div><h2 id="14">Run</h2><div><ul><li><b>Exponential form model</b>: run the exponential model. Prompts to select type of water surface and additional form selection properties.</li><li><b>Power form model</b>:  run the power model. Prompts to select type of water surface</li><li><b>CKFA form model</b>:  run the CKFA model. Prompts to select type of water surface.</li><li><b>Valley form model</b>: run the Valley model</li><li><b>Transgression model</b>: run the transgression model. Prompts to select source channel and valley models to use.</li><li><b>Derive Output</b>: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.</li></ul></div><h2 id="15">Analysis</h2><div><ul><li><b>Plots</b>: initialises the Plot UI to select variables and produce various types of plot. The user selects the Case, Dataset and Variable to used, along with the Plot type and any Scaling to be applied from a series of drop down lists,</li><li><b>Statistics</b>: initialiss the Statistics UI to select data and run a range of standard statistical methods.</li><li><b>Trangression Plots</b>: summary plots to present the results of the transgression model or export the GrossProps and Transgression output tables to a file (see <a href="matlab:doc('channelform_output')">Output help</a> for details).</li><li><b>Transgression Plots&gt;Grid Plot</b>: plot initial grid, new grid and difference.</li><li><b>Transgression Plots&gt;Change Plot</b>: plot volume difference over the model run and the variation of sediment exchange with transgression distance.</li><li><b>Transgression Plots&gt;Section Plot</b>: plot a set of along-channel cross-sections and the channel centre-line (thalweg) for the initial and final grid.</li><li><b>Transgression Plots&gt;Transgression Plot</b>: composite set of plots to show results form Transgression table.</li><li><b>Transgression Plots&gt;Export Table</b>: write GrossProps and Transgression output tables from the Transgression model to a file.</li></ul></div><h2 id="16">Help</h2><div><ul><li><b>Help</b>: access the online documentation for CoastalTools.</li></ul></div><h2 id="17">See Also</h2><p>The <a href="matlab:cfm_open_manual">manual</a> provides further details of setup and configuration of the model.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Menu Options
+% Summary of the options available for each drop down menu.
+
+%% File
+% * *New*: clears any existing model (prompting to save if not already saved) and a popup dialog box prompts for Project name and Date (default is current date). 
+% * *Open*: existing Asmita models are saved as *.mat files. User selects a model from dialog box.
+% * *Save*: save a file that has already been saved.
+% * *Save as*: save a file with a new or different name.
+% * *Exit*: exit the program. The close window button has the same effect.
+
+%% Tools
+% * *Refresh*: updates Cases tab.
+% * *Clear all > Project*: deletes the current project, including all Setup data and all Cases.
+% * *Clear all > Figures*: deletes all results plot figures (useful if a large number of plots have been produced).
+% * *Clear all > Cases*: deletes all Cases listed on the Cases tab but does not affect the model setup.
+
+%% Project
+% * *Project Info*: edit the Project name and Date
+% * *Cases > Edit Description*: user selects a Case to edit the Case description.
+% * *Cases > Edit Data Set*: initialises the Edit Data UI for editing data sets.
+% * *Cases > Save*: user selects a data set to be saved from a list box of Cases and the is then prompted to name the file. The data are written to an Excel spreadsheet. 
+% * *Cases > Delete*: user selects Case(s) to be deleted from a list box of Cases and results are then deleted (model setup is not changed).
+% * *Cases > Reload*: user selects a Case to reload as the current parameter settings.
+% * *Cases > View settings*: user selects a Case to display a table listing the parameters used for the selected Case. 
+% * *Export/Import > Export*: user selects a Case class instance to export as a mat file.
+% * *Export/Import > Import*: user selects an exported Case class instance (mat file) to be loaded.
+%%
+% <html>
+% <table border=1><tr><td><u>Note</u>: to export the data from a Case for use in another application 
+% (eg text file, Excel, etc), use the <b>Project>Cases>Edit Data Set</b> option 
+% to make a selection and then use the <i>Copy to Clipboard</i> button to paste 
+% the selection to the clipboard.
+% </td></tr></table>
+% </html>
+
+%% Setup > Form Parameters
+% * *Exp Form Parameters*: UI to input the parameters needed for the
+% exponential form model. 
+% * *Power Form Parameters*: UI to input the parameters needed for the
+% power form model. 
+% * *Valley Parameters*: UI to input the parameters needed for the
+% valley form model. 
+% * *Shore Parameters*: UI to input parameters needed for the shore profile,
+% when adding a shoreline strip to Channel or Valley models.
+%%
+% <html>
+% <table border=1><tr><td><u>Note</u>: the CKFA model input parameters are 
+% derived from the water level, hydrodynamic and sediment parameter settings.
+% </td></tr></table>
+% </html>
+
+%% Setup > System Parameters
+% * *Hydraulic Parameters > Tidal Forcing*: UI to input water level parameters including 
+% sea level rise and any cyclic variations in tidal range. 
+% * *Hydraulic Parameters > Hydraulic Model*: UI to input parameters needed
+% for the CST hydraulic model.
+% * *Sediment Parameters*: UI to input parameters needed to determine
+% external sediment exchange.
+% * *Transgression Parameters*: UI to set inclusion/exclusion of various
+% constraints, computation parameters and open coast erosion settings.
+% * *Morphological Modifications*: UI to input the x,y,z definitions of
+% the, one or more, boxout forms that can be imposed on model forms. 
+
+%% Setup > Run Parameters
+% * *Grid Parameters*: define dimensions of default grid
+% * *Run Time Parameters*: settings for time step and duration of model run
+
+%% Setup > Import Grid
+% Load x,y,z data from a file. To create a new instance (e.g. for a
+% different location or data source) use Load. To add data to an
+% existing data set, use Add.
+%%
+% * *Load*: prompts user for file to be loaded. Once files have been read, user is prompted for a description (working title) for the data set. 
+% * *Add*: prompts user for file to be loaded (only one file at a time can be added). Only files with the same dimensions as the existing data set can be used to Add data to a data record.
+% * *Delete*: delete a grid from an existing Case table (ie a row).
+
+%% Setup > Grid Tools
+% * *Grid Tools > Translate Grid*: interactively translate grid x-y
+% coordinates;
+% * *Grid Tools > Rotate Grid*: interactively flip or rotate grid;   
+% * *Grid Tools > Re-Grid*: regrid a gridded dataset to match another grid or to user
+% specified dimensions;
+% * *Grid Tools > Sub-Grid*: interactively define a subgrid and save grid as a new Case;               
+% * *Grid Tools > Combine Grids*: superimpose one grid on another based on maximum
+% or minimum set of values;
+% * *Grid Tools > Add Surface*: add horizontal surface to an extisting
+% grid;
+% * *Grid Tools > To curvilinear*: map grid from cartesian to curvilinear coordinates; 
+% * *Grid Tools > From curvilinear*: map grid from curvilinear to cartesian
+% coordinates;
+% * *Grid Tools > Display Dimensions*: display a table with the dimensions
+% of a selected grid;
+% * *Grid Tools > Difference Plot*: generate a plot of the difference
+% between two grids;
+% * *Grid Tools > Plot Sections*: interactively define sections and plot
+% them on a figure;
+% * *Grid Tools > Digitise Line*: interactively digitise a line (with
+% option to add z values) using selected grid as base map;
+% * *Grid Tools > Export xyz Grid*: select a Case and export grid as xyz
+% tuples;
+
+%% Setup (other)
+% * *Add Properties*: add form properties to a gridded data
+% set.
+% * *Delete Properties*: delete ALL property tables associated with a 
+% selected gridded data set.
+% * *Edit Inlet Definition*: provides access to the definition of the 
+% position of the head of the inlet, distance from the x-axis origin to 
+% the mouth and any definition of the channel centre-line (if used).
+% * *Model Constants*: various constants are defined for use in models, such as the acceleration due to gravity, viscosity and density of sea water, and density of sediment. 
+
+%% Utilities 
+% * *Hydraulic Model*: runs the CSTmodel (if CSTmodel App is installed).
+% * *Add Form to Valley*: combines channel and valley grids.
+% * *Utilities>Add Meander*: adds a user defined meander to an idealised 
+% channel form model. After selecting a model, the user is prompted to 
+% load a text file containing the x-y co-ordinates of the channel 
+% centreline. These are used to map the straight channel into curvilinear 
+% co-ordinates that follow the centreline and then interpolate the results 
+% onto the cartesian model grid.
+% * *Utilities>Add Shoreline>Model Shore*: add a shoreline strip to a 
+% channel or valley model. This extends the grid seawards by the distance 
+% to the closure depth specified in Setup>Form Parameters>Shore Parameters. 
+% This comprises a beach profile using Dean’s equilibrium model on the open 
+% coast and the defined offshore bed slope across the mouth of the channel.
+% * *Utilities>Add Shoreline>Extrapolate Shore*: add a shoreline strip to a 
+% grid (imported or model). The user is prompted to define the width of the 
+% extension, the seaward or offshore depth and an exponent. An exponent 
+% of 1, gives linear extrapolation between the grid shore values and the 
+% defined offshore value, a value greater than one gives a shore that is 
+% concave down and a value greater than one gives a shore that is convex up.
+% * *Utilities>Add Modifications*: adds defined modifications to a grid.
+% * *Utilities>Add Thalweg to Valley*: uses an xyz definition of a channel 
+% thalweg, to create a valley base in an existing model or imported grid. 
+% This is used to modify an existing valley grid, to extend the valley 
+% form down to the pre-Holocene surface (i.e. below the existing channel 
+% bed) using the defined the thalweg data. User is prompted a thalweg file. 
+% This has a header of %f %f %f, followed by rows of x, y, z values that 
+% define the pre-Holocene valley bed. The upper and lower cut-offs must 
+% then be defined.  These are used to mask out the channel in the valley 
+% grid in order to introduce the new channel base (thalweg). Typically 
+% values just above high water and below the deepest depth in the valley
+% grid channel should suffice.
+% * *River Dimensions*: calculates the river dimensions based on the
+% current input parameters.
+% * *Valley Thalweg*: plots the valley centre-line along the x-axis.
+% * *Area of Flood Plain*: calculates the area of the flood plain.
+% * *CKFA Channel Dimensions*: calculates the governing dimensions that
+% would be used in the CKFA model based on the current input parameters.
+% * *Morphological Timescale*: calculate the morphological timescale using
+% the ASMITA model parameterisation and the current input parameters.
+% * *Channel-Valley Sub-Plot*: create a plot showing the channel, valley
+% and combined form as 3 sub-plots.
+
+%% Run
+% * *Exponential form model*: run the exponential model. Prompts to select
+% type of water surface and additional form selection properties.
+% * *Power form model*:  run the power model. Prompts to select
+% type of water surface
+% * *CKFA form model*:  run the CKFA model. Prompts to select
+% type of water surface.
+% * *Valley form model*: run the Valley model
+% * *Transgression model*: run the transgression model. Prompts to select
+% source channel and valley models to use.
+% * *Derive Output*: initialises the Derive Output UI to select and define manipulations of the data or call external functions and load the result as new data set.
+
+%% Analysis
+% * *Plots*: initialises the Plot UI to select variables and produce various types of plot. The user selects the Case, Dataset and Variable to used, along with the Plot type and any Scaling to be applied from a series of drop down lists, 
+% * *Statistics*: initialiss the Statistics UI to select data and run a range of standard statistical methods.
+% * *Trangression Plots*: summary plots to present the results of the
+% transgression model or export the GrossProps and Transgression output
+% tables to a file (see <matlab:doc('channelform_output') Output help> for details).
+% * *Transgression Plots>Grid Plot*: plot initial grid, new grid and
+% difference.
+% * *Transgression Plots>Change Plot*: plot volume difference over the 
+% model run and the variation of sediment exchange with transgression
+% distance.
+% * *Transgression Plots>Section Plot*: plot a set of along-channel cross-sections and the channel centre-line
+% (thalweg) for the initial and final grid.
+% * *Transgression Plots>Transgression Plot*: composite set of plots to show 
+% results form Transgression table.
+% * *Transgression Plots>Export Table*: write GrossProps and Transgression 
+% output tables from the Transgression model to a file.
+
+%% Help
+% * *Help*: access the online documentation for CoastalTools.
+
+%% See Also
+% The <matlab:cfm_open_manual manual> provides further details of setup and 
+% configuration of the model.
+##### SOURCE END #####
+--></body></html>

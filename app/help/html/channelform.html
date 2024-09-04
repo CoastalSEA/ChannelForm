@@ -1,0 +1,137 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>ChannelForm</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-12-22"><meta name="DC.source" content="channelform.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>ChannelForm</h1><!--introduction--><p>Matlab&#8482; App to model the interaction of estuary channels and the surrounding flood plain and valley landscape.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Licence</a></li><li><a href="#2">Requirements</a></li><li><a href="#3">Background</a></li><li><a href="#4">Bibliography</a></li><li><a href="#5">Acknowledgements</a></li><li><a href="#7">Manual</a></li><li><a href="#8">See Also</a></li></ul></div><h2 id="1">Licence</h2><p>The code is provided as Open Source code (issued under a GNU General Public License).</p><h2 id="2">Requirements</h2><p>ModelUI is written in Matlab&#8482; and requires v2016b, or later. In addition, ModelUI requires both the <a href="matlab:doc('dstoolbox')">dstoolbox</a> and the <a href="matlab:doc('muitoolbox')">muitoolbox</a></p><h2 id="3">Background</h2><p>ChannelForm is a Matlab&#8482; App that provides a framework for studying estuary and inlet morphological landforms in the context of the surrounding landscape (valley and flood plain). A set of tools allow digital terrain models (DTMs) to be created from models or imported. The models/data can define the channel form and the surrounding or antecedent landscape. A set of grid manipulation tools allow the grids to be manipulated and combined to generate composite DTMs of the channel in the landscape. Several idealised models are provided that use some combination of the plan form and cross-section to generate a 3D form, or generate the form using parameters that are not a function of the estuary itself (i.e. they are exogenous). In both cases, the water level surface can be defined using plane surfaces, or derived from a quasi-analytical hydrodynamic model that accounts for tides and river flows. Using channel and valley forms, marine transgression as a function of sea level rise can also be examined. This identifies the horizontal transgression of the initial form to achieve a net mass balance when any exchange with the external environment is accounted for. The output includes the gross properties of the channel, various well-known parameter relationships, and a time series of DTMs</p><h2 id="4">Bibliography</h2><p>Townend I H and Pethick J, 2002, Estuarine flooding and managed retreat. Phil.Trans.R.Soc.Lond.A, 360 (1796), 1477-1495.</p><p>Townend I H, 2010, An exploration of equilibrium in Venice Lagoon using an idealised form model. Continental Shelf Research, 30 (8), 984-999.</p><p>Townend I H, 2012, The estimation of estuary dimensions using a simplified form model and the exogenous controls. Earth Surface Processes and Landforms, 37, 1573-1583.</p><p>Townend I H, Zhou Z, Guo L and Coco G, 2021, A morphological investigation of marine transgression in estuaries. Earth Surf. Process. Landf., 46, 626&#8211;641, <a href="https://doi.org/10.1002/esp.5050">https://doi.org/10.1002/esp.5050</a>.</p><h2 id="5">Acknowledgements</h2><p>The ChannelForm App makes use of functions from the Matlab&#8482; File Exchange Form, including:</p><div><ul><li>InterX - NS (2010). <a href="https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections">https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections</a></li><li>xy2sn and sn2xy - Juernjakob Dugge (2015). jdugge/xy2sn, <a href="https://github.com/jdugge/xy2sn">https://github.com/jdugge/xy2sn</a></li></ul></div><h2 id="7">Manual</h2><p>The <a href="matlab:cfm_open_manual">manual</a> provides further details of setup and configuration of the model. The files for the example use case can be found in the example folder <a href="matlab:cfm_example_folder">here</a>.</p><h2 id="8">See Also</h2><p><a href="matlab:doc('muitoolbox')">muitoolbox</a>, <a href="matlab:doc('dstoolbox')">dstoolbox</a>.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% ChannelForm
+% Matlab(TM) App to model the interaction of estuary channels and the surrounding 
+% flood plain and valley landscape.
+
+%% Licence
+% The code is provided as Open Source code (issued under a GNU General 
+% Public License).
+
+%% Requirements
+% ModelUI is written in Matlab(TM) and requires v2016b, or later. In addition, 
+% ModelUI requires both the <matlab:doc('dstoolbox') dstoolbox> and the 
+% <matlab:doc('muitoolbox') muitoolbox>
+
+%% Background
+% ChannelForm is a Matlab(TM) App that provides a framework for studying 
+% estuary and inlet morphological landforms in the context of the 
+% surrounding landscape (valley and flood plain). A set of tools allow digital 
+% terrain models (DTMs) to be created from models or imported. The 
+% models/data can define the channel form and the surrounding or 
+% antecedent landscape. A set of grid manipulation tools allow the grids 
+% to be manipulated and combined to generate composite DTMs of the channel 
+% in the landscape. Several idealised models are provided that use some 
+% combination of the plan form and cross-section to generate a 3D form, or 
+% generate the form using parameters that are not a function of the 
+% estuary itself (i.e. they are exogenous). In both cases, the water level 
+% surface can be defined using plane surfaces, or derived from a 
+% quasi-analytical hydrodynamic model that accounts for tides and river 
+% flows. Using channel and valley forms, marine transgression as a 
+% function of sea level rise can also be examined. This identifies the 
+% horizontal transgression of the initial form to achieve a net mass 
+% balance when any exchange with the external environment is accounted 
+% for. The output includes the gross properties of the channel, various 
+% well-known parameter relationships, and a time series of DTMs
+
+%% Bibliography
+% Townend I H and Pethick J, 2002, Estuarine flooding and managed retreat. 
+% Phil.Trans.R.Soc.Lond.A, 360 (1796), 1477-1495.
+%
+% Townend I H, 2010, An exploration of equilibrium in Venice Lagoon using 
+% an idealised form model. Continental Shelf Research, 30 (8), 984-999.
+%
+% Townend I H, 2012, The estimation of estuary dimensions using a 
+% simplified form model and the exogenous controls. Earth Surface 
+% Processes and Landforms, 37, 1573-1583.
+%
+% Townend I H, Zhou Z, Guo L and Coco G, 2021, A morphological 
+% investigation of marine transgression in estuaries. Earth Surf. Process. 
+% Landf., 46, 626–641, https://doi.org/10.1002/esp.5050.
+
+%% Acknowledgements
+% The ChannelForm App makes use of functions from the Matlab(TM) 
+% File Exchange Form, including:
+%%
+% * InterX - NS (2010). https://www.mathworks.com/matlabcentral/fileexchange/22441-curve-intersections 
+% * xy2sn and sn2xy - Juernjakob Dugge (2015). jdugge/xy2sn, https://github.com/jdugge/xy2sn  
+
+%% Manual
+% The <matlab:cfm_open_manual manual> provides further details of setup and 
+% configuration of the model. The files for the example use case can be found in
+% the example folder <matlab:cfm_example_folder here>. 
+
+%% See Also
+% <matlab:doc('muitoolbox') muitoolbox>, <matlab:doc('dstoolbox') dstoolbox>.
+	
+##### SOURCE END #####
+--></body></html>

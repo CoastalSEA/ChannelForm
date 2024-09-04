@@ -1,0 +1,275 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Output</title><meta name="generator" content="MATLAB 9.9"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-12-21"><meta name="DC.source" content="channelform_output.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Output</h1><!--introduction--><p>The ChannelForm model generates gridded bathymetry/topography terrain models as snapshots or timeseries datasets. Similar externally generated data sets can also be imported. The grids and various derived properties are held in a set of <a href="matlab:doc('dstable')">dstables</a>.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Output Assignment</a></li><li><a href="#2">Output Tables</a></li><li><a href="#4">Form</a></li><li><a href="#7">Hypsometry</a></li><li><a href="#10">SectionProps</a></li><li><a href="#13">Plan</a></li><li><a href="#16">GrossProps</a></li><li><a href="#19">WaterLevels</a></li><li><a href="#22">Transgresion</a></li><li><a href="#25">See Also</a></li></ul></div><h2 id="1">Output Assignment</h2><p>The ChannelForm model model and data import classes use the <a href="matlab:doc('gdinterface')">GDinterface</a> abstract class to manage the data. The data are stored in a set of <a href="matlab:doc('dstable')">dstables</a>, which are assigned as a <a href="matlab:doc('struct')">struct</a> to the <a href="matlab:doc('muicatalogue')">muiCatalogue</a> <i>Data</i> property (typically as part of a UI based on the <a href="matlab:doc('muitoolbox')">muitoolbox</a>). The metatdata for the dstable content are defined in the <i><b>setDSproperties</b></i> method in <a href="matlab:doc('gdinterface')">GDinterface</a>.</p><h2 id="2">Output Tables</h2><p>Imported and model grids are both held in the <i>'Form'</i> <a href="matlab:doc('dstable')">dstable</a>. In addition, data related to the properties of the channel or inlet and any data on water levels are held in a number of addtional tables, as detailed below.</p><p>A number of additional tables support applications that represent inlet, estuary, river and valley formations. These include <i>'Hypsometry'</i> for the variation of surface area and volume as a function of elevation, <i>'SectionProps'</i> holds the variation of the width and cross-sectional area along the x-axis derived from the gridded data, <i>'Plan'</i> holds the widths along the x-axis specified in the model, or based on an exponential fit to the gridded data, <i>'WaterLevels'</i> holds the variation in water levels at high water, mean tide and low water along the x-axis, and <i>'GrossProps'</i> holds various summary properties of the form related to length, area, volume, rate of convergence, etc.</p><h2 id="4">Form</h2><p>Elevations of grid along with the x and y dimensions, with the following variables:</p><div><ul><li>Z - Elevation (mAD)</li></ul></div><p><i>Dimensions</i> of time (table rows), X and Y.</p><p><i>UserData.ishead</i> - orientation of x-axis relative to mouth (true if minimum x is at the head of the estuary/inlet, default is false).</p><p><i>UserData.xM</i> - distance from x=0 to mouth of estuary/inlet (default is 0).</p><p><i>UserData.cline</i> &#8211; struct for x and y coordinates of meander centre-line.</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="7">Hypsometry</h2><p>Variation of surface area and volume as a function of elevation, with the following variables:</p><div><ul><li>Volume - Volume (m^3)</li><li>SurfaceArea - Surface area (m^2)</li><li>SAfreq - Surface area frequency</li></ul></div><p><i>Dimensions</i> of time (table rows), and Z.</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="10">SectionProps</h2><p>Variation of the width and cross-sectional area along the x-axis derived from the gridded data, with the following variables:</p><div><ul><li>Whw - High Water Width (m)</li><li>Wmt - Mean Tide Width (m)</li><li>Wlw - Low Water Width (m)</li><li>CSAhw - High Water Cross-sectional Area (m^2)</li><li>CSAmt - Mean Tide Cross-sectional Area (m^2)</li><li>CSAlw - Low Water Cross-sectional Area (m^2)</li><li>Dhw &#8211; High Water depth (m)</li><li>Dmt &#8211;Mean Tide depth (m)</li><li>Dlw - Low Water depth (m)</li><li>PrA - Tidal Prism (using CSA) (m^3)</li><li>Shw &#8211; High Water surface area (m^2)</li><li>Smt &#8211; Mean Tide surface area (m^2)</li><li>Slw &#8211; Low Watere surface area (m^2)</li><li>Vhw &#8211; High Water volume (m^3)</li><li>Vmt &#8211; Mean Tide volume (m^3)</li><li>Vlw &#8211; Low Water volume (m^3)</li><li>PrV - Tidal Prism (using hypsometry) (m^3)</li><li>Gamma - Dronkers' Gamma (-)</li><li>Vs - Storage Volume (m^3)</li><li>Vc - Channel Volume (m^3)</li><li>amp - Tidal amplitude at mouth (m)</li><li>hyd - Hydraulic depth of channel (m)</li></ul></div><p><i>Dimensions</i> of time (table rows), and X.</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="13">Plan</h2><p>Widths along the x-axis, specified in the model, or based on an exponential fit to the gridded data, with the following variables:</p><div><ul><li>Whw - High Water Width (m)</li><li>Wmt - Mean Tide Width (m)</li><li>Wlw - Low Water Width (m)</li></ul></div><p><i>Dimensions</i> of time (table rows), and X.</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="16">GrossProps</h2><p>Various summary properties of the form related to length, area, volume, rate of convergence, etc, with the following variables:</p><div><ul><li>Shw - High Water Surface Area (m^2)</li><li>Slw - Low Water Surface Area (m^2)</li><li>Vhw - High Water Volume (m^3)</li><li>Vlw - Low Water Volume (m^3)</li><li>PrA - Tidal Prism using cross-sectional areas (m^3)</li><li>PrV - Tidal Prism using hypsometry volumes (m^3)</li><li>Gamma - Dronkers' Gamma (-)</li><li>Vs - Storage Volume (m^3)</li><li>Vc - Channel Volume (m^3)</li><li>Wm - Mean Tide Width  at mouth (m)</li><li>Am - Mean Tide Cross-sectional Area at mouth (m^2)</li><li>Dm &#8211; Depth at mouth to MTL (m)</li><li>amp - Tidal amplitude at mouth (m)</li><li>hyd - Hydraulic depth of channel (m)</li><li>aoh - Amplitude to Depth ratio (-)</li><li>VsoVc - Storage to Channel Volume ratio (-)</li><li>PrvAm - Prism to Cross-sectional Area ratio at mouth (m)</li><li>SflShw - Intertidal to Basin Area ratio</li><li>Lw - Width convergence length</li><li>La - Cross-sectional Area convergence length</li></ul></div><p><i>Dimensions</i> of time (table rows).</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="19">WaterLevels</h2><p>Variation in water levels at high water, mean tide and low water along the x-axis, with the following variables:</p><div><ul><li>zhw - High Water level (mAD), where mAD = metres above Datum</li><li>zmt - Mean Tide level (mAD)</li><li>zlw - Low Water level (mAD)</li></ul></div><p><i>Dimensions</i> of time (table rows), and X.</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="22">Transgresion</h2><p>When the Transgression model is run as additional table is included in the model output tables containing a set of output properties that summarise the changes of form over time, with the following variables:</p><div><ul><li>delX - Unadjusted transgression distance (m)</li><li>estdX - Adjusted transgression distance (m)</li><li>cstdX - Open coast transgression distance (m)</li><li>dSLR - Cumulative sea level rise (m)</li><li>Lt - Distance to tidal limit (m)</li><li>FPA - Flood plain area (m)</li><li>waterVol - Water volume change due to changes in HW (m^3)</li><li>sedVol - Cumulative sediment flux (+ve=sediment import) (m^3)</li><li>vdiffx - Volume change for [0,delX/2,delX,3delX/2] (m^3)</li></ul></div><p><i>Dimensions</i> of time (table rows)</p><p><i>Description</i> &#8211; user assigned Case description.</p><p><i>Source</i> - source file or model class.</p><p><i>MetaData</i> - details any manipulation e.g. type of model or grid rotation.</p><h2 id="25">See Also</h2><p>The <a href="matlab:cfm_open_manual">manual</a> provides further details of setup and configuration of the model.</p><p>Townend I H, Zhou Z, Guo L and Coco G, 2021, A morphological investigation of marine transgression in estuaries. Earth Surf. Process. Landf., 46, 626&#8211;641, <a href="https://doi.org/10.1002/esp.5050">https://doi.org/10.1002/esp.5050</a>.</p><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Output
+% The ChannelForm model generates gridded bathymetry/topography terrain
+% models as snapshots or timeseries datasets. Similar externally generated
+% data sets can also be imported. The grids and various derived properties
+% are held in a set of <matlab:doc('dstable') dstables>.
+
+%% Output Assignment
+% The ChannelForm model model and data import classes use the 
+% <matlab:doc('gdinterface') GDinterface> abstract class to manage the data. 
+% The data are stored in a set of <matlab:doc('dstable') dstables>, which
+% are assigned as a <matlab:doc('struct') struct> to the <matlab:doc('muicatalogue') muiCatalogue>
+% _Data_ property (typically as part of a UI based on the <matlab:doc('muitoolbox') muitoolbox>). 
+% The metatdata for the dstable content are defined in the _*setDSproperties*_ 
+% method in <matlab:doc('gdinterface') GDinterface>. 
+
+%% Output Tables
+% Imported and model grids are both held in the _'Form'_ <matlab:doc('dstable') dstable>.
+% In addition, data related to the properties of the channel or inlet and
+% any data on water levels are held in a number of addtional tables, as
+% detailed below.
+%%
+% A number of additional tables support applications that represent
+% inlet, estuary, river and valley formations. These include _'Hypsometry'_ for the
+% variation of surface area and volume as a function of elevation,
+% _'SectionProps'_ holds the variation of the width and cross-sectional area
+% along the x-axis derived from the gridded data, _'Plan'_ holds the widths along 
+% the x-axis specified in the model, or based on an exponential fit to the
+% gridded data, _'WaterLevels'_ holds the variation in water levels at high
+% water, mean tide and low water along the x-axis, and _'GrossProps'_ holds
+% various summary properties of the form related to length, area, volume,
+% rate of convergence, etc. 
+
+%%% Form
+% Elevations of grid along with the x and y dimensions, with the 
+% following variables:
+%%
+% * Z - Elevation (mAD)
+%%
+% _Dimensions_ of time (table rows), X and Y.
+%
+% _UserData.ishead_ - orientation of x-axis relative to mouth (true if
+% minimum x is at the head of the estuary/inlet, default is false).
+%
+% _UserData.xM_ - distance from x=0 to mouth of estuary/inlet (default is
+% 0).
+%
+% _UserData.cline_ – struct for x and y coordinates of meander centre-line.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%%% Hypsometry
+% Variation of surface area and volume as a function of
+% elevation, with the following variables:
+%%
+% * Volume - Volume (m^3)
+% * SurfaceArea - Surface area (m^2)
+% * SAfreq - Surface area frequency
+%%
+% _Dimensions_ of time (table rows), and Z.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%%% SectionProps
+% Variation of the width and cross-sectional area
+% along the x-axis derived from the gridded data, with the following variables:
+%%
+% * Whw - High Water Width (m)
+% * Wmt - Mean Tide Width (m)
+% * Wlw - Low Water Width (m)
+% * CSAhw - High Water Cross-sectional Area (m^2)
+% * CSAmt - Mean Tide Cross-sectional Area (m^2)
+% * CSAlw - Low Water Cross-sectional Area (m^2)
+% * Dhw – High Water depth (m)
+% * Dmt –Mean Tide depth (m)
+% * Dlw - Low Water depth (m)
+% * PrA - Tidal Prism (using CSA) (m^3)
+% * Shw – High Water surface area (m^2)
+% * Smt – Mean Tide surface area (m^2)
+% * Slw – Low Watere surface area (m^2)
+% * Vhw – High Water volume (m^3)
+% * Vmt – Mean Tide volume (m^3)
+% * Vlw – Low Water volume (m^3)
+% * PrV - Tidal Prism (using hypsometry) (m^3)
+% * Gamma - Dronkers' Gamma (-)
+% * Vs - Storage Volume (m^3)
+% * Vc - Channel Volume (m^3) 
+% * amp - Tidal amplitude at mouth (m)
+% * hyd - Hydraulic depth of channel (m)
+%%
+% _Dimensions_ of time (table rows), and X.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%%% Plan
+% Widths along the x-axis, specified in the model, or based on an exponential 
+% fit to the gridded data, with the following variables:
+%%
+% * Whw - High Water Width (m)
+% * Wmt - Mean Tide Width (m)
+% * Wlw - Low Water Width (m)
+%%
+% _Dimensions_ of time (table rows), and X.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%%% GrossProps 
+% Various summary properties of the form related to length, area, volume,
+% rate of convergence, etc, with the following variables:
+%%
+% * Shw - High Water Surface Area (m^2)
+% * Slw - Low Water Surface Area (m^2)
+% * Vhw - High Water Volume (m^3)
+% * Vlw - Low Water Volume (m^3)
+% * PrA - Tidal Prism using cross-sectional areas (m^3)
+% * PrV - Tidal Prism using hypsometry volumes (m^3)
+% * Gamma - Dronkers' Gamma (-)
+% * Vs - Storage Volume (m^3)
+% * Vc - Channel Volume (m^3)
+% * Wm - Mean Tide Width  at mouth (m)
+% * Am - Mean Tide Cross-sectional Area at mouth (m^2)
+% * Dm – Depth at mouth to MTL (m)
+% * amp - Tidal amplitude at mouth (m)
+% * hyd - Hydraulic depth of channel (m)
+% * aoh - Amplitude to Depth ratio (-)
+% * VsoVc - Storage to Channel Volume ratio (-)
+% * PrvAm - Prism to Cross-sectional Area ratio at mouth (m)
+% * SflShw - Intertidal to Basin Area ratio
+% * Lw - Width convergence length
+% * La - Cross-sectional Area convergence length
+%%
+% _Dimensions_ of time (table rows).
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%%% WaterLevels
+% Variation in water levels at high water, mean tide and low water along
+% the x-axis, with the following variables:
+%%
+% * zhw - High Water level (mAD), where mAD = metres above Datum
+% * zmt - Mean Tide level (mAD)
+% * zlw - Low Water level (mAD)
+%%
+% _Dimensions_ of time (table rows), and X.
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%%% Transgresion
+% When the Transgression model is run as additional table is included
+% in the model output tables containing a set of output properties that
+% summarise the changes of form over time, with the following variables:
+%%
+% * delX - Unadjusted transgression distance (m)
+% * estdX - Adjusted transgression distance (m)
+% * cstdX - Open coast transgression distance (m)
+% * dSLR - Cumulative sea level rise (m)
+% * Lt - Distance to tidal limit (m)
+% * FPA - Flood plain area (m)
+% * waterVol - Water volume change due to changes in HW (m^3)
+% * sedVol - Cumulative sediment flux (+ve=sediment import) (m^3)
+% * vdiffx - Volume change for [0,delX/2,delX,3delX/2] (m^3)
+%%
+% _Dimensions_ of time (table rows)
+%
+% _Description_ – user assigned Case description.
+%
+% _Source_ - source file or model class.
+%
+% _MetaData_ - details any manipulation e.g. type of model or grid rotation.
+
+%% See Also
+% The <matlab:cfm_open_manual manual> provides further details of setup and 
+% configuration of the model.
+%%
+% Townend I H, Zhou Z, Guo L and Coco G, 2021, A morphological investigation 
+% of marine transgression in estuaries. Earth Surf. Process. Landf., 46, 
+% 626–641, https://doi.org/10.1002/esp.5050.
+
+
+##### SOURCE END #####
+--></body></html>
