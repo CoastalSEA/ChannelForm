@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="35162468" file="D:\Matlab Code\muiModels\ChannelForm\app\ChannelForm.prj" location="D:\Matlab Code\muiModels\ChannelForm\app" name="ChannelForm" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="287841890" file="D:\Matlab Code\muiModels\ChannelForm\app\ChannelForm.prj" location="D:\Matlab Code\muiModels\ChannelForm\app" name="ChannelForm" target="target.mlapps" target-name="Package App">
     <param.appname>ChannelForm</param.appname>
     <param.authnamewatermark>Ian Townend</param.authnamewatermark>
     <param.email>i.townend@soton.ac.uk</param.email>
@@ -56,7 +56,8 @@
       <file>${PROJECT_ROOT}\example</file>
       <file>${PROJECT_ROOT}\help</file>
       <file>${PROJECT_ROOT}\info.xml</file>
-      <file>D:\Matlab Code\muiModels\muiAppLib</file>
+      <file>D:\Matlab Code\muiModels\muiAppLib\muiAppEstuaryFcns</file>
+      <file>D:\Matlab Code\muiModels\muiAppLib\muiAppGridFcns</file>
     </fileset.resources>
     <fileset.package />
     <build-deliverables>
