@@ -1,5 +1,5 @@
 # ChannelForm
-ChannelForm is a Matlab(TM) App to model the interaction of estuary channels and the surrounding flood plain and valley landscape.
+ChannelForm is an App to model the interaction of estuary channels and the surrounding flood plain and valley landscape.
 
 ## Licence
 The code is provided as Open Source code (issued under a BSD 3-clause License).
