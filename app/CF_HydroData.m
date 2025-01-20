@@ -432,7 +432,7 @@ classdef CF_HydroData < muiPropertyUI
             %prompt user to select a form model from existing cases
             muicat = mobj.Cases;
             promptxt = 'Select Form Model to use:'; 
-            gridclasses = {'CF_FormModel','GD_ImportData'};
+            gridclasses = {'CF_FormModel','FGD_ImportData'};
             [caserec,ok] = selectRecord(muicat,'PromptText',promptxt,...
                               'CaseType',[],'CaseClass',gridclasses,...
                               'SelectionMode','single','ListSize',[250,200]);

@@ -158,7 +158,7 @@ classdef CF_FormModel < FGDinterface
             %add shoreline strip based on the idealised beach profile
             muicat = mobj.Cases;
             ftxt = 'Select Form Model to use:';
-            obj = selectCaseObj(muicat,[],{'CF_FormModel','CF_ValleyModel','GD_ImportData'},ftxt);
+            obj = selectCaseObj(muicat,[],{'CF_FormModel','CF_ValleyModel','FGD_ImportData'},ftxt);
             if isempty(obj), return; end
  
             grid = getGrid(obj,1);

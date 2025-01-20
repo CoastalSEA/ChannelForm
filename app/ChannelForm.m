@@ -346,7 +346,7 @@ classdef ChannelForm < muiModelUI
 %%
         function loadMenuOptions(obj,src,~)
             %callback functions to import data
-            classname = 'GD_ImportData';
+            classname = 'FGD_ImportData';
             switch src.Text
                 case 'Load'
                     fname = sprintf('%s.loadData',classname);
@@ -407,8 +407,8 @@ classdef ChannelForm < muiModelUI
         function gridMenuOptions(obj,src,~)
             %callback functions for grid tools options
             gridclasses = {'CF_FormModel','CF_ValleyModel',...
-                                          'CF_TransModel','GD_ImportData'};
-            %CF_FromModel inherits GDinterface, which includes the grid tools
+                                          'CF_TransModel','FGD_ImportData'};
+            %CF_FormModel inherits GDinterface, which includes the grid tools
             GDinterface.gridMenuOptions(obj,src,gridclasses);
             DrawMap(obj);
         end
@@ -416,7 +416,7 @@ classdef ChannelForm < muiModelUI
         function formMenuOptions(obj,src,~)
             %callback functions for grid tools options
             gridclasses = {'CF_FormModel','CF_ValleyModel',...
-                                          'CF_TransModel','GD_ImportData'};
+                                          'CF_TransModel','FGD_ImportData'};
             %CF_FromModel inherits GDinterface, which includes the grid tools
             FGDinterface.formMenuOptions(obj,src,gridclasses);
             DrawMap(obj);

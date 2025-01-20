@@ -91,18 +91,18 @@ classdef CF_ValleyModel < FGDinterface
             %merge a selected form with the selected valley form 
             muicat = mobj.Cases;
             vobj = getClassObj(mobj,'Cases','CF_ValleyModel');
-            gobj = getClassObj(mobj,'Cases','GD_ImportData');
+            gobj = getClassObj(mobj,'Cases','FGD_ImportData');
             if isempty(vobj) && isempty(gobj)
                 warndlg('No valley model or imported data available');
                 return; 
             end
             
             ftxt = 'Select Form Model to use:';
-            fobj = selectCaseObj(muicat,[],{'CF_FormModel','GD_ImportData'},ftxt);
+            fobj = selectCaseObj(muicat,[],{'CF_FormModel','FGD_ImportData'},ftxt);
             if isempty(fobj), return; end
             fgrid = getGrid(fobj,1);
             vtxt = 'Select Valley Model to use:';
-            vobj = selectCaseObj(muicat,[],{'CF_ValleyModel','GD_ImportData'},vtxt);
+            vobj = selectCaseObj(muicat,[],{'CF_ValleyModel','FGD_ImportData'},vtxt);
             vgrid = getGrid(vobj,1);
             
             %prompt user to define whether to use min or max values
@@ -222,7 +222,7 @@ classdef CF_ValleyModel < FGDinterface
         function checkFloodPlainArea(mobj)
             %display the area of the flood plain in a user selected combined form
             promptxt = 'Select a Combined Form'; 
-            obj = selectCaseObj(mobj.Cases,[],{'CF_FormModel','GD_ImportData'},promptxt);
+            obj = selectCaseObj(mobj.Cases,[],{'CF_FormModel','FGD_ImportData'},promptxt);
             if isempty(obj), return; end
             grid = getGrid(obj,1);
 
@@ -265,7 +265,7 @@ classdef CF_ValleyModel < FGDinterface
             %generate a plot of the channel, valley and combined form            
             muicat = mobj.Cases;
             ftxt = 'Select Form Model to use:';
-            [fobj,~] = selectCaseObj(muicat,[],{'CF_FormModel','GD_ImportData'},ftxt);
+            [fobj,~] = selectCaseObj(muicat,[],{'CF_FormModel','FGD_ImportData'},ftxt);
             if isempty(fobj), return; end
             fgrid = getGrid(fobj,1);
             xf = fgrid.x/1000;  %change x-y axes to km
@@ -273,7 +273,7 @@ classdef CF_ValleyModel < FGDinterface
             zf = fgrid.z;
 
             vtxt = 'Select Valley Model to use:';
-            [vobj,~] = selectCaseObj(muicat,[],{'CF_ValleyModel','GD_ImportData'},vtxt);
+            [vobj,~] = selectCaseObj(muicat,[],{'CF_ValleyModel','FGD_ImportData'},vtxt);
             vgrid = getGrid(vobj,1);
             xv = vgrid.x/1000;  %change x-y axes to km
             yv = vgrid.y/1000;

@@ -1127,7 +1127,7 @@ classdef CF_TransModel < FGDinterface
             obj.Channel = selectCaseObj(muicat,[],{'CF_FormModel'},ftxt);
             if isempty(obj.Channel), isok = false; return; end
             vtxt = 'Select Valley Model to use:';
-            obj.Valley = selectCaseObj(muicat,[],{'CF_ValleyModel','GD_ImportData'},vtxt);
+            obj.Valley = selectCaseObj(muicat,[],{'CF_ValleyModel','FGD_ImportData'},vtxt);
             if isempty(obj.Valley), isok = false; return; end
             
             %Metadata of selection
