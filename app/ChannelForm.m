@@ -12,6 +12,8 @@ classdef ChannelForm < muiModelUI
 % Author: Ian Townend
 % CoastalSEA (c) Jan 2021
 %--------------------------------------------------------------------------
+%
+% HarmonyC: Testing on pushing changes %
 % 
     properties  (Access = protected)
         %implement properties defined as Abstract in muiModelUI
