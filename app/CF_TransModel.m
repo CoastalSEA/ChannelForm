@@ -1025,9 +1025,9 @@ classdef CF_TransModel < FGDinterface
                 %convergence length from mouth accounting for any offset
                 % [ich,~] = gd_basin_indices(grid);
                 % ewidth = tp.Wz.Whw-tp.Rv.Wr; ewidth(ewidth<0) = 0;
-                % Lwu = -getconvergencelength(grid.x(ich),ewidth(ich)); %width convergence length at mean tide level
+                % Lwu = -gd_convergencelength(grid.x(ich),ewidth(ich)); %width convergence length at mean tide level
                 % ewidth = tp.Wz.Wlw-tp.Rv.Wr; ewidth(ewidth<0) = 0;
-                % Lwl = -getconvergencelength(grid.x(ich),ewidth(ich)); %csa convergence length at mean tide level
+                % Lwl = -gd_convergencelength(grid.x(ich),ewidth(ich)); %csa convergence length at mean tide level
                 % %increase in mouth width due to landward transgression
                 % %new widths based on increment, edX, from previous time step
                 % Wu = (Wu-tp.Rv.Wr)*exp(edX/Lwu)+tp.Rv.Wr; 
