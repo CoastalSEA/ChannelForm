@@ -308,7 +308,7 @@ classdef CF_FormModel < FGDinterface
                 varorder = {'PlanUI','ChannelUI','IntertidalUI','BasinUI','LowWaterUI'};                
                 uioptions{4} = {'Rectangle','Ellipse','Half-ellipse',...
                                 'Divergent-shore','Divergent-bay',...
-                                'Logistic-shore','Logistic-bay'};  
+                                'Logistic-shore','Logistic-bay','Inverse Logistic-shore'};  
                 uioptions{5} = {'Yes','No'};
             end
 

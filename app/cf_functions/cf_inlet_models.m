@@ -406,12 +406,12 @@ function yu = getHWForm(yl,xi,bu,bt,Lt,Ll,Li,basin)
             %combined plan form
             yu = min(yuexp,yupbl);
         case 'Logistic-shore'
-            %logistic variation around tidal limit
+            %logistic variation from tidal inlet with straight shore
             x = xi/(Ll-Li);
             params = setGLstruct(bu,bt,Ll,Li);
             yu = general_logistic(x,params,false)*(bt-bu)+bu;
         case 'Logistic-bay'
-            %logistic variation around tidal limit
+            %logistic variation from tidal inlet with eliptical shore
             x = xi/(Ll-Li);
             params = setGLstruct(bu,bt,Ll,Li);
             yuexp = general_logistic(x,params,false)*(bt-bu)+bu;
@@ -419,11 +419,16 @@ function yu = getHWForm(yl,xi,bu,bt,Lt,Ll,Li,basin)
             yupbl = sqrt(4*(Lt-Li-xi)*(Lt-Ll));
             %combined plan form
             yu = min(yuexp,yupbl);
+        case 'Inverse Logistic-shore'
+            %logistic variation around tidal limit with straight shore
+            x = (Ll-xi)/(Ll-Li);
+            params = setGLstruct(bu,bt,Ll,Li);
+            yu = general_logistic(x,params,false)*(bt-bu)+bu;
     end
 end
 %%
 function params = setGLstruct(bu,bt,Ll,Li)
-    %   p - struct containing:
+    %   params - struct containing:
     A = 0.0;      %left horizontal asymptote
     B = 10;       %growth rate
     C = 1.0;      %upper asymptote of A+(K-A)/C^(1/nu) - typically 1
